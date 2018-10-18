@@ -110,10 +110,12 @@ func newTimerQueueFailoverProcessor(shard ShardContext, historyService *historyE
 		// should use current cluster's time when doing domain failover
 		return shard.GetCurrentTime(currentClusterName)
 	}
+	failoverStartTime := time.Now()
 	updateShardAckLevel := func(ackLevel TimerSequenceID) error {
 		return shard.UpdateTimerFailoverLevel(
 			domainID,
 			persistence.TimerFailoverLevel{
+				StartTime:    failoverStartTime,
 				MinLevel:     minLevel,
 				CurrentLevel: ackLevel.VisibilityTimestamp,
 				MaxLevel:     maxLevel,
@@ -121,7 +123,6 @@ func newTimerQueueFailoverProcessor(shard ShardContext, historyService *historyE
 			},
 		)
 	}
-
 	timerAckMgrShutdown := func() error {
 		return shard.DeleteTimerFailoverLevel(domainID)
 	}
