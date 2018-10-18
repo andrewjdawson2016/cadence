@@ -21,8 +21,9 @@
 package history
 
 import (
-	"github.com/uber-common/bark"
+	"time"
 
+	"github.com/uber-common/bark"
 	h "github.com/uber/cadence/.gen/go/history"
 	workflow "github.com/uber/cadence/.gen/go/shared"
 	"github.com/uber/cadence/client/history"
@@ -138,10 +139,12 @@ func newTransferQueueFailoverProcessor(shard ShardContext, historyService *histo
 	maxReadAckLevel := func() int64 {
 		return maxLevel // this is a const
 	}
+	failoverStartTime := time.Now()
 	updateTransferAckLevel := func(ackLevel int64) error {
 		return shard.UpdateTransferFailoverLevel(
 			domainID,
 			persistence.TransferFailoverLevel{
+				StartTime:    failoverStartTime,
 				MinLevel:     minLevel,
 				CurrentLevel: ackLevel,
 				MaxLevel:     maxLevel,
