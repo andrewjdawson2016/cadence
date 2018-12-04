@@ -158,7 +158,7 @@ func (c *client) uploadBlobs(
 		PrefixesListable: true,
 		Blob: &blobstore.Blob{
 			Size:            int64(0),
-			Body:            bytes.NewReader([]byte),
+			Body:            bytes.NewReader([]byte{}),
 			CompressionType: blobstore.NoCompression,
 			Tags:            tags,
 		},
