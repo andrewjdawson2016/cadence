@@ -371,6 +371,7 @@ CREATE TABLE domains_by_name (
   config_version     bigint, -- indicating the version of domain config, excluding the failover / change of active cluster name
   failover_version   bigint, -- indicating the version of active domain only, used for domain failover
   db_version         bigint, -- indicate the version of the record, used for update
+  archival_info      frozen<archival_info>, -- indicate archival configuration used for workflow histories in this domain
   PRIMARY KEY (name)
 )  WITH COMPACTION = {
      'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'
@@ -387,6 +388,7 @@ CREATE TABLE domains_by_name_v2 (
   failover_version              bigint, -- indicating the version of active domain only, used for domain failover
   failover_notification_version bigint, -- indicating the last change related to domain failover
   notification_version          bigint,
+  archival_info                 frozen<archival_info>, -- indicate archival configuration used for workflow histories in this domain
   PRIMARY KEY (domains_partition, name)
 )  WITH COMPACTION = {
      'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'
