@@ -816,6 +816,13 @@ struct DomainReplicationConfiguration {
  20: optional list<ClusterReplicationConfiguration> clusters
 }
 
+const i32 RETENTION_DAYS_INFINITE = -1
+
+struct ArchivalConfiguration {
+  10: optional bool archivalEnabled
+  20: optional i32 retentionDays
+}
+
 struct RegisterDomainRequest {
   10: optional string name
   20: optional string description
@@ -827,6 +834,7 @@ struct RegisterDomainRequest {
   // A key-value map for any customized purpose
   80: optional map<string,string> data
   90: optional string securityToken
+  100: optional ArchivalConfiguration archivalConfiguration
 }
 
 struct ListDomainsRequest {
@@ -849,6 +857,7 @@ struct DescribeDomainResponse {
   30: optional DomainReplicationConfiguration replicationConfiguration
   40: optional i64 (js.type = "Long") failoverVersion
   50: optional bool isGlobalDomain
+  60: optional ArchivalConfiguration archivalConfiguration
 }
 
 struct UpdateDomainRequest {
@@ -857,6 +866,7 @@ struct UpdateDomainRequest {
  30: optional DomainConfiguration configuration
  40: optional DomainReplicationConfiguration replicationConfiguration
  50: optional string securityToken
+ 60: optional ArchivalConfiguration archivalConfiguration
 }
 
 struct UpdateDomainResponse {
@@ -865,6 +875,7 @@ struct UpdateDomainResponse {
   30: optional DomainReplicationConfiguration replicationConfiguration
   40: optional i64 (js.type = "Long") failoverVersion
   50: optional bool isGlobalDomain
+  60: optional ArchivalConfiguration archivalConfiguration
 }
 
 struct DeprecateDomainRequest {

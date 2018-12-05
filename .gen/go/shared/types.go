@@ -2370,6 +2370,188 @@ func (v *ActivityType) GetName() (o string) {
 	return
 }
 
+type ArchivalConfiguration struct {
+	ArchivalEnabled *bool  `json:"archivalEnabled,omitempty"`
+	RetentionDays   *int32 `json:"retentionDays,omitempty"`
+}
+
+// ToWire translates a ArchivalConfiguration struct into a Thrift-level intermediate
+// representation. This intermediate representation may be serialized
+// into bytes using a ThriftRW protocol implementation.
+//
+// An error is returned if the struct or any of its fields failed to
+// validate.
+//
+//   x, err := v.ToWire()
+//   if err != nil {
+//     return err
+//   }
+//
+//   if err := binaryProtocol.Encode(x, writer); err != nil {
+//     return err
+//   }
+func (v *ArchivalConfiguration) ToWire() (wire.Value, error) {
+	var (
+		fields [2]wire.Field
+		i      int = 0
+		w      wire.Value
+		err    error
+	)
+
+	if v.ArchivalEnabled != nil {
+		w, err = wire.NewValueBool(*(v.ArchivalEnabled)), error(nil)
+		if err != nil {
+			return w, err
+		}
+		fields[i] = wire.Field{ID: 10, Value: w}
+		i++
+	}
+	if v.RetentionDays != nil {
+		w, err = wire.NewValueI32(*(v.RetentionDays)), error(nil)
+		if err != nil {
+			return w, err
+		}
+		fields[i] = wire.Field{ID: 20, Value: w}
+		i++
+	}
+
+	return wire.NewValueStruct(wire.Struct{Fields: fields[:i]}), nil
+}
+
+// FromWire deserializes a ArchivalConfiguration struct from its Thrift-level
+// representation. The Thrift-level representation may be obtained
+// from a ThriftRW protocol implementation.
+//
+// An error is returned if we were unable to build a ArchivalConfiguration struct
+// from the provided intermediate representation.
+//
+//   x, err := binaryProtocol.Decode(reader, wire.TStruct)
+//   if err != nil {
+//     return nil, err
+//   }
+//
+//   var v ArchivalConfiguration
+//   if err := v.FromWire(x); err != nil {
+//     return nil, err
+//   }
+//   return &v, nil
+func (v *ArchivalConfiguration) FromWire(w wire.Value) error {
+	var err error
+
+	for _, field := range w.GetStruct().Fields {
+		switch field.ID {
+		case 10:
+			if field.Value.Type() == wire.TBool {
+				var x bool
+				x, err = field.Value.GetBool(), error(nil)
+				v.ArchivalEnabled = &x
+				if err != nil {
+					return err
+				}
+
+			}
+		case 20:
+			if field.Value.Type() == wire.TI32 {
+				var x int32
+				x, err = field.Value.GetI32(), error(nil)
+				v.RetentionDays = &x
+				if err != nil {
+					return err
+				}
+
+			}
+		}
+	}
+
+	return nil
+}
+
+// String returns a readable string representation of a ArchivalConfiguration
+// struct.
+func (v *ArchivalConfiguration) String() string {
+	if v == nil {
+		return "<nil>"
+	}
+
+	var fields [2]string
+	i := 0
+	if v.ArchivalEnabled != nil {
+		fields[i] = fmt.Sprintf("ArchivalEnabled: %v", *(v.ArchivalEnabled))
+		i++
+	}
+	if v.RetentionDays != nil {
+		fields[i] = fmt.Sprintf("RetentionDays: %v", *(v.RetentionDays))
+		i++
+	}
+
+	return fmt.Sprintf("ArchivalConfiguration{%v}", strings.Join(fields[:i], ", "))
+}
+
+func _Bool_EqualsPtr(lhs, rhs *bool) bool {
+	if lhs != nil && rhs != nil {
+
+		x := *lhs
+		y := *rhs
+		return (x == y)
+	}
+	return lhs == nil && rhs == nil
+}
+
+// Equals returns true if all the fields of this ArchivalConfiguration match the
+// provided ArchivalConfiguration.
+//
+// This function performs a deep comparison.
+func (v *ArchivalConfiguration) Equals(rhs *ArchivalConfiguration) bool {
+	if v == nil {
+		return rhs == nil
+	} else if rhs == nil {
+		return false
+	}
+	if !_Bool_EqualsPtr(v.ArchivalEnabled, rhs.ArchivalEnabled) {
+		return false
+	}
+	if !_I32_EqualsPtr(v.RetentionDays, rhs.RetentionDays) {
+		return false
+	}
+
+	return true
+}
+
+// MarshalLogObject implements zapcore.ObjectMarshaler, enabling
+// fast logging of ArchivalConfiguration.
+func (v *ArchivalConfiguration) MarshalLogObject(enc zapcore.ObjectEncoder) (err error) {
+	if v == nil {
+		return nil
+	}
+	if v.ArchivalEnabled != nil {
+		enc.AddBool("archivalEnabled", *v.ArchivalEnabled)
+	}
+	if v.RetentionDays != nil {
+		enc.AddInt32("retentionDays", *v.RetentionDays)
+	}
+	return err
+}
+
+// GetArchivalEnabled returns the value of ArchivalEnabled if it is set or its
+// zero value if it is unset.
+func (v *ArchivalConfiguration) GetArchivalEnabled() (o bool) {
+	if v.ArchivalEnabled != nil {
+		return *v.ArchivalEnabled
+	}
+
+	return
+}
+
+// GetRetentionDays returns the value of RetentionDays if it is set or its
+// zero value if it is unset.
+func (v *ArchivalConfiguration) GetRetentionDays() (o int32) {
+	if v.RetentionDays != nil {
+		return *v.RetentionDays
+	}
+
+	return
+}
+
 type BadRequestError struct {
 	Message string `json:"message,required"`
 }
@@ -9379,6 +9561,7 @@ type DescribeDomainResponse struct {
 	ReplicationConfiguration *DomainReplicationConfiguration `json:"replicationConfiguration,omitempty"`
 	FailoverVersion          *int64                          `json:"failoverVersion,omitempty"`
 	IsGlobalDomain           *bool                           `json:"isGlobalDomain,omitempty"`
+	ArchivalConfiguration    *ArchivalConfiguration          `json:"archivalConfiguration,omitempty"`
 }
 
 // ToWire translates a DescribeDomainResponse struct into a Thrift-level intermediate
@@ -9398,7 +9581,7 @@ type DescribeDomainResponse struct {
 //   }
 func (v *DescribeDomainResponse) ToWire() (wire.Value, error) {
 	var (
-		fields [5]wire.Field
+		fields [6]wire.Field
 		i      int = 0
 		w      wire.Value
 		err    error
@@ -9444,6 +9627,14 @@ func (v *DescribeDomainResponse) ToWire() (wire.Value, error) {
 		fields[i] = wire.Field{ID: 50, Value: w}
 		i++
 	}
+	if v.ArchivalConfiguration != nil {
+		w, err = v.ArchivalConfiguration.ToWire()
+		if err != nil {
+			return w, err
+		}
+		fields[i] = wire.Field{ID: 60, Value: w}
+		i++
+	}
 
 	return wire.NewValueStruct(wire.Struct{Fields: fields[:i]}), nil
 }
@@ -9462,6 +9653,12 @@ func _DomainConfiguration_Read(w wire.Value) (*DomainConfiguration, error) {
 
 func _DomainReplicationConfiguration_Read(w wire.Value) (*DomainReplicationConfiguration, error) {
 	var v DomainReplicationConfiguration
+	err := v.FromWire(w)
+	return &v, err
+}
+
+func _ArchivalConfiguration_Read(w wire.Value) (*ArchivalConfiguration, error) {
+	var v ArchivalConfiguration
 	err := v.FromWire(w)
 	return &v, err
 }
@@ -9532,6 +9729,14 @@ func (v *DescribeDomainResponse) FromWire(w wire.Value) error {
 				}
 
 			}
+		case 60:
+			if field.Value.Type() == wire.TStruct {
+				v.ArchivalConfiguration, err = _ArchivalConfiguration_Read(field.Value)
+				if err != nil {
+					return err
+				}
+
+			}
 		}
 	}
 
@@ -9545,7 +9750,7 @@ func (v *DescribeDomainResponse) String() string {
 		return "<nil>"
 	}
 
-	var fields [5]string
+	var fields [6]string
 	i := 0
 	if v.DomainInfo != nil {
 		fields[i] = fmt.Sprintf("DomainInfo: %v", v.DomainInfo)
@@ -9567,18 +9772,12 @@ func (v *DescribeDomainResponse) String() string {
 		fields[i] = fmt.Sprintf("IsGlobalDomain: %v", *(v.IsGlobalDomain))
 		i++
 	}
+	if v.ArchivalConfiguration != nil {
+		fields[i] = fmt.Sprintf("ArchivalConfiguration: %v", v.ArchivalConfiguration)
+		i++
+	}
 
 	return fmt.Sprintf("DescribeDomainResponse{%v}", strings.Join(fields[:i], ", "))
-}
-
-func _Bool_EqualsPtr(lhs, rhs *bool) bool {
-	if lhs != nil && rhs != nil {
-
-		x := *lhs
-		y := *rhs
-		return (x == y)
-	}
-	return lhs == nil && rhs == nil
 }
 
 // Equals returns true if all the fields of this DescribeDomainResponse match the
@@ -9606,6 +9805,9 @@ func (v *DescribeDomainResponse) Equals(rhs *DescribeDomainResponse) bool {
 	if !_Bool_EqualsPtr(v.IsGlobalDomain, rhs.IsGlobalDomain) {
 		return false
 	}
+	if !((v.ArchivalConfiguration == nil && rhs.ArchivalConfiguration == nil) || (v.ArchivalConfiguration != nil && rhs.ArchivalConfiguration != nil && v.ArchivalConfiguration.Equals(rhs.ArchivalConfiguration))) {
+		return false
+	}
 
 	return true
 }
@@ -9630,6 +9832,9 @@ func (v *DescribeDomainResponse) MarshalLogObject(enc zapcore.ObjectEncoder) (er
 	}
 	if v.IsGlobalDomain != nil {
 		enc.AddBool("isGlobalDomain", *v.IsGlobalDomain)
+	}
+	if v.ArchivalConfiguration != nil {
+		err = multierr.Append(err, enc.AddObject("archivalConfiguration", v.ArchivalConfiguration))
 	}
 	return err
 }
@@ -9679,6 +9884,16 @@ func (v *DescribeDomainResponse) GetFailoverVersion() (o int64) {
 func (v *DescribeDomainResponse) GetIsGlobalDomain() (o bool) {
 	if v.IsGlobalDomain != nil {
 		return *v.IsGlobalDomain
+	}
+
+	return
+}
+
+// GetArchivalConfiguration returns the value of ArchivalConfiguration if it is set or its
+// zero value if it is unset.
+func (v *DescribeDomainResponse) GetArchivalConfiguration() (o *ArchivalConfiguration) {
+	if v.ArchivalConfiguration != nil {
+		return v.ArchivalConfiguration
 	}
 
 	return
@@ -23705,6 +23920,7 @@ type RegisterDomainRequest struct {
 	ActiveClusterName                      *string                            `json:"activeClusterName,omitempty"`
 	Data                                   map[string]string                  `json:"data,omitempty"`
 	SecurityToken                          *string                            `json:"securityToken,omitempty"`
+	ArchivalConfiguration                  *ArchivalConfiguration             `json:"archivalConfiguration,omitempty"`
 }
 
 // ToWire translates a RegisterDomainRequest struct into a Thrift-level intermediate
@@ -23724,7 +23940,7 @@ type RegisterDomainRequest struct {
 //   }
 func (v *RegisterDomainRequest) ToWire() (wire.Value, error) {
 	var (
-		fields [9]wire.Field
+		fields [10]wire.Field
 		i      int = 0
 		w      wire.Value
 		err    error
@@ -23800,6 +24016,14 @@ func (v *RegisterDomainRequest) ToWire() (wire.Value, error) {
 			return w, err
 		}
 		fields[i] = wire.Field{ID: 90, Value: w}
+		i++
+	}
+	if v.ArchivalConfiguration != nil {
+		w, err = v.ArchivalConfiguration.ToWire()
+		if err != nil {
+			return w, err
+		}
+		fields[i] = wire.Field{ID: 100, Value: w}
 		i++
 	}
 
@@ -23914,6 +24138,14 @@ func (v *RegisterDomainRequest) FromWire(w wire.Value) error {
 				}
 
 			}
+		case 100:
+			if field.Value.Type() == wire.TStruct {
+				v.ArchivalConfiguration, err = _ArchivalConfiguration_Read(field.Value)
+				if err != nil {
+					return err
+				}
+
+			}
 		}
 	}
 
@@ -23927,7 +24159,7 @@ func (v *RegisterDomainRequest) String() string {
 		return "<nil>"
 	}
 
-	var fields [9]string
+	var fields [10]string
 	i := 0
 	if v.Name != nil {
 		fields[i] = fmt.Sprintf("Name: %v", *(v.Name))
@@ -23963,6 +24195,10 @@ func (v *RegisterDomainRequest) String() string {
 	}
 	if v.SecurityToken != nil {
 		fields[i] = fmt.Sprintf("SecurityToken: %v", *(v.SecurityToken))
+		i++
+	}
+	if v.ArchivalConfiguration != nil {
+		fields[i] = fmt.Sprintf("ArchivalConfiguration: %v", v.ArchivalConfiguration)
 		i++
 	}
 
@@ -24006,6 +24242,9 @@ func (v *RegisterDomainRequest) Equals(rhs *RegisterDomainRequest) bool {
 	if !_String_EqualsPtr(v.SecurityToken, rhs.SecurityToken) {
 		return false
 	}
+	if !((v.ArchivalConfiguration == nil && rhs.ArchivalConfiguration == nil) || (v.ArchivalConfiguration != nil && rhs.ArchivalConfiguration != nil && v.ArchivalConfiguration.Equals(rhs.ArchivalConfiguration))) {
+		return false
+	}
 
 	return true
 }
@@ -24042,6 +24281,9 @@ func (v *RegisterDomainRequest) MarshalLogObject(enc zapcore.ObjectEncoder) (err
 	}
 	if v.SecurityToken != nil {
 		enc.AddString("securityToken", *v.SecurityToken)
+	}
+	if v.ArchivalConfiguration != nil {
+		err = multierr.Append(err, enc.AddObject("archivalConfiguration", v.ArchivalConfiguration))
 	}
 	return err
 }
@@ -24131,6 +24373,16 @@ func (v *RegisterDomainRequest) GetData() (o map[string]string) {
 func (v *RegisterDomainRequest) GetSecurityToken() (o string) {
 	if v.SecurityToken != nil {
 		return *v.SecurityToken
+	}
+
+	return
+}
+
+// GetArchivalConfiguration returns the value of ArchivalConfiguration if it is set or its
+// zero value if it is unset.
+func (v *RegisterDomainRequest) GetArchivalConfiguration() (o *ArchivalConfiguration) {
+	if v.ArchivalConfiguration != nil {
+		return v.ArchivalConfiguration
 	}
 
 	return
@@ -36853,6 +37105,7 @@ type UpdateDomainRequest struct {
 	Configuration            *DomainConfiguration            `json:"configuration,omitempty"`
 	ReplicationConfiguration *DomainReplicationConfiguration `json:"replicationConfiguration,omitempty"`
 	SecurityToken            *string                         `json:"securityToken,omitempty"`
+	ArchivalConfiguration    *ArchivalConfiguration          `json:"archivalConfiguration,omitempty"`
 }
 
 // ToWire translates a UpdateDomainRequest struct into a Thrift-level intermediate
@@ -36872,7 +37125,7 @@ type UpdateDomainRequest struct {
 //   }
 func (v *UpdateDomainRequest) ToWire() (wire.Value, error) {
 	var (
-		fields [5]wire.Field
+		fields [6]wire.Field
 		i      int = 0
 		w      wire.Value
 		err    error
@@ -36916,6 +37169,14 @@ func (v *UpdateDomainRequest) ToWire() (wire.Value, error) {
 			return w, err
 		}
 		fields[i] = wire.Field{ID: 50, Value: w}
+		i++
+	}
+	if v.ArchivalConfiguration != nil {
+		w, err = v.ArchivalConfiguration.ToWire()
+		if err != nil {
+			return w, err
+		}
+		fields[i] = wire.Field{ID: 60, Value: w}
 		i++
 	}
 
@@ -36994,6 +37255,14 @@ func (v *UpdateDomainRequest) FromWire(w wire.Value) error {
 				}
 
 			}
+		case 60:
+			if field.Value.Type() == wire.TStruct {
+				v.ArchivalConfiguration, err = _ArchivalConfiguration_Read(field.Value)
+				if err != nil {
+					return err
+				}
+
+			}
 		}
 	}
 
@@ -37007,7 +37276,7 @@ func (v *UpdateDomainRequest) String() string {
 		return "<nil>"
 	}
 
-	var fields [5]string
+	var fields [6]string
 	i := 0
 	if v.Name != nil {
 		fields[i] = fmt.Sprintf("Name: %v", *(v.Name))
@@ -37027,6 +37296,10 @@ func (v *UpdateDomainRequest) String() string {
 	}
 	if v.SecurityToken != nil {
 		fields[i] = fmt.Sprintf("SecurityToken: %v", *(v.SecurityToken))
+		i++
+	}
+	if v.ArchivalConfiguration != nil {
+		fields[i] = fmt.Sprintf("ArchivalConfiguration: %v", v.ArchivalConfiguration)
 		i++
 	}
 
@@ -37058,6 +37331,9 @@ func (v *UpdateDomainRequest) Equals(rhs *UpdateDomainRequest) bool {
 	if !_String_EqualsPtr(v.SecurityToken, rhs.SecurityToken) {
 		return false
 	}
+	if !((v.ArchivalConfiguration == nil && rhs.ArchivalConfiguration == nil) || (v.ArchivalConfiguration != nil && rhs.ArchivalConfiguration != nil && v.ArchivalConfiguration.Equals(rhs.ArchivalConfiguration))) {
+		return false
+	}
 
 	return true
 }
@@ -37082,6 +37358,9 @@ func (v *UpdateDomainRequest) MarshalLogObject(enc zapcore.ObjectEncoder) (err e
 	}
 	if v.SecurityToken != nil {
 		enc.AddString("securityToken", *v.SecurityToken)
+	}
+	if v.ArchivalConfiguration != nil {
+		err = multierr.Append(err, enc.AddObject("archivalConfiguration", v.ArchivalConfiguration))
 	}
 	return err
 }
@@ -37136,12 +37415,23 @@ func (v *UpdateDomainRequest) GetSecurityToken() (o string) {
 	return
 }
 
+// GetArchivalConfiguration returns the value of ArchivalConfiguration if it is set or its
+// zero value if it is unset.
+func (v *UpdateDomainRequest) GetArchivalConfiguration() (o *ArchivalConfiguration) {
+	if v.ArchivalConfiguration != nil {
+		return v.ArchivalConfiguration
+	}
+
+	return
+}
+
 type UpdateDomainResponse struct {
 	DomainInfo               *DomainInfo                     `json:"domainInfo,omitempty"`
 	Configuration            *DomainConfiguration            `json:"configuration,omitempty"`
 	ReplicationConfiguration *DomainReplicationConfiguration `json:"replicationConfiguration,omitempty"`
 	FailoverVersion          *int64                          `json:"failoverVersion,omitempty"`
 	IsGlobalDomain           *bool                           `json:"isGlobalDomain,omitempty"`
+	ArchivalConfiguration    *ArchivalConfiguration          `json:"archivalConfiguration,omitempty"`
 }
 
 // ToWire translates a UpdateDomainResponse struct into a Thrift-level intermediate
@@ -37161,7 +37451,7 @@ type UpdateDomainResponse struct {
 //   }
 func (v *UpdateDomainResponse) ToWire() (wire.Value, error) {
 	var (
-		fields [5]wire.Field
+		fields [6]wire.Field
 		i      int = 0
 		w      wire.Value
 		err    error
@@ -37205,6 +37495,14 @@ func (v *UpdateDomainResponse) ToWire() (wire.Value, error) {
 			return w, err
 		}
 		fields[i] = wire.Field{ID: 50, Value: w}
+		i++
+	}
+	if v.ArchivalConfiguration != nil {
+		w, err = v.ArchivalConfiguration.ToWire()
+		if err != nil {
+			return w, err
+		}
+		fields[i] = wire.Field{ID: 60, Value: w}
 		i++
 	}
 
@@ -37277,6 +37575,14 @@ func (v *UpdateDomainResponse) FromWire(w wire.Value) error {
 				}
 
 			}
+		case 60:
+			if field.Value.Type() == wire.TStruct {
+				v.ArchivalConfiguration, err = _ArchivalConfiguration_Read(field.Value)
+				if err != nil {
+					return err
+				}
+
+			}
 		}
 	}
 
@@ -37290,7 +37596,7 @@ func (v *UpdateDomainResponse) String() string {
 		return "<nil>"
 	}
 
-	var fields [5]string
+	var fields [6]string
 	i := 0
 	if v.DomainInfo != nil {
 		fields[i] = fmt.Sprintf("DomainInfo: %v", v.DomainInfo)
@@ -37310,6 +37616,10 @@ func (v *UpdateDomainResponse) String() string {
 	}
 	if v.IsGlobalDomain != nil {
 		fields[i] = fmt.Sprintf("IsGlobalDomain: %v", *(v.IsGlobalDomain))
+		i++
+	}
+	if v.ArchivalConfiguration != nil {
+		fields[i] = fmt.Sprintf("ArchivalConfiguration: %v", v.ArchivalConfiguration)
 		i++
 	}
 
@@ -37341,6 +37651,9 @@ func (v *UpdateDomainResponse) Equals(rhs *UpdateDomainResponse) bool {
 	if !_Bool_EqualsPtr(v.IsGlobalDomain, rhs.IsGlobalDomain) {
 		return false
 	}
+	if !((v.ArchivalConfiguration == nil && rhs.ArchivalConfiguration == nil) || (v.ArchivalConfiguration != nil && rhs.ArchivalConfiguration != nil && v.ArchivalConfiguration.Equals(rhs.ArchivalConfiguration))) {
+		return false
+	}
 
 	return true
 }
@@ -37365,6 +37678,9 @@ func (v *UpdateDomainResponse) MarshalLogObject(enc zapcore.ObjectEncoder) (err 
 	}
 	if v.IsGlobalDomain != nil {
 		enc.AddBool("isGlobalDomain", *v.IsGlobalDomain)
+	}
+	if v.ArchivalConfiguration != nil {
+		err = multierr.Append(err, enc.AddObject("archivalConfiguration", v.ArchivalConfiguration))
 	}
 	return err
 }
@@ -37414,6 +37730,16 @@ func (v *UpdateDomainResponse) GetFailoverVersion() (o int64) {
 func (v *UpdateDomainResponse) GetIsGlobalDomain() (o bool) {
 	if v.IsGlobalDomain != nil {
 		return *v.IsGlobalDomain
+	}
+
+	return
+}
+
+// GetArchivalConfiguration returns the value of ArchivalConfiguration if it is set or its
+// zero value if it is unset.
+func (v *UpdateDomainResponse) GetArchivalConfiguration() (o *ArchivalConfiguration) {
+	if v.ArchivalConfiguration != nil {
+		return v.ArchivalConfiguration
 	}
 
 	return
