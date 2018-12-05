@@ -34,7 +34,7 @@ type (
 
 	// Initiator is used to trigger system tasks
 	Initiator interface {
-		Archive(request *archival.PutRequest) error
+		Archive(request *archival.PutWorkflowRequest) error
 	}
 
 	initiator struct {
@@ -45,7 +45,7 @@ type (
 	// Signal is the data sent to system tasks
 	Signal struct {
 		RequestType    RequestType
-		ArchiveRequest *archival.PutRequest
+		ArchiveRequest *archival.PutWorkflowRequest
 	}
 )
 
@@ -58,7 +58,7 @@ func NewInitiator(frontendClient frontend.Client, numSWFn dynamicconfig.IntPrope
 }
 
 // Archive starts an archival task
-func (i *initiator) Archive(request *archival.PutRequest) error {
+func (i *initiator) Archive(request *archival.PutWorkflowRequest) error {
 	if request.DomainName == Domain {
 		return nil
 	}

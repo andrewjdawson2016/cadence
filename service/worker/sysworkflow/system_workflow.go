@@ -109,7 +109,7 @@ func selectSystemTask(scope tally.Scope, signal Signal, ctx workflow.Context, lo
 // ArchivalActivity is the archival activity code
 func ArchivalActivity(
 	ctx context.Context,
-	request archival.PutRequest,
+	request archival.PutWorkflowRequest,
 ) error {
 	userWorkflowID := request.WorkflowID
 	userRunID := request.RunID

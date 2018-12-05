@@ -27,8 +27,8 @@ import (
 	"time"
 )
 
-// PutRequest is request for Archive
-type PutRequest struct {
+// PutWorkflowRequest is request for Archive
+type PutWorkflowRequest struct {
 	DomainName   string
 	DomainID     string
 	WorkflowID   string
@@ -41,7 +41,7 @@ type PutRequest struct {
 
 // Client is used to store and retrieve blobs
 type Client interface {
-	PutWorkflow(ctx context.Context, request *PutRequest) error
+	PutWorkflow(ctx context.Context, request *PutWorkflowRequest) error
 
 	GetWorkflowExecutionHistory(
 		ctx context.Context,
@@ -56,7 +56,7 @@ type Client interface {
 
 type nopClient struct{}
 
-func (c *nopClient) PutWorkflow(ctx context.Context, request *PutRequest) error {
+func (c *nopClient) PutWorkflow(ctx context.Context, request *PutWorkflowRequest) error {
 	return errors.New("not implemented")
 }
 
