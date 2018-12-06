@@ -50,13 +50,18 @@ const (
 		`clusters: ? ` +
 		`}`
 
+	templateDomainArchiveConfigType = `{` +
+		`enabled: ?, ` +
+		`retention_days: ? ` +
+		`}`
+
 	templateCreateDomainQuery = `INSERT INTO domains (` +
 		`id, domain) ` +
 		`VALUES(?, {name: ?}) IF NOT EXISTS`
 
 	templateCreateDomainByNameQuery = `INSERT INTO domains_by_name (` +
-		`name, domain, config, replication_config, is_global_domain, config_version, failover_version) ` +
-		`VALUES(?, ` + templateDomainInfoType + `, ` + templateDomainConfigType + `, ` + templateDomainReplicationConfigType + `, ?, ?, ?) IF NOT EXISTS`
+		`name, domain, config, replication_config, is_global_domain, config_version, failover_version, archival_config) ` +
+		`VALUES(?, ` + templateDomainInfoType + `, ` + templateDomainConfigType + `, ` + templateDomainReplicationConfigType + `, ?, ?, ?, ` + templateDomainArchiveConfigType + `) IF NOT EXISTS`
 
 	templateGetDomainQuery = `SELECT domain.name ` +
 		`FROM domains ` +
@@ -68,7 +73,8 @@ const (
 		`is_global_domain, ` +
 		`config_version, ` +
 		`failover_version, ` +
-		`db_version ` +
+		`db_version, ` +
+		`archival_config.enabled, archival_config.retention_days ` +
 		`FROM domains_by_name ` +
 		`WHERE name = ?`
 
@@ -78,7 +84,8 @@ const (
 		`replication_config = ` + templateDomainReplicationConfigType + `, ` +
 		`config_version = ? ,` +
 		`failover_version = ? ,` +
-		`db_version = ? ` +
+		`db_version = ?, ` +
+		`archival_config = ` + templateDomainArchiveConfigType +
 		`WHERE name = ? ` +
 		`IF db_version = ? `
 
@@ -96,7 +103,7 @@ type (
 	}
 )
 
-// newMetadataPersistence is used to create an instance of HistoryManager implementation
+// newMetadataPersistence is used to create an instance of MetadataStore implementation
 func newMetadataPersistence(cfg config.Cassandra, clusterName string, logger bark.Logger) (p.MetadataStore,
 	error) {
 	cluster := NewCassandraCluster(cfg.Hosts, cfg.Port, cfg.User, cfg.Password, cfg.Datacenter)
@@ -157,6 +164,8 @@ func (m *cassandraMetadataPersistence) CreateDomain(request *p.CreateDomainReque
 		request.IsGlobalDomain,
 		request.ConfigVersion,
 		request.FailoverVersion,
+		request.ArchivalConfig.Enabled,
+		request.ArchivalConfig.RetentionDays,
 	)
 
 	previous := make(map[string]interface{})
@@ -195,6 +204,7 @@ func (m *cassandraMetadataPersistence) GetDomain(request *p.GetDomainRequest) (*
 	info := &p.DomainInfo{}
 	config := &p.DomainConfig{}
 	replicationConfig := &p.DomainReplicationConfig{}
+	archivalConfig := &p.DomainArchivalConfig{}
 	var replicationClusters []map[string]interface{}
 	var dbVersion int64
 	var failoverVersion int64
@@ -251,6 +261,8 @@ func (m *cassandraMetadataPersistence) GetDomain(request *p.GetDomainRequest) (*
 		&configVersion,
 		&failoverVersion,
 		&dbVersion,
+		&archivalConfig.Enabled,
+		&archivalConfig.RetentionDays,
 	)
 
 	if err != nil {
@@ -270,6 +282,7 @@ func (m *cassandraMetadataPersistence) GetDomain(request *p.GetDomainRequest) (*
 		FailoverVersion:     failoverVersion,
 		NotificationVersion: dbVersion,
 		TableVersion:        p.DomainTableVersionV1,
+		ArchivalConfig:      archivalConfig,
 	}, nil
 }
 
@@ -294,6 +307,8 @@ func (m *cassandraMetadataPersistence) UpdateDomain(request *p.UpdateDomainReque
 		request.ConfigVersion,
 		request.FailoverVersion,
 		nextVersion,
+		request.ArchivalConfig.Enabled,
+		request.ArchivalConfig.RetentionDays,
 		request.Info.Name,
 		currentVersion,
 	)

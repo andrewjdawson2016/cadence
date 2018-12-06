@@ -968,6 +968,12 @@ type (
 		Clusters          []*ClusterReplicationConfig
 	}
 
+	// DomainArchivalConfig describes the archival configuration
+	DomainArchivalConfig struct {
+		Enabled       bool
+		RetentionDays int32
+	}
+
 	// ClusterReplicationConfig describes the cross DC cluster replication configuration
 	ClusterReplicationConfig struct {
 		ClusterName string
@@ -981,6 +987,7 @@ type (
 		IsGlobalDomain    bool
 		ConfigVersion     int64
 		FailoverVersion   int64
+		ArchivalConfig    *DomainArchivalConfig
 	}
 
 	// CreateDomainResponse is the response for CreateDomain
@@ -1005,6 +1012,7 @@ type (
 		FailoverNotificationVersion int64
 		NotificationVersion         int64
 		TableVersion                int
+		ArchivalConfig              *DomainArchivalConfig
 	}
 
 	// UpdateDomainRequest is used to update domain
@@ -1017,6 +1025,7 @@ type (
 		FailoverNotificationVersion int64
 		NotificationVersion         int64
 		TableVersion                int
+		ArchivalConfig              *DomainArchivalConfig
 	}
 
 	// DeleteDomainRequest is used to delete domain entry from domains table
