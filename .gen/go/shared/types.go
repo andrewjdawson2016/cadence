@@ -2371,8 +2371,9 @@ func (v *ActivityType) GetName() (o string) {
 }
 
 type ArchivalConfiguration struct {
-	ArchivalEnabled *bool  `json:"archivalEnabled,omitempty"`
-	RetentionDays   *int32 `json:"retentionDays,omitempty"`
+	Enabled       *bool   `json:"enabled,omitempty"`
+	BucketName    *string `json:"bucketName,omitempty"`
+	RetentionDays *int32  `json:"retentionDays,omitempty"`
 }
 
 // ToWire translates a ArchivalConfiguration struct into a Thrift-level intermediate
@@ -2392,18 +2393,26 @@ type ArchivalConfiguration struct {
 //   }
 func (v *ArchivalConfiguration) ToWire() (wire.Value, error) {
 	var (
-		fields [2]wire.Field
+		fields [3]wire.Field
 		i      int = 0
 		w      wire.Value
 		err    error
 	)
 
-	if v.ArchivalEnabled != nil {
-		w, err = wire.NewValueBool(*(v.ArchivalEnabled)), error(nil)
+	if v.Enabled != nil {
+		w, err = wire.NewValueBool(*(v.Enabled)), error(nil)
 		if err != nil {
 			return w, err
 		}
 		fields[i] = wire.Field{ID: 10, Value: w}
+		i++
+	}
+	if v.BucketName != nil {
+		w, err = wire.NewValueString(*(v.BucketName)), error(nil)
+		if err != nil {
+			return w, err
+		}
+		fields[i] = wire.Field{ID: 20, Value: w}
 		i++
 	}
 	if v.RetentionDays != nil {
@@ -2411,7 +2420,7 @@ func (v *ArchivalConfiguration) ToWire() (wire.Value, error) {
 		if err != nil {
 			return w, err
 		}
-		fields[i] = wire.Field{ID: 20, Value: w}
+		fields[i] = wire.Field{ID: 30, Value: w}
 		i++
 	}
 
@@ -2444,13 +2453,23 @@ func (v *ArchivalConfiguration) FromWire(w wire.Value) error {
 			if field.Value.Type() == wire.TBool {
 				var x bool
 				x, err = field.Value.GetBool(), error(nil)
-				v.ArchivalEnabled = &x
+				v.Enabled = &x
 				if err != nil {
 					return err
 				}
 
 			}
 		case 20:
+			if field.Value.Type() == wire.TBinary {
+				var x string
+				x, err = field.Value.GetString(), error(nil)
+				v.BucketName = &x
+				if err != nil {
+					return err
+				}
+
+			}
+		case 30:
 			if field.Value.Type() == wire.TI32 {
 				var x int32
 				x, err = field.Value.GetI32(), error(nil)
@@ -2473,10 +2492,14 @@ func (v *ArchivalConfiguration) String() string {
 		return "<nil>"
 	}
 
-	var fields [2]string
+	var fields [3]string
 	i := 0
-	if v.ArchivalEnabled != nil {
-		fields[i] = fmt.Sprintf("ArchivalEnabled: %v", *(v.ArchivalEnabled))
+	if v.Enabled != nil {
+		fields[i] = fmt.Sprintf("Enabled: %v", *(v.Enabled))
+		i++
+	}
+	if v.BucketName != nil {
+		fields[i] = fmt.Sprintf("BucketName: %v", *(v.BucketName))
 		i++
 	}
 	if v.RetentionDays != nil {
@@ -2507,7 +2530,10 @@ func (v *ArchivalConfiguration) Equals(rhs *ArchivalConfiguration) bool {
 	} else if rhs == nil {
 		return false
 	}
-	if !_Bool_EqualsPtr(v.ArchivalEnabled, rhs.ArchivalEnabled) {
+	if !_Bool_EqualsPtr(v.Enabled, rhs.Enabled) {
+		return false
+	}
+	if !_String_EqualsPtr(v.BucketName, rhs.BucketName) {
 		return false
 	}
 	if !_I32_EqualsPtr(v.RetentionDays, rhs.RetentionDays) {
@@ -2523,8 +2549,11 @@ func (v *ArchivalConfiguration) MarshalLogObject(enc zapcore.ObjectEncoder) (err
 	if v == nil {
 		return nil
 	}
-	if v.ArchivalEnabled != nil {
-		enc.AddBool("archivalEnabled", *v.ArchivalEnabled)
+	if v.Enabled != nil {
+		enc.AddBool("enabled", *v.Enabled)
+	}
+	if v.BucketName != nil {
+		enc.AddString("bucketName", *v.BucketName)
 	}
 	if v.RetentionDays != nil {
 		enc.AddInt32("retentionDays", *v.RetentionDays)
@@ -2532,11 +2561,21 @@ func (v *ArchivalConfiguration) MarshalLogObject(enc zapcore.ObjectEncoder) (err
 	return err
 }
 
-// GetArchivalEnabled returns the value of ArchivalEnabled if it is set or its
+// GetEnabled returns the value of Enabled if it is set or its
 // zero value if it is unset.
-func (v *ArchivalConfiguration) GetArchivalEnabled() (o bool) {
-	if v.ArchivalEnabled != nil {
-		return *v.ArchivalEnabled
+func (v *ArchivalConfiguration) GetEnabled() (o bool) {
+	if v.Enabled != nil {
+		return *v.Enabled
+	}
+
+	return
+}
+
+// GetBucketName returns the value of BucketName if it is set or its
+// zero value if it is unset.
+func (v *ArchivalConfiguration) GetBucketName() (o string) {
+	if v.BucketName != nil {
+		return *v.BucketName
 	}
 
 	return
