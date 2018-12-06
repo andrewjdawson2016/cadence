@@ -42,7 +42,10 @@ const (
 
 	templateDomainConfigType = `{` +
 		`retention: ?, ` +
-		`emit_metric: ?` +
+		`emit_metric: ?, ` +
+		`archival_enabled: ?, ` +
+		`archival_bucket_name: ?, ` +
+		`archival_retention_days: ?` +
 		`}`
 
 	templateDomainReplicationConfigType = `{` +
@@ -50,18 +53,13 @@ const (
 		`clusters: ? ` +
 		`}`
 
-	templateDomainArchiveConfigType = `{` +
-		`enabled: ?, ` +
-		`retention_days: ? ` +
-		`}`
-
 	templateCreateDomainQuery = `INSERT INTO domains (` +
 		`id, domain) ` +
 		`VALUES(?, {name: ?}) IF NOT EXISTS`
 
 	templateCreateDomainByNameQuery = `INSERT INTO domains_by_name (` +
-		`name, domain, config, replication_config, is_global_domain, config_version, failover_version, archival_config) ` +
-		`VALUES(?, ` + templateDomainInfoType + `, ` + templateDomainConfigType + `, ` + templateDomainReplicationConfigType + `, ?, ?, ?, ` + templateDomainArchiveConfigType + `) IF NOT EXISTS`
+		`name, domain, config, replication_config, is_global_domain, config_version, failover_version) ` +
+		`VALUES(?, ` + templateDomainInfoType + `, ` + templateDomainConfigType + `, ` + templateDomainReplicationConfigType + `, ?, ?, ?) IF NOT EXISTS`
 
 	templateGetDomainQuery = `SELECT domain.name ` +
 		`FROM domains ` +
@@ -69,12 +67,12 @@ const (
 
 	templateGetDomainByNameQuery = `SELECT domain.id, domain.name, domain.status, domain.description, ` +
 		`domain.owner_email, domain.data, config.retention, config.emit_metric, ` +
+		`config.archival_enabled, config.archival_bucket_name, config.archival_retention_days, ` +
 		`replication_config.active_cluster_name, replication_config.clusters, ` +
 		`is_global_domain, ` +
 		`config_version, ` +
 		`failover_version, ` +
-		`db_version, ` +
-		`archival_config.enabled, archival_config.retention_days ` +
+		`db_version ` +
 		`FROM domains_by_name ` +
 		`WHERE name = ?`
 
@@ -84,8 +82,7 @@ const (
 		`replication_config = ` + templateDomainReplicationConfigType + `, ` +
 		`config_version = ? ,` +
 		`failover_version = ? ,` +
-		`db_version = ?, ` +
-		`archival_config = ` + templateDomainArchiveConfigType +
+		`db_version = ? ` +
 		`WHERE name = ? ` +
 		`IF db_version = ? `
 
@@ -159,13 +156,14 @@ func (m *cassandraMetadataPersistence) CreateDomain(request *p.CreateDomainReque
 		request.Info.Data,
 		request.Config.Retention,
 		request.Config.EmitMetric,
+		request.Config.ArchivalConfig.Enabled,
+		request.Config.ArchivalConfig.BucketName,
+		request.Config.ArchivalConfig.RetentionDays,
 		request.ReplicationConfig.ActiveClusterName,
 		p.SerializeClusterConfigs(request.ReplicationConfig.Clusters),
 		request.IsGlobalDomain,
 		request.ConfigVersion,
 		request.FailoverVersion,
-		request.ArchivalConfig.Enabled,
-		request.ArchivalConfig.RetentionDays,
 	)
 
 	previous := make(map[string]interface{})
@@ -204,7 +202,6 @@ func (m *cassandraMetadataPersistence) GetDomain(request *p.GetDomainRequest) (*
 	info := &p.DomainInfo{}
 	config := &p.DomainConfig{}
 	replicationConfig := &p.DomainReplicationConfig{}
-	archivalConfig := &p.DomainArchivalConfig{}
 	var replicationClusters []map[string]interface{}
 	var dbVersion int64
 	var failoverVersion int64
@@ -255,14 +252,15 @@ func (m *cassandraMetadataPersistence) GetDomain(request *p.GetDomainRequest) (*
 		&info.Data,
 		&config.Retention,
 		&config.EmitMetric,
+		&config.ArchivalConfig.Enabled,
+		&config.ArchivalConfig.BucketName,
+		&config.ArchivalConfig.RetentionDays,
 		&replicationConfig.ActiveClusterName,
 		&replicationClusters,
 		&isGlobalDomain,
 		&configVersion,
 		&failoverVersion,
 		&dbVersion,
-		&archivalConfig.Enabled,
-		&archivalConfig.RetentionDays,
 	)
 
 	if err != nil {
@@ -282,7 +280,6 @@ func (m *cassandraMetadataPersistence) GetDomain(request *p.GetDomainRequest) (*
 		FailoverVersion:     failoverVersion,
 		NotificationVersion: dbVersion,
 		TableVersion:        p.DomainTableVersionV1,
-		ArchivalConfig:      archivalConfig,
 	}, nil
 }
 
@@ -302,13 +299,14 @@ func (m *cassandraMetadataPersistence) UpdateDomain(request *p.UpdateDomainReque
 		request.Info.Data,
 		request.Config.Retention,
 		request.Config.EmitMetric,
+		request.Config.ArchivalConfig.Enabled,
+		request.Config.ArchivalConfig.BucketName,
+		request.Config.ArchivalConfig.RetentionDays,
 		request.ReplicationConfig.ActiveClusterName,
 		p.SerializeClusterConfigs(request.ReplicationConfig.Clusters),
 		request.ConfigVersion,
 		request.FailoverVersion,
 		nextVersion,
-		request.ArchivalConfig.Enabled,
-		request.ArchivalConfig.RetentionDays,
 		request.Info.Name,
 		currentVersion,
 	)

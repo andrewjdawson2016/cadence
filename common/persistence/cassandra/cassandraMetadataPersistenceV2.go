@@ -35,18 +35,18 @@ const domainMetadataRecordName = "cadence-domain-metadata"
 
 const (
 	templateCreateDomainByNameQueryWithinBatchV2 = `INSERT INTO domains_by_name_v2 (` +
-		`domains_partition, name, domain, config, replication_config, is_global_domain, config_version, failover_version, failover_notification_version, notification_version, archival_config) ` +
-		`VALUES(?, ?, ` + templateDomainInfoType + `, ` + templateDomainConfigType + `, ` + templateDomainReplicationConfigType + `, ?, ?, ?, ?, ?, ` + templateDomainArchiveConfigType + `) IF NOT EXISTS`
+		`domains_partition, name, domain, config, replication_config, is_global_domain, config_version, failover_version, failover_notification_version, notification_version) ` +
+		`VALUES(?, ?, ` + templateDomainInfoType + `, ` + templateDomainConfigType + `, ` + templateDomainReplicationConfigType + `, ?, ?, ?, ?, ?) IF NOT EXISTS`
 
 	templateGetDomainByNameQueryV2 = `SELECT domain.id, domain.name, domain.status, domain.description, ` +
 		`domain.owner_email, domain.data, config.retention, config.emit_metric, ` +
+		`config.archival_enabled, config.archival_bucket_name, config.archival_retention_days, ` +
 		`replication_config.active_cluster_name, replication_config.clusters, ` +
 		`is_global_domain, ` +
 		`config_version, ` +
 		`failover_version, ` +
 		`failover_notification_version, ` +
-		`notification_version, ` +
-		`archival_config.enabled, archival_config.retention_days ` +
+		`notification_version ` +
 		`FROM domains_by_name_v2 ` +
 		`WHERE domains_partition = ? ` +
 		`and name = ?`
@@ -58,8 +58,7 @@ const (
 		`config_version = ? ,` +
 		`failover_version = ? ,` +
 		`failover_notification_version = ? , ` +
-		`notification_version = ? , ` +
-		`archival_config = ` + templateDomainArchiveConfigType +
+		`notification_version = ? ` +
 		`WHERE domains_partition = ? ` +
 		`and name = ?`
 
@@ -80,13 +79,13 @@ const (
 
 	templateListDomainQueryV2 = `SELECT name, domain.id, domain.name, domain.status, domain.description, ` +
 		`domain.owner_email, domain.data, config.retention, config.emit_metric, ` +
+		`config.archival_enabled, config.archival_bucket_name, config.archival_retention_days, ` +
 		`replication_config.active_cluster_name, replication_config.clusters, ` +
 		`is_global_domain, ` +
 		`config_version, ` +
 		`failover_version, ` +
 		`failover_notification_version, ` +
-		`notification_version, ` +
-		`archival_config.enabled, archival_config.retention_days ` +
+		`notification_version ` +
 		`FROM domains_by_name_v2 ` +
 		`WHERE domains_partition = ? `
 )
@@ -160,6 +159,9 @@ func (m *cassandraMetadataPersistenceV2) CreateDomain(request *p.CreateDomainReq
 		request.Info.Data,
 		request.Config.Retention,
 		request.Config.EmitMetric,
+		request.Config.ArchivalConfig.Enabled,
+		request.Config.ArchivalConfig.BucketName,
+		request.Config.ArchivalConfig.RetentionDays,
 		request.ReplicationConfig.ActiveClusterName,
 		p.SerializeClusterConfigs(request.ReplicationConfig.Clusters),
 		request.IsGlobalDomain,
@@ -216,6 +218,9 @@ func (m *cassandraMetadataPersistenceV2) UpdateDomain(request *p.UpdateDomainReq
 		request.Info.Data,
 		request.Config.Retention,
 		request.Config.EmitMetric,
+		request.Config.ArchivalConfig.Enabled,
+		request.Config.ArchivalConfig.BucketName,
+		request.Config.ArchivalConfig.RetentionDays,
 		request.ReplicationConfig.ActiveClusterName,
 		p.SerializeClusterConfigs(request.ReplicationConfig.Clusters),
 		request.ConfigVersion,
@@ -306,6 +311,9 @@ func (m *cassandraMetadataPersistenceV2) GetDomain(request *p.GetDomainRequest) 
 		&info.Data,
 		&config.Retention,
 		&config.EmitMetric,
+		&config.ArchivalConfig.Enabled,
+		&config.ArchivalConfig.BucketName,
+		&config.ArchivalConfig.RetentionDays,
 		&replicationConfig.ActiveClusterName,
 		&replicationClusters,
 		&isGlobalDomain,
@@ -363,6 +371,7 @@ func (m *cassandraMetadataPersistenceV2) ListDomains(request *p.ListDomainsReque
 		&name,
 		&domain.Info.ID, &domain.Info.Name, &domain.Info.Status, &domain.Info.Description, &domain.Info.OwnerEmail, &domain.Info.Data,
 		&domain.Config.Retention, &domain.Config.EmitMetric,
+		&domain.Config.ArchivalConfig.Enabled, &domain.Config.ArchivalConfig.BucketName, &domain.Config.ArchivalConfig.RetentionDays,
 		&domain.ReplicationConfig.ActiveClusterName, &replicationClusters,
 		&domain.IsGlobalDomain, &domain.ConfigVersion, &domain.FailoverVersion,
 		&domain.FailoverNotificationVersion, &domain.NotificationVersion,

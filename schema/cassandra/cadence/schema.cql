@@ -243,11 +243,6 @@ CREATE TYPE domain_replication_config (
   clusters            list<frozen<cluster_replication_config>>
 );
 
-CREATE TYPE domain_archival_config (
-  enabled        boolean,
-  retention_days int,
-);
-
 CREATE TYPE serialized_event_batch (
   encoding_type text,
   version       int,

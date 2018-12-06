@@ -960,6 +960,7 @@ type (
 		// NOTE: this retention is in days, not in seconds
 		Retention  int32
 		EmitMetric bool
+		ArchivalConfig *ArchivalConfig
 	}
 
 	// DomainReplicationConfig describes the cross DC domain replication configuration
@@ -968,9 +969,10 @@ type (
 		Clusters          []*ClusterReplicationConfig
 	}
 
-	// DomainArchivalConfig describes the archival configuration
-	DomainArchivalConfig struct {
+	// ArchivalConfig describes the archival configuration
+	ArchivalConfig struct {
 		Enabled       bool
+		BucketName string
 		RetentionDays int32
 	}
 
@@ -987,7 +989,6 @@ type (
 		IsGlobalDomain    bool
 		ConfigVersion     int64
 		FailoverVersion   int64
-		ArchivalConfig    *DomainArchivalConfig
 	}
 
 	// CreateDomainResponse is the response for CreateDomain
@@ -1012,7 +1013,6 @@ type (
 		FailoverNotificationVersion int64
 		NotificationVersion         int64
 		TableVersion                int
-		ArchivalConfig              *DomainArchivalConfig
 	}
 
 	// UpdateDomainRequest is used to update domain
@@ -1025,7 +1025,6 @@ type (
 		FailoverNotificationVersion int64
 		NotificationVersion         int64
 		TableVersion                int
-		ArchivalConfig              *DomainArchivalConfig
 	}
 
 	// DeleteDomainRequest is used to delete domain entry from domains table
