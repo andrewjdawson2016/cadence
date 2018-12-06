@@ -9,6 +9,9 @@ CREATE TABLE domains(
 /* end domain */
   retention INT NOT NULL,
   emit_metric TINYINT(1) NOT NULL,
+  archival_enabled BOOLEAN NOT NULL,
+  archival_bucket_name VARCHAR(255) NOT NULL,
+  archival_retention_days INT NOT NULL,
 /* end domain_config */
   config_version BIGINT NOT NULL,
   notification_version BIGINT NOT NULL,
