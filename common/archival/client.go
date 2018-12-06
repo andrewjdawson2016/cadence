@@ -27,7 +27,7 @@ import (
 	"time"
 )
 
-// PutWorkflowRequest is request for Archive
+// PutWorkflowRequest is request for PutWorkflow
 type PutWorkflowRequest struct {
 	DomainName   string
 	DomainID     string

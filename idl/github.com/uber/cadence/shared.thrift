@@ -819,8 +819,9 @@ struct DomainReplicationConfiguration {
 const i32 RETENTION_DAYS_INFINITE = -1
 
 struct ArchivalConfiguration {
-  10: optional bool archivalEnabled
-  20: optional i32 retentionDays
+  10: optional bool enabled
+  20: optional string bucketName
+  30: optional i32 retentionDays
 }
 
 struct RegisterDomainRequest {
