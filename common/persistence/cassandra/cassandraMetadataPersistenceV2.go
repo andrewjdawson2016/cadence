@@ -35,8 +35,8 @@ const domainMetadataRecordName = "cadence-domain-metadata"
 
 const (
 	templateCreateDomainByNameQueryWithinBatchV2 = `INSERT INTO domains_by_name_v2 (` +
-		`domains_partition, name, domain, config, replication_config, is_global_domain, config_version, failover_version, failover_notification_version, notification_version) ` +
-		`VALUES(?, ?, ` + templateDomainInfoType + `, ` + templateDomainConfigType + `, ` + templateDomainReplicationConfigType + `, ?, ?, ?, ?, ?) IF NOT EXISTS`
+		`domains_partition, name, domain, config, replication_config, is_global_domain, config_version, failover_version, failover_notification_version, notification_version, archival_config) ` +
+		`VALUES(?, ?, ` + templateDomainInfoType + `, ` + templateDomainConfigType + `, ` + templateDomainReplicationConfigType + `, ?, ?, ?, ?, ?, ` + templateDomainArchiveConfigType + `) IF NOT EXISTS`
 
 	templateGetDomainByNameQueryV2 = `SELECT domain.id, domain.name, domain.status, domain.description, ` +
 		`domain.owner_email, domain.data, config.retention, config.emit_metric, ` +
@@ -45,7 +45,8 @@ const (
 		`config_version, ` +
 		`failover_version, ` +
 		`failover_notification_version, ` +
-		`notification_version ` +
+		`notification_version, ` +
+		`archival_config.enabled, archival_config.retention_days ` +
 		`FROM domains_by_name_v2 ` +
 		`WHERE domains_partition = ? ` +
 		`and name = ?`
@@ -57,7 +58,8 @@ const (
 		`config_version = ? ,` +
 		`failover_version = ? ,` +
 		`failover_notification_version = ? , ` +
-		`notification_version = ? ` +
+		`notification_version = ? , ` +
+		`archival_config = ` + templateDomainArchiveConfigType +
 		`WHERE domains_partition = ? ` +
 		`and name = ?`
 
@@ -83,7 +85,8 @@ const (
 		`config_version, ` +
 		`failover_version, ` +
 		`failover_notification_version, ` +
-		`notification_version ` +
+		`notification_version, ` +
+		`archival_config.enabled, archival_config.retention_days ` +
 		`FROM domains_by_name_v2 ` +
 		`WHERE domains_partition = ? `
 )

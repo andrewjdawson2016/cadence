@@ -227,8 +227,11 @@ CREATE TYPE domain (
 );
 
 CREATE TYPE domain_config (
-  retention   int,
-  emit_metric boolean
+  retention               int,
+  emit_metric             boolean,
+  archival_enabled        bool,
+  archival_bucket_name    text,
+  archival_retention_days int
 );
 
 CREATE TYPE cluster_replication_config (
@@ -375,8 +378,7 @@ CREATE TABLE domains_by_name (
   is_global_domain   boolean, -- indicating whether a domain is a global domain
   config_version     bigint, -- indicating the version of domain config, excluding the failover / change of active cluster name
   failover_version   bigint, -- indicating the version of active domain only, used for domain failover
-  db_version         bigint, -- indicate the version of the record, used for update
-  archival_config    frozen<domain_archival_config>, -- indicate archival configuration
+  db_version         bigint -- indicate the version of the record, used for update
   PRIMARY KEY (name)
 )  WITH COMPACTION = {
      'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'
@@ -392,8 +394,7 @@ CREATE TABLE domains_by_name_v2 (
   config_version                bigint, -- indicating the version of domain config, excluding the failover / change of active cluster name
   failover_version              bigint, -- indicating the version of active domain only, used for domain failover
   failover_notification_version bigint, -- indicating the last change related to domain failover
-  notification_version          bigint,
-  archival_config               frozen<domain_archival_config>, -- indicate archival configuration
+  notification_version          bigint
   PRIMARY KEY (domains_partition, name)
 )  WITH COMPACTION = {
      'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'

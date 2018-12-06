@@ -1,8 +1,3 @@
--- Archival configuration for each domain
-CREATE TYPE domain_archival_config (
-  enabled        boolean,
-  retention_days int,
-);
-
-ALTER TABLE domains_by_name ADD archival_config frozen<domain_archival_config>;
-ALTER TABLE domains_by_name_v2 ADD archival_config frozen<domain_archival_config>;
+ALTER TYPE domain_config ADD archival_enabled bool;
+ALTER TYPE domain_config ADD archival_bucket_name text;
+ALTER TYPE domain_config ADD archival_retention_days int;
