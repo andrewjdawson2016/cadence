@@ -795,9 +795,18 @@ struct DomainInfo {
   50: optional map<string,string> data
 }
 
+const i32 ARCHIVAL_RETENTION_DAYS_INFINITE = -1
+
+struct ArchivalConfiguration {
+  10: optional bool enabled
+  20: optional string bucketName
+  30: optional i32 retentionDays
+}
+
 struct DomainConfiguration {
   10: optional i32 workflowExecutionRetentionPeriodInDays
   20: optional bool emitMetric
+  30: optional ArchivalConfiguration archivalConfig
 }
 
 struct UpdateDomainInfo {
@@ -814,14 +823,6 @@ struct ClusterReplicationConfiguration {
 struct DomainReplicationConfiguration {
  10: optional string activeClusterName
  20: optional list<ClusterReplicationConfiguration> clusters
-}
-
-const i32 RETENTION_DAYS_INFINITE = -1
-
-struct ArchivalConfiguration {
-  10: optional bool enabled
-  20: optional string bucketName
-  30: optional i32 retentionDays
 }
 
 struct RegisterDomainRequest {

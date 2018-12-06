@@ -11711,8 +11711,9 @@ func (v *DomainCacheInfo) GetNumOfItemsInCacheByName() (o int64) {
 }
 
 type DomainConfiguration struct {
-	WorkflowExecutionRetentionPeriodInDays *int32 `json:"workflowExecutionRetentionPeriodInDays,omitempty"`
-	EmitMetric                             *bool  `json:"emitMetric,omitempty"`
+	WorkflowExecutionRetentionPeriodInDays *int32                 `json:"workflowExecutionRetentionPeriodInDays,omitempty"`
+	EmitMetric                             *bool                  `json:"emitMetric,omitempty"`
+	ArchivalConfig                         *ArchivalConfiguration `json:"archivalConfig,omitempty"`
 }
 
 // ToWire translates a DomainConfiguration struct into a Thrift-level intermediate
@@ -11732,7 +11733,7 @@ type DomainConfiguration struct {
 //   }
 func (v *DomainConfiguration) ToWire() (wire.Value, error) {
 	var (
-		fields [2]wire.Field
+		fields [3]wire.Field
 		i      int = 0
 		w      wire.Value
 		err    error
@@ -11752,6 +11753,14 @@ func (v *DomainConfiguration) ToWire() (wire.Value, error) {
 			return w, err
 		}
 		fields[i] = wire.Field{ID: 20, Value: w}
+		i++
+	}
+	if v.ArchivalConfig != nil {
+		w, err = v.ArchivalConfig.ToWire()
+		if err != nil {
+			return w, err
+		}
+		fields[i] = wire.Field{ID: 30, Value: w}
 		i++
 	}
 
@@ -11800,6 +11809,14 @@ func (v *DomainConfiguration) FromWire(w wire.Value) error {
 				}
 
 			}
+		case 30:
+			if field.Value.Type() == wire.TStruct {
+				v.ArchivalConfig, err = _ArchivalConfiguration_Read(field.Value)
+				if err != nil {
+					return err
+				}
+
+			}
 		}
 	}
 
@@ -11813,7 +11830,7 @@ func (v *DomainConfiguration) String() string {
 		return "<nil>"
 	}
 
-	var fields [2]string
+	var fields [3]string
 	i := 0
 	if v.WorkflowExecutionRetentionPeriodInDays != nil {
 		fields[i] = fmt.Sprintf("WorkflowExecutionRetentionPeriodInDays: %v", *(v.WorkflowExecutionRetentionPeriodInDays))
@@ -11821,6 +11838,10 @@ func (v *DomainConfiguration) String() string {
 	}
 	if v.EmitMetric != nil {
 		fields[i] = fmt.Sprintf("EmitMetric: %v", *(v.EmitMetric))
+		i++
+	}
+	if v.ArchivalConfig != nil {
+		fields[i] = fmt.Sprintf("ArchivalConfig: %v", v.ArchivalConfig)
 		i++
 	}
 
@@ -11843,6 +11864,9 @@ func (v *DomainConfiguration) Equals(rhs *DomainConfiguration) bool {
 	if !_Bool_EqualsPtr(v.EmitMetric, rhs.EmitMetric) {
 		return false
 	}
+	if !((v.ArchivalConfig == nil && rhs.ArchivalConfig == nil) || (v.ArchivalConfig != nil && rhs.ArchivalConfig != nil && v.ArchivalConfig.Equals(rhs.ArchivalConfig))) {
+		return false
+	}
 
 	return true
 }
@@ -11858,6 +11882,9 @@ func (v *DomainConfiguration) MarshalLogObject(enc zapcore.ObjectEncoder) (err e
 	}
 	if v.EmitMetric != nil {
 		enc.AddBool("emitMetric", *v.EmitMetric)
+	}
+	if v.ArchivalConfig != nil {
+		err = multierr.Append(err, enc.AddObject("archivalConfig", v.ArchivalConfig))
 	}
 	return err
 }
@@ -11877,6 +11904,16 @@ func (v *DomainConfiguration) GetWorkflowExecutionRetentionPeriodInDays() (o int
 func (v *DomainConfiguration) GetEmitMetric() (o bool) {
 	if v.EmitMetric != nil {
 		return *v.EmitMetric
+	}
+
+	return
+}
+
+// GetArchivalConfig returns the value of ArchivalConfig if it is set or its
+// zero value if it is unset.
+func (v *DomainConfiguration) GetArchivalConfig() (o *ArchivalConfiguration) {
+	if v.ArchivalConfig != nil {
+		return v.ArchivalConfig
 	}
 
 	return

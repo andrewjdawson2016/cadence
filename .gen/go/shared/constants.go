@@ -25,4 +25,4 @@ package shared
 
 
 
-const RetentionDaysInfinite int32 = -1
+const ArchivalRetentionDaysInfinite int32 = -1
