@@ -2371,7 +2371,6 @@ func (v *ActivityType) GetName() (o string) {
 }
 
 type ArchivalConfiguration struct {
-	Enabled       *bool   `json:"enabled,omitempty"`
 	BucketName    *string `json:"bucketName,omitempty"`
 	RetentionDays *int32  `json:"retentionDays,omitempty"`
 }
@@ -2393,26 +2392,18 @@ type ArchivalConfiguration struct {
 //   }
 func (v *ArchivalConfiguration) ToWire() (wire.Value, error) {
 	var (
-		fields [3]wire.Field
+		fields [2]wire.Field
 		i      int = 0
 		w      wire.Value
 		err    error
 	)
 
-	if v.Enabled != nil {
-		w, err = wire.NewValueBool(*(v.Enabled)), error(nil)
-		if err != nil {
-			return w, err
-		}
-		fields[i] = wire.Field{ID: 10, Value: w}
-		i++
-	}
 	if v.BucketName != nil {
 		w, err = wire.NewValueString(*(v.BucketName)), error(nil)
 		if err != nil {
 			return w, err
 		}
-		fields[i] = wire.Field{ID: 20, Value: w}
+		fields[i] = wire.Field{ID: 10, Value: w}
 		i++
 	}
 	if v.RetentionDays != nil {
@@ -2420,7 +2411,7 @@ func (v *ArchivalConfiguration) ToWire() (wire.Value, error) {
 		if err != nil {
 			return w, err
 		}
-		fields[i] = wire.Field{ID: 30, Value: w}
+		fields[i] = wire.Field{ID: 20, Value: w}
 		i++
 	}
 
@@ -2450,16 +2441,6 @@ func (v *ArchivalConfiguration) FromWire(w wire.Value) error {
 	for _, field := range w.GetStruct().Fields {
 		switch field.ID {
 		case 10:
-			if field.Value.Type() == wire.TBool {
-				var x bool
-				x, err = field.Value.GetBool(), error(nil)
-				v.Enabled = &x
-				if err != nil {
-					return err
-				}
-
-			}
-		case 20:
 			if field.Value.Type() == wire.TBinary {
 				var x string
 				x, err = field.Value.GetString(), error(nil)
@@ -2469,7 +2450,7 @@ func (v *ArchivalConfiguration) FromWire(w wire.Value) error {
 				}
 
 			}
-		case 30:
+		case 20:
 			if field.Value.Type() == wire.TI32 {
 				var x int32
 				x, err = field.Value.GetI32(), error(nil)
@@ -2492,12 +2473,8 @@ func (v *ArchivalConfiguration) String() string {
 		return "<nil>"
 	}
 
-	var fields [3]string
+	var fields [2]string
 	i := 0
-	if v.Enabled != nil {
-		fields[i] = fmt.Sprintf("Enabled: %v", *(v.Enabled))
-		i++
-	}
 	if v.BucketName != nil {
 		fields[i] = fmt.Sprintf("BucketName: %v", *(v.BucketName))
 		i++
@@ -2510,16 +2487,6 @@ func (v *ArchivalConfiguration) String() string {
 	return fmt.Sprintf("ArchivalConfiguration{%v}", strings.Join(fields[:i], ", "))
 }
 
-func _Bool_EqualsPtr(lhs, rhs *bool) bool {
-	if lhs != nil && rhs != nil {
-
-		x := *lhs
-		y := *rhs
-		return (x == y)
-	}
-	return lhs == nil && rhs == nil
-}
-
 // Equals returns true if all the fields of this ArchivalConfiguration match the
 // provided ArchivalConfiguration.
 //
@@ -2528,9 +2495,6 @@ func (v *ArchivalConfiguration) Equals(rhs *ArchivalConfiguration) bool {
 	if v == nil {
 		return rhs == nil
 	} else if rhs == nil {
-		return false
-	}
-	if !_Bool_EqualsPtr(v.Enabled, rhs.Enabled) {
 		return false
 	}
 	if !_String_EqualsPtr(v.BucketName, rhs.BucketName) {
@@ -2549,9 +2513,6 @@ func (v *ArchivalConfiguration) MarshalLogObject(enc zapcore.ObjectEncoder) (err
 	if v == nil {
 		return nil
 	}
-	if v.Enabled != nil {
-		enc.AddBool("enabled", *v.Enabled)
-	}
 	if v.BucketName != nil {
 		enc.AddString("bucketName", *v.BucketName)
 	}
@@ -2559,16 +2520,6 @@ func (v *ArchivalConfiguration) MarshalLogObject(enc zapcore.ObjectEncoder) (err
 		enc.AddInt32("retentionDays", *v.RetentionDays)
 	}
 	return err
-}
-
-// GetEnabled returns the value of Enabled if it is set or its
-// zero value if it is unset.
-func (v *ArchivalConfiguration) GetEnabled() (o bool) {
-	if v.Enabled != nil {
-		return *v.Enabled
-	}
-
-	return
 }
 
 // GetBucketName returns the value of BucketName if it is set or its
@@ -9817,6 +9768,16 @@ func (v *DescribeDomainResponse) String() string {
 	}
 
 	return fmt.Sprintf("DescribeDomainResponse{%v}", strings.Join(fields[:i], ", "))
+}
+
+func _Bool_EqualsPtr(lhs, rhs *bool) bool {
+	if lhs != nil && rhs != nil {
+
+		x := *lhs
+		y := *rhs
+		return (x == y)
+	}
+	return lhs == nil && rhs == nil
 }
 
 // Equals returns true if all the fields of this DescribeDomainResponse match the

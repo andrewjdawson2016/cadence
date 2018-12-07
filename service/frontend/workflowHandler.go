@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -265,6 +266,13 @@ func (wh *WorkflowHandler) RegisterDomain(ctx context.Context, registerRequest *
 		return wh.error(errActiveClusterNotInClusters, scope)
 	}
 
+	archivalConfig := &persistence.ArchivalConfig{}
+	if registerRequest.GetArchivalConfiguration() != nil {
+		archivalConfig.Enabled = true
+		archivalConfig.RetentionDays = registerRequest.GetArchivalConfiguration().GetRetentionDays()
+		archivalConfig.BucketName = wh.archivalBucketName(registerRequest.GetArchivalConfiguration().GetBucketName(), registerRequest.GetName())
+	}
+
 	domainRequest := &persistence.CreateDomainRequest{
 		Info: &persistence.DomainInfo{
 			ID:          uuid.New(),
@@ -277,6 +285,7 @@ func (wh *WorkflowHandler) RegisterDomain(ctx context.Context, registerRequest *
 		Config: &persistence.DomainConfig{
 			Retention:  registerRequest.GetWorkflowExecutionRetentionPeriodInDays(),
 			EmitMetric: registerRequest.GetEmitMetric(),
+			ArchivalConfig: archivalConfig,
 		},
 		ReplicationConfig: &persistence.DomainReplicationConfig{
 			ActiveClusterName: activeClusterName,
@@ -528,6 +537,14 @@ func (wh *WorkflowHandler) UpdateDomain(ctx context.Context,
 		if updatedConfig.WorkflowExecutionRetentionPeriodInDays != nil {
 			configurationChanged = true
 			config.Retention = updatedConfig.GetWorkflowExecutionRetentionPeriodInDays()
+		}
+		if updatedConfig.ArchivalConfig != nil {
+			configurationChanged = true
+			config.ArchivalConfig = &persistence.ArchivalConfig{
+				Enabled: true,
+				BucketName: wh.archivalBucketName(updatedConfig.GetArchivalConfig().GetBucketName(), info.Name),
+				RetentionDays: updatedConfig.GetArchivalConfig().GetRetentionDays(),
+			}
 		}
 	}
 	if updateRequest.ReplicationConfiguration != nil {
@@ -2735,6 +2752,13 @@ func createDomainResponse(info *persistence.DomainInfo, config *persistence.Doma
 		WorkflowExecutionRetentionPeriodInDays: common.Int32Ptr(config.Retention),
 	}
 
+	if config.ArchivalConfig.Enabled {
+		configResult.ArchivalConfig = &gen.ArchivalConfiguration{
+			BucketName: common.StringPtr(config.ArchivalConfig.BucketName),
+			RetentionDays: common.Int32Ptr(config.ArchivalConfig.RetentionDays),
+		}
+	}
+
 	clusters := []*gen.ClusterReplicationConfiguration{}
 	for _, cluster := range replicationConfig.Clusters {
 		clusters = append(clusters, &gen.ClusterReplicationConfiguration{
@@ -2871,4 +2895,13 @@ func (wh *WorkflowHandler) validateClusterName(clusterName string) error {
 		return &gen.BadRequestError{Message: fmt.Sprintf(errMsg, clusterName)}
 	}
 	return nil
+}
+
+func (wh *WorkflowHandler) archivalBucketName(givenArchivalBucket string, domain string) string {
+	if len(givenArchivalBucket) != 0 {
+		return givenArchivalBucket
+	}
+	// TODO: What is the correct way to get this?
+	deploymentGroup := ""
+	return strings.Join([]string{deploymentGroup, domain}, "/")
 }

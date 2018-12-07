@@ -798,9 +798,8 @@ struct DomainInfo {
 const i32 ARCHIVAL_RETENTION_DAYS_INFINITE = -1
 
 struct ArchivalConfiguration {
-  10: optional bool enabled
-  20: optional string bucketName
-  30: optional i32 retentionDays
+  10: optional string bucketName
+  20: optional i32 retentionDays
 }
 
 struct DomainConfiguration {
