@@ -283,8 +283,8 @@ func (wh *WorkflowHandler) RegisterDomain(ctx context.Context, registerRequest *
 			Data:        registerRequest.Data,
 		},
 		Config: &persistence.DomainConfig{
-			Retention:  registerRequest.GetWorkflowExecutionRetentionPeriodInDays(),
-			EmitMetric: registerRequest.GetEmitMetric(),
+			Retention:      registerRequest.GetWorkflowExecutionRetentionPeriodInDays(),
+			EmitMetric:     registerRequest.GetEmitMetric(),
 			ArchivalConfig: archivalConfig,
 		},
 		ReplicationConfig: &persistence.DomainReplicationConfig{
@@ -541,8 +541,8 @@ func (wh *WorkflowHandler) UpdateDomain(ctx context.Context,
 		if updatedConfig.ArchivalConfig != nil {
 			configurationChanged = true
 			config.ArchivalConfig = &persistence.ArchivalConfig{
-				Enabled: true,
-				BucketName: wh.archivalBucketName(updatedConfig.GetArchivalConfig().GetBucketName(), info.Name),
+				Enabled:       true,
+				BucketName:    wh.archivalBucketName(updatedConfig.GetArchivalConfig().GetBucketName(), info.Name),
 				RetentionDays: updatedConfig.GetArchivalConfig().GetRetentionDays(),
 			}
 		}
@@ -2754,7 +2754,7 @@ func createDomainResponse(info *persistence.DomainInfo, config *persistence.Doma
 
 	if config.ArchivalConfig.Enabled {
 		configResult.ArchivalConfig = &gen.ArchivalConfiguration{
-			BucketName: common.StringPtr(config.ArchivalConfig.BucketName),
+			BucketName:    common.StringPtr(config.ArchivalConfig.BucketName),
 			RetentionDays: common.Int32Ptr(config.ArchivalConfig.RetentionDays),
 		}
 	}
