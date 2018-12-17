@@ -544,8 +544,8 @@ func (wh *WorkflowHandler) UpdateDomain(ctx context.Context,
 			configurationChanged = true
 			config.Retention = updatedConfig.GetWorkflowExecutionRetentionPeriodInDays()
 		}
-
 		if updatedConfig.ArchivalEnabled != nil {
+			configurationChanged = true
 			if updatedConfig.GetArchivalEnabled() {
 				config.ArchivalEnabled = true
 				config.BucketName = bucketName(updatedConfig.CustomBucketName)
@@ -555,10 +555,8 @@ func (wh *WorkflowHandler) UpdateDomain(ctx context.Context,
 				config.BucketName = ""
 				config.ArchivalRetentionDays = 0
 			}
-			configurationChanged = true
 		}
 	}
-
 	if updateRequest.ReplicationConfiguration != nil {
 		updateReplicationConfig := updateRequest.ReplicationConfiguration
 		if err := validateReplicationConfig(getResponse,
@@ -2918,16 +2916,11 @@ func validateArchivalConfig(enabled bool, bucketName *string, retention *int32) 
 	return errInvalidArchivalConfig
 }
 
-func deploymentGroup() string {
-	// TODO: what is the best way to get this?
-	return ""
-}
-
 func bucketName(customBucketName *string) string {
 	if customBucketName != nil {
 		return *customBucketName
 	}
-	return deploymentGroup()
+	return cadenceBucket()
 }
 
 func archivalRetention(customRetention *int32) int32 {
@@ -2938,5 +2931,11 @@ func archivalRetention(customRetention *int32) int32 {
 }
 
 func isCustomBucket(name string) bool {
-	return name != deploymentGroup()
+	return name != cadenceBucket()
+}
+
+func cadenceBucket() string {
+	// TODO: what is the best way to get this?
+	deploymentGroup := ""
+	return fmt.Sprintf("cadence_%v", deploymentGroup)
 }
