@@ -797,15 +797,12 @@ struct DomainInfo {
 
 const i32 ARCHIVAL_RETENTION_DAYS_INFINITE = -1
 
-struct ArchivalConfiguration {
-  10: optional string bucketName
-  20: optional i32 retentionDays
-}
-
 struct DomainConfiguration {
   10: optional i32 workflowExecutionRetentionPeriodInDays
   20: optional bool emitMetric
-  30: optional ArchivalConfiguration archivalConfig
+  30: optional bool archivalEnabled
+  40: optional string customBucketName
+  50: optional i32 archivalRetentionPeriodInDays
 }
 
 struct UpdateDomainInfo {
@@ -835,7 +832,9 @@ struct RegisterDomainRequest {
   // A key-value map for any customized purpose
   80: optional map<string,string> data
   90: optional string securityToken
-  100: optional ArchivalConfiguration archivalConfiguration
+  100: optional bool archivalEnabled
+  110: optional string customBucketName
+  120: optional i32 archivalRetentionPeriodInDays
 }
 
 struct ListDomainsRequest {
@@ -858,7 +857,6 @@ struct DescribeDomainResponse {
   30: optional DomainReplicationConfiguration replicationConfiguration
   40: optional i64 (js.type = "Long") failoverVersion
   50: optional bool isGlobalDomain
-  60: optional ArchivalConfiguration archivalConfiguration
 }
 
 struct UpdateDomainRequest {
@@ -867,7 +865,6 @@ struct UpdateDomainRequest {
  30: optional DomainConfiguration configuration
  40: optional DomainReplicationConfiguration replicationConfiguration
  50: optional string securityToken
- 60: optional ArchivalConfiguration archivalConfiguration
 }
 
 struct UpdateDomainResponse {
@@ -876,7 +873,6 @@ struct UpdateDomainResponse {
   30: optional DomainReplicationConfiguration replicationConfiguration
   40: optional i64 (js.type = "Long") failoverVersion
   50: optional bool isGlobalDomain
-  60: optional ArchivalConfiguration archivalConfiguration
 }
 
 struct DeprecateDomainRequest {
