@@ -958,22 +958,17 @@ type (
 	// DomainConfig describes the domain configuration
 	DomainConfig struct {
 		// NOTE: this retention is in days, not in seconds
-		Retention      int32
-		EmitMetric     bool
-		ArchivalConfig *ArchivalConfig
+		Retention             int32
+		EmitMetric            bool
+		ArchivalEnabled       bool
+		BucketName            string
+		ArchivalRetentionDays int32
 	}
 
 	// DomainReplicationConfig describes the cross DC domain replication configuration
 	DomainReplicationConfig struct {
 		ActiveClusterName string
 		Clusters          []*ClusterReplicationConfig
-	}
-
-	// ArchivalConfig describes the archival configuration
-	ArchivalConfig struct {
-		Enabled       bool
-		BucketName    string
-		RetentionDays int32
 	}
 
 	// ClusterReplicationConfig describes the cross DC cluster replication configuration
