@@ -39,14 +39,12 @@ const (
 	workflowStartToCloseTimeout         = time.Hour * 24 * 30
 	decisionTaskStartToCloseTimeout     = time.Minute
 	signalName                          = "cadsys-signal-sig"
-	signalsUntilContinueAsNew           = 1000
 	archiveSystemWorkflowFnName         = "ArchiveSystemWorkflow"
 	archivalUploadActivityFnName        = "ArchivalUploadActivity"
 	archivalDeleteHistoryActivityFnName = "ArchivalDeleteHistoryActivity"
 	historyBlobKeyExt                   = "history"
 	blobstoreOperationsDefaultTimeout   = 5 * time.Second
-	heartbeatTimeout                    = 10 * time.Second
-	numWorkers                          = 50
+	heartbeatTimeout                    = 20 * time.Second
 
 	// the following are all non-retryable error strings
 	errArchivalUploadActivityGetDomainStr           = "failed to get domain from domain cache"

@@ -68,6 +68,8 @@ type (
 		EnableArchivalCompression dynamicconfig.BoolPropertyFnWithDomainFilter
 		HistoryPageSize           dynamicconfig.IntPropertyFnWithDomainFilter
 		TargetArchivalBlobSize    dynamicconfig.IntPropertyFnWithDomainFilter
+		WorkflowConcurrency       dynamicconfig.IntPropertyFn
+		ArchivalsPerIteration     dynamicconfig.IntPropertyFn
 	}
 )
 
@@ -75,6 +77,7 @@ type (
 var (
 	globalLogger        bark.Logger
 	globalMetricsClient metrics.Client
+	globalConfig        *Config
 )
 
 func init() {
@@ -85,11 +88,11 @@ func init() {
 
 // NewSysWorker returns a new SysWorker
 func NewSysWorker(container *SysWorkerContainer) SysWorker {
-	logger := container.Logger.WithFields(bark.Fields{
+	globalLogger = container.Logger.WithFields(bark.Fields{
 		logging.TagWorkflowComponent: logging.TagValueArchiveSystemWorkflowComponent,
 	})
-	globalLogger = logger
 	globalMetricsClient = container.MetricsClient
+	globalConfig = container.Config
 	actCtx := context.WithValue(context.Background(), sysWorkerContainerKey, container)
 	wo := worker.Options{
 		BackgroundActivityContext: actCtx,

@@ -169,6 +169,9 @@ var keys = map[Key]string{
 	EnableArchivalCompression:                "worker.EnableArchivalCompression",
 	WorkerHistoryPageSize:                    "worker.WorkerHistoryPageSize",
 	WorkerTargetArchivalBlobSize:             "worker.WorkerTargetArchivalBlobSize",
+	WorkerWorkflowConcurrency:                "worker.WorkflowConcurrency",
+	WorkerArchivalsPerIteration:              "worker.ArchivalsPerIteration",
+
 }
 
 const (
@@ -427,6 +430,10 @@ const (
 	WorkerHistoryPageSize
 	// WorkerTargetArchivalBlobSize indicates the target blob size in bytes for archival, actual blob size may vary
 	WorkerTargetArchivalBlobSize
+	// WorkerWorkflowConcurrency controls the number of go routines handling archival work per archival workflow
+	WorkerWorkflowConcurrency
+	// WorkerArchivalsPerIteration controls the number of archivals handled in each iteration of archival workflow
+	WorkerArchivalsPerIteration
 
 	// lastKeyForTest must be the last one in this const group for testing purpose
 	lastKeyForTest

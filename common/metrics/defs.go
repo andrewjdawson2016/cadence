@@ -1299,6 +1299,8 @@ const (
 	SysWorkerReceivedSignal
 	SysWorkerContinueAsNew
 	SysWorkerContinueAsNewLatency
+	SysWorkerCarryoverBacklog
+	SysWorkerChannelClosedFailures
 	SysWorkerArchivalUploadActivityNonRetryableFailures
 	SysWorkerArchivalUploadSuccessful
 	SysWorkerArchivalDeleteHistoryActivityNonRetryableFailures
@@ -1317,6 +1319,7 @@ const (
 	SysWorkerBlobUploadNonRetryableFailures
 	SysWorkerDeleteHistoryV2NonRetryableFailures
 	SysWorkerDeleteHistoryV1NonRetryableFailures
+	SysWorkerActivityContextExpired
 
 	NumWorkerMetrics
 )
@@ -1500,6 +1503,8 @@ var MetricDefs = map[ServiceIdx]map[int]metricDefinition{
 		SysWorkerReceivedSignal:                                    {metricName: "sysworker.received-signal"},
 		SysWorkerContinueAsNew:                                     {metricName: "sysworker.continue-as-new"},
 		SysWorkerContinueAsNewLatency:                              {metricName: "sysworker.continue-as-new-latency"},
+		SysWorkerCarryoverBacklog:                                  {metricName: "sysworker.carryover-backlog"},
+		SysWorkerChannelClosedFailures:                             {metricName: "sysworker.channel-closed-errors"},
 		SysWorkerArchivalUploadActivityNonRetryableFailures:        {metricName: "sysworker.archival-upload-activity-non-retryable-errors"},
 		SysWorkerArchivalUploadSuccessful:                          {metricName: "sysworker.archival-upload-successful"},
 		SysWorkerArchivalDeleteHistoryActivityNonRetryableFailures: {metricName: "sysworker.archival-delete-history-activity-non-retryable-errors"},
@@ -1518,6 +1523,7 @@ var MetricDefs = map[ServiceIdx]map[int]metricDefinition{
 		SysWorkerBlobUploadNonRetryableFailures:                    {metricName: "sysworker.blob-upload-non-retryable-errors"},
 		SysWorkerDeleteHistoryV2NonRetryableFailures:               {metricName: "sysworker.delete-history-v2-non-retryable-errors"},
 		SysWorkerDeleteHistoryV1NonRetryableFailures:               {metricName: "sysworker.delete-history-v1-non-retryable-errors"},
+		SysWorkerActivityContextExpired:                            {metricName: "sysworker.activity-context-expired"},
 	},
 }
 
