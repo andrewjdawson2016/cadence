@@ -32,6 +32,9 @@ import (
 
 type (
 	// Archiver is used to process archival requests
+
+	// Seems like we need to give this a different name now that we have something else called Archiver.
+	// What about handler.go?
 	Archiver interface {
 		Start()
 		Finished() []uint64

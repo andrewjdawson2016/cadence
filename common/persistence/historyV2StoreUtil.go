@@ -159,6 +159,8 @@ func ReadFullPageV2EventsByBatch(historyV2Mgr HistoryV2Manager, req *ReadHistory
 			return nil, 0, nil, err
 		}
 		historyBatches = append(historyBatches, response.History...)
+
+		// do you mean to iterate over response.History? I do not think eventsRead is being computed correctly
 		for _, batch := range historyBatches {
 			eventsRead += len(batch.Events)
 		}

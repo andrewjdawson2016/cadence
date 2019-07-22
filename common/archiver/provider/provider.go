@@ -89,6 +89,7 @@ func (p *archiverProvider) RegisterBootstrapContainer(
 	historyContainer *archiver.HistoryBootstrapContainer,
 	visibilityContainter *archiver.VisibilityBootstrapContainer,
 ) {
+	// I do not think overwriting should be allowed.
 	p.historyContainers[serviceName] = historyContainer
 	p.visibilityContainers[serviceName] = visibilityContainter
 }

@@ -28,6 +28,8 @@ import (
 	"github.com/uber/cadence/common/service/config"
 )
 
+// lets delete this file
+
 type (
 	visibilityArchiver struct{}
 )

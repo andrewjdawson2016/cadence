@@ -157,6 +157,11 @@ func contextExpired(ctx context.Context) bool {
 	}
 }
 
+// I am a little concerned about having each archiver totally define there own URI from a string
+// What do you think about providing a function in provider.go which basically parses a URI
+// It can turn it into a struct that contains: scheme, authority, path, anything else we need to add in the future
+// The reason I like this is scheme is something that provider depends on but currently scheme is being totally
+// controlled/defined by the archiver implementors.
 func getDirPathFromURI(URI string) string {
 	return URI[len(URIScheme+"://"):]
 }

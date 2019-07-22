@@ -43,6 +43,8 @@ const (
 )
 
 var (
+	// Why are some of these errors considered BadRequestError and other are just error? It seems like they should all be just error.New()?
+
 	// ErrInvalidURIScheme is the error for invalid URI
 	ErrInvalidURIScheme = errors.New("URI scheme is invalid")
 	// ErrContextTimeout is the error for context timeout

@@ -28,7 +28,7 @@ import (
 )
 
 type (
-	// ArchiveOption is used to provide options for addding features to
+	// ArchiveOption is used to provide options for adding features to
 	// the Archive method of History/Visibility Archiver
 	ArchiveOption func(featureCatalog *ArchiveFeatureCatalog)
 
@@ -56,23 +56,23 @@ func GetFeatureCatalog(opts ...ArchiveOption) *ArchiveFeatureCatalog {
 }
 
 // GetHeartbeatArchiveOption returns an ArchiveOption for enabling heartbeating.
-// It should be used when the Archive method is invoked inside an activity.
+// It should be used when the Archive method is invoked inside an activity. (should not mention activity, the archiver implementor should not be aware of activity)
 func GetHeartbeatArchiveOption() ArchiveOption {
 	return func(catalog *ArchiveFeatureCatalog) {
-		catalog.ProgressManager = &heartbeatProgessManager{}
+		catalog.ProgressManager = &heartbeatProgressManager{}
 	}
 }
 
-type heartbeatProgessManager struct{}
+type heartbeatProgressManager struct{}
 
-func (h *heartbeatProgessManager) RecordProgress(ctx context.Context, progress interface{}) error {
+func (h *heartbeatProgressManager) RecordProgress(ctx context.Context, progress interface{}) error {
 	activity.RecordHeartbeat(ctx, progress)
 	return nil
 }
 
-func (h *heartbeatProgessManager) LoadProgress(ctx context.Context, valuePtr interface{}) error {
+func (h *heartbeatProgressManager) LoadProgress(ctx context.Context, valuePtr interface{}) error {
 	if !activity.HasHeartbeatDetails(ctx) {
-		return errors.New("no progess information in the context")
+		return errors.New("no progress information in the context")
 	}
 	return activity.GetHeartbeatDetails(ctx, valuePtr)
 }

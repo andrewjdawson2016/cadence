@@ -56,6 +56,7 @@ type (
 	}
 
 	// HistoryBlob is the serializable data that forms the body of a blob
+	// Can we call this NextResult? It might not get used as a blob at all.
 	HistoryBlob struct {
 		Header *HistoryBlobHeader `json:"header"`
 		Body   []*shared.History  `json:"body"`
@@ -72,6 +73,9 @@ type (
 		historyManager        persistence.HistoryManager
 		historyV2Manager      persistence.HistoryV2Manager
 		sizeEstimator         SizeEstimator
+		// What about just having the request as state?
+		// 1. Makes it really clear that one request is handled by one historyIterator.
+		// 2.Reduces the number of fields you are keeping.
 		domainID              string
 		domainName            string
 		workflowID            string
@@ -89,6 +93,8 @@ var (
 )
 
 // NewHistoryIterator returns a new HistoryIterator
+
+// What do you think about separating this into two constructors: NewHistoryIterator and NewHistoryIteratorFromState?
 func NewHistoryIterator(
 	request *ArchiveHistoryRequest,
 	historyManager persistence.HistoryManager,
@@ -261,6 +267,12 @@ func (i *historyIterator) reset(stateToken []byte) error {
 	i.historyIteratorState = iteratorState
 	return nil
 }
+
+// Can we run a test on this:
+// 1. Create a large random workflow history (maybe we can use Yu's generator)
+// 2. Compress it and view size
+// 3. Feed that history through this size estimator to see how well it preforms
+
 
 type (
 	// SizeEstimator is used to estimate the size of any object

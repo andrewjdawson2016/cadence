@@ -36,6 +36,8 @@ var (
 	// ErrArchiveNonRetriable is the error every Archiver implementation should return when
 	// a non-retriable error is encountered.
 	// If errors of other types are returned, method might be retried by caller
+
+	// this seems like it should live in constants.go
 	ErrArchiveNonRetriable = errors.New("archive method encountered a non-retriable error")
 )
 
@@ -101,6 +103,18 @@ type (
 	VisibilityBootstrapContainer struct{}
 
 	// VisibilityArchiver is used to archive visibility and read archived visibility
+
+	// I was wrong about including all the stubbed out plumbing for visibility. This is going to be confusing for people for two reasons
+	// 1. Even if they implement this archiver it won't work because we have not make the frontend changes to use this archiver
+	// 2. This interface will likely change for example the Get method will likely be called Query.
+
+	// Can we remove the following
+	// - all methods on this interface - we should keep the interface itself
+	// - the above types
+	// - the filestore stubs
+	// - update the README to indicate visibility archiver
+
+	// the provider should keep all the plumbing it has today and cluster metadata should keep all its plumbing, I just do not want to provide any details of visibilityArchiver API
 	VisibilityArchiver interface {
 		Archive(ctx context.Context, URI string, request *ArchiveVisibilityRequest, opts ...ArchiveOption) error
 		Get(ctx context.Context, URI string, request *GetVisibilityRequest) (*GetVisibilityResponse, error)

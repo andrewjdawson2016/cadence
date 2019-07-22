@@ -54,6 +54,8 @@ import (
 
 const (
 	// URIScheme is the scheme for the filestore implementation
+
+	// along the same lines as my comment in util.go I think all schemes should get defined in provider.go
 	URIScheme = "file"
 
 	errEncodeHistory = "failed to encode history batches"
@@ -119,10 +121,13 @@ func (h *historyArchiver) Archive(
 	request *archiver.ArchiveHistoryRequest,
 	opts ...archiver.ArchiveOption,
 ) error {
-	logger := tagLoggerWithArchiveHistoryRequest(h.container.Logger, request)
+	logger := tagLoggerWithArchiveHistoryRequest(h.container.Logger, request) // tag the logger with URI here - we always want to have the URI on the logger
 
 	if err := h.ValidateURI(URI); err != nil {
 		logger.Error(archiver.ArchiveNonRetriableErrorMsg, tag.ArchivalArchiveFailReason(archiver.ErrInvalidURI), tag.Error(err), tag.ArchivalURI(URI))
+		// we can implement this using featureCatalog. I think that will be more clear so this code will look like return catalog.NonRetriableError()
+		// the reason I suggest this is the way I think about catalog is it is the way the Archiver implementation can control the caller of itself.
+		// so using catalog to record non-retryable errors fits nicely.
 		return archiver.ErrArchiveNonRetriable
 	}
 
@@ -268,6 +273,7 @@ func (h *historyArchiver) Get(
 	return response, nil
 }
 
+// Even if we turn URI into a struct and have a parsing utility in provider we still need this ValidateURI per archiver
 func (h *historyArchiver) ValidateURI(URI string) error {
 	if !strings.HasPrefix(URI, URIScheme+"://") {
 		return archiver.ErrInvalidURIScheme
@@ -276,6 +282,8 @@ func (h *historyArchiver) ValidateURI(URI string) error {
 	return validateDirPath(getDirPathFromURI(URI))
 }
 
+
+// I do not like the name blob for this because its not a blobstore what about getNexResult
 func getNextHistoryBlob(ctx context.Context, historyIterator archiver.HistoryIterator) (*archiver.HistoryBlob, error) {
 	historyBlob, err := historyIterator.Next()
 	op := func() error {
