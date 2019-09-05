@@ -147,6 +147,7 @@ type (
 		GetStartVersion() int64
 		GetUserTimer(string) (bool, *persistence.TimerInfo)
 		GetWorkflowType() *workflow.WorkflowType
+		GetQueryRegistry() QueryRegistry
 		HasBufferedEvents() bool
 		HasInFlightDecision() bool
 		HasParentExecution() bool

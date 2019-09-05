@@ -30,7 +30,7 @@ import (
 )
 
 var (
-	errQueryNotFound       = errors.New("callback function could not be applied because query was not found")
+	errQueryNotFound       = errors.New("query could not be found in registry")
 	errQueryAlreadyInState = errors.New("could not invoke callback because query is already in target state")
 )
 
@@ -38,12 +38,12 @@ type (
 	// QueryRegistry keeps track of all outstanding queries for a single workflow execution
 	QueryRegistry interface {
 		BufferQuery(*shared.WorkflowQuery) Query
-		GetBuffered() map[string]Query
-		GetStarted() map[string]Query
+		StartBuffered() ([]*shared.WorkflowQuery, error)
+		GetQuery(string) (Query, error)
 	}
 
 	queryRegistry struct {
-		sync.RWMutex
+		sync.Mutex
 
 		buffered map[string]Query
 		started  map[string]Query
@@ -69,20 +69,34 @@ func (r *queryRegistry) BufferQuery(queryInput *shared.WorkflowQuery) Query {
 	return query
 }
 
-// GetBuffered returns all buffered queries.
-func (r *queryRegistry) GetBuffered() map[string]Query {
-	r.RLock()
-	defer r.RUnlock()
-
-	return r.buffered
+func (r *queryRegistry) StartBuffered() ([]*shared.WorkflowQuery, error) {
+	r.Lock()
+	var queries []Query
+	for _, q := range r.buffered {
+		queries = append(queries, q)
+	}
+	r.Unlock()
+	var result []*shared.WorkflowQuery
+	for _, q := range queries {
+		result = append(result, q.QueryInput())
+		if _, err := q.RecordEvent(QueryEventStart, nil); err != nil {
+			return nil, err
+		}
+	}
+	return result, nil
 }
 
-// GetStarted returns all started queries.
-func (r *queryRegistry) GetStarted() map[string]Query {
-	r.RLock()
-	defer r.RUnlock()
+func (r *queryRegistry) GetQuery(id string) (Query, error) {
+	r.Lock()
+	defer r.Unlock()
 
-	return r.started
+	if q, ok := r.buffered[id]; ok {
+		return q, nil
+	}
+	if q, ok := r.started[id]; ok {
+		return q, nil
+	}
+	return nil, errQueryNotFound
 }
 
 func (r *queryRegistry) terminalStateCallback(id string) {

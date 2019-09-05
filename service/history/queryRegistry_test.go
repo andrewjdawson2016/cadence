@@ -23,11 +23,11 @@
 package history
 
 import (
+	"github.com/uber/cadence/.gen/go/shared"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/uber/cadence/.gen/go/shared"
 )
 
 type QueryRegistrySuite struct {
@@ -49,15 +49,26 @@ func (s *QueryRegistrySuite) TestQueryRegistry() {
 	for i := 0; i < 10; i++ {
 		queries = append(queries, qr.BufferQuery(&shared.WorkflowQuery{}))
 	}
-	s.Len(qr.GetBuffered(), 10)
-	s.Len(qr.GetStarted(), 0)
+	s.NotNil(qr.GetQuery(queries[0].ID()))
+	s.Nil("not_exists_id")
 	for i := 0; i < 5; i++ {
 		changed, err := queries[i].RecordEvent(QueryEventStart, nil)
 		s.True(changed)
 		s.NoError(err)
 	}
-	s.Len(qr.GetBuffered(), 5)
-	s.Len(qr.GetStarted(), 5)
+	startedQueries, err := qr.StartBuffered()
+	s.NoError(err)
+	s.Len(startedQueries, 5)
+
+	startedQueries, err = qr.StartBuffered()
+	s.NoError(err)
+	s.Len(startedQueries, 0)
+
+	for i := 0; i < 5; i++ {
+		changed, err := queries[i].RecordEvent(QueryEventRebuffer, nil)
+		s.True(changed)
+		s.NoError(err)
+	}
 
 	completeQuery := func(q Query) {
 		if q.State() == QueryStateBuffered {
@@ -80,11 +91,43 @@ func (s *QueryRegistrySuite) TestQueryRegistry() {
 		s.NoError(err)
 	}
 
-	completeQuery(queries[0])
-	expireQuery(queries[1])
-	completeQuery(queries[8])
-	expireQuery(queries[9])
+	q0, err := qr.GetQuery(queries[0].ID())
+	s.NoError(err)
+	s.NotNil(q0)
+	s.Equal(QueryStateBuffered, q0.State())
+	completeQuery(q0)
+	s.Equal(QueryStateCompleted, q0.State())
+	q0, err = qr.GetQuery(queries[0].ID())
+	s.Nil(q0)
+	s.Error(err)
 
-	s.Len(qr.GetBuffered(), 3)
-	s.Len(qr.GetStarted(), 3)
+	q1, err := qr.GetQuery(queries[1].ID())
+	s.NoError(err)
+	s.NotNil(q1)
+	s.Equal(QueryStateBuffered, q1.State())
+	expireQuery(q1)
+	s.Equal(QueryStateExpired, q1.State())
+	q1, err = qr.GetQuery(queries[1].ID())
+	s.Nil(q1)
+	s.Error(err)
+
+	q9, err := qr.GetQuery(queries[9].ID())
+	s.NoError(err)
+	s.NotNil(q9)
+	s.Equal(QueryStateStarted, q9.State())
+	completeQuery(q9)
+	s.Equal(QueryStateCompleted, q9.State())
+	q9, err = qr.GetQuery(queries[9].ID())
+	s.Nil(q9)
+	s.Error(err)
+
+	q8, err := qr.GetQuery(queries[8].ID())
+	s.NoError(err)
+	s.NotNil(q8)
+	s.Equal(QueryStateStarted, q8.State())
+	expireQuery(q8)
+	s.Equal(QueryStateExpired, q8.State())
+	q8, err = qr.GetQuery(queries[8].ID())
+	s.Nil(q8)
+	s.Error(err)
 }

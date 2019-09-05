@@ -108,6 +108,9 @@ type (
 		timeSource      clock.TimeSource
 		logger          log.Logger
 		domainName      string
+
+		// in memory only attribute to keep track of queries for workflow
+		queryRegistry QueryRegistry
 	}
 )
 
@@ -156,6 +159,7 @@ func newMutableStateBuilder(
 		timeSource:      shard.GetTimeSource(),
 		logger:          logger,
 		domainName:      domainName,
+		queryRegistry: NewQueryRegistry(),
 	}
 	s.executionInfo = &persistence.WorkflowExecutionInfo{
 		DecisionVersion:    common.EmptyVersion,
@@ -707,6 +711,10 @@ func (e *mutableStateBuilder) GetWorkflowType() *workflow.WorkflowType {
 	wType.Name = common.StringPtr(e.executionInfo.WorkflowTypeName)
 
 	return wType
+}
+
+func (e *mutableStateBuilder) GetQueryRegistry() QueryRegistry {
+	return e.queryRegistry
 }
 
 func (e *mutableStateBuilder) GetActivityScheduledEvent(

@@ -41,12 +41,9 @@ type (
 	// decision business logic handler
 	decisionHandler interface {
 		handleDecisionTaskScheduled(ctx.Context, *h.ScheduleDecisionTaskRequest) error
-		handleDecisionTaskStarted(ctx.Context,
-			*h.RecordDecisionTaskStartedRequest) (*h.RecordDecisionTaskStartedResponse, error)
-		handleDecisionTaskFailed(ctx.Context,
-			*h.RespondDecisionTaskFailedRequest) error
-		handleDecisionTaskCompleted(ctx.Context,
-			*h.RespondDecisionTaskCompletedRequest) (*h.RespondDecisionTaskCompletedResponse, error)
+		handleDecisionTaskStarted(ctx.Context, *h.RecordDecisionTaskStartedRequest) (*h.RecordDecisionTaskStartedResponse, error)
+		handleDecisionTaskFailed(ctx.Context, *h.RespondDecisionTaskFailedRequest) error
+		handleDecisionTaskCompleted(ctx.Context, *h.RespondDecisionTaskCompletedRequest) (*h.RespondDecisionTaskCompletedResponse, error)
 		// TODO also include the handle of decision timeout here
 	}
 
@@ -180,10 +177,14 @@ func (handler *decisionHandlerImpl) handleDecisionTaskStarted(
 
 			updateAction := &updateWorkflowAction{}
 
+			queries, err := msBuilder.GetQueryRegistry().StartBuffered()
+			if err != nil {
+				return nil, err
+			}
 			if decision.StartedID != common.EmptyEventID {
 				// If decision is started as part of the current request scope then return a positive response
 				if decision.RequestID == requestID {
-					resp = handler.createRecordDecisionTaskStartedResponse(domainID, msBuilder, decision, req.PollRequest.GetIdentity())
+					resp = handler.createRecordDecisionTaskStartedResponse(domainID, msBuilder, decision, req.PollRequest.GetIdentity(), queries)
 					updateAction.noop = true
 					return updateAction, nil
 				}
@@ -199,7 +200,7 @@ func (handler *decisionHandlerImpl) handleDecisionTaskStarted(
 				return nil, &workflow.InternalServiceError{Message: "Unable to add DecisionTaskStarted event to history."}
 			}
 
-			resp = handler.createRecordDecisionTaskStartedResponse(domainID, msBuilder, decision, req.PollRequest.GetIdentity())
+			resp = handler.createRecordDecisionTaskStartedResponse(domainID, msBuilder, decision, req.PollRequest.GetIdentity(), queries)
 			return updateAction, nil
 		})
 
@@ -557,7 +558,7 @@ Update_History_Loop:
 		resp = &h.RespondDecisionTaskCompletedResponse{}
 		if request.GetReturnNewDecisionTask() && createNewDecisionTask {
 			decision, _ := msBuilder.GetDecisionInfo(newDecisionTaskScheduledID)
-			resp.StartedResponse = handler.createRecordDecisionTaskStartedResponse(domainID, msBuilder, decision, request.GetIdentity())
+			resp.StartedResponse = handler.createRecordDecisionTaskStartedResponse(domainID, msBuilder, decision, request.GetIdentity(), nil)
 			// sticky is always enabled when worker request for new decision task from RespondDecisionTaskCompleted
 			resp.StartedResponse.StickyExecutionEnabled = common.BoolPtr(true)
 		}
@@ -573,6 +574,7 @@ func (handler *decisionHandlerImpl) createRecordDecisionTaskStartedResponse(
 	msBuilder mutableState,
 	decision *decisionInfo,
 	identity string,
+	queries []*workflow.WorkflowQuery,
 ) *h.RecordDecisionTaskStartedResponse {
 
 	response := &h.RecordDecisionTaskStartedResponse{}
@@ -606,6 +608,7 @@ func (handler *decisionHandlerImpl) createRecordDecisionTaskStartedResponse(
 	}
 	response.EventStoreVersion = common.Int32Ptr(msBuilder.GetEventStoreVersion())
 	response.BranchToken = msBuilder.GetCurrentBranch()
+	response.Queries = queries
 
 	return response
 }

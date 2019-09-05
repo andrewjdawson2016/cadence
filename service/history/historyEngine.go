@@ -588,7 +588,11 @@ func (e *historyEngineImpl) QueryWorkflow(
 	if err != nil {
 		return nil, err
 	}
-	queryRegistry := context.getQueryRegistry()
+	ms, err := context.loadWorkflowExecution()
+	if err != nil {
+		return nil, err
+	}
+	queryRegistry := ms.GetQueryRegistry()
 	release(nil)
 	query := queryRegistry.BufferQuery(request.GetQuery())
 	domainCache, err := e.shard.GetDomainCache().GetDomainByID(request.GetDomainUUID())
