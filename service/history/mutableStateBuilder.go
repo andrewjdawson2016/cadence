@@ -159,7 +159,7 @@ func newMutableStateBuilder(
 		timeSource:      shard.GetTimeSource(),
 		logger:          logger,
 		domainName:      domainName,
-		queryRegistry: NewQueryRegistry(),
+		queryRegistry:   NewQueryRegistry(),
 	}
 	s.executionInfo = &persistence.WorkflowExecutionInfo{
 		DecisionVersion:    common.EmptyVersion,
