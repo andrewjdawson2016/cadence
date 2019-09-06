@@ -177,9 +177,13 @@ func (handler *decisionHandlerImpl) handleDecisionTaskStarted(
 
 			updateAction := &updateWorkflowAction{}
 
-			queries, err := msBuilder.GetQueryRegistry().StartBuffered()
+			queryMap, err := msBuilder.GetQueryRegistry().StartBuffered()
 			if err != nil {
 				return nil, err
+			}
+			var queries []*workflow.WorkflowQuery
+			for _, q := range queryMap {
+				queries = append(queries, q)
 			}
 			if decision.StartedID != common.EmptyEventID {
 				// If decision is started as part of the current request scope then return a positive response

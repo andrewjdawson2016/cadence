@@ -49,8 +49,14 @@ func (s *QueryRegistrySuite) TestQueryRegistry() {
 	for i := 0; i < 10; i++ {
 		queries = append(queries, qr.BufferQuery(&shared.WorkflowQuery{}))
 	}
-	s.NotNil(qr.GetQuery(queries[0].ID()))
-	s.Nil("not_exists_id")
+
+	q, err := qr.GetQuery(queries[0].ID())
+	s.NoError(err)
+	s.NotNil(q)
+	q, err = qr.GetQuery("not_exists")
+	s.Equal(errQueryNotFound, err)
+	s.Nil(q)
+
 	for i := 0; i < 5; i++ {
 		changed, err := queries[i].RecordEvent(QueryEventStart, nil)
 		s.True(changed)
@@ -99,7 +105,7 @@ func (s *QueryRegistrySuite) TestQueryRegistry() {
 	s.Equal(QueryStateCompleted, q0.State())
 	q0, err = qr.GetQuery(queries[0].ID())
 	s.Nil(q0)
-	s.Error(err)
+	s.Equal(errQueryNotFound, err)
 
 	q1, err := qr.GetQuery(queries[1].ID())
 	s.NoError(err)
@@ -109,7 +115,7 @@ func (s *QueryRegistrySuite) TestQueryRegistry() {
 	s.Equal(QueryStateExpired, q1.State())
 	q1, err = qr.GetQuery(queries[1].ID())
 	s.Nil(q1)
-	s.Error(err)
+	s.Equal(errQueryNotFound, err)
 
 	q9, err := qr.GetQuery(queries[9].ID())
 	s.NoError(err)
@@ -119,7 +125,7 @@ func (s *QueryRegistrySuite) TestQueryRegistry() {
 	s.Equal(QueryStateCompleted, q9.State())
 	q9, err = qr.GetQuery(queries[9].ID())
 	s.Nil(q9)
-	s.Error(err)
+	s.Equal(errQueryNotFound, err)
 
 	q8, err := qr.GetQuery(queries[8].ID())
 	s.NoError(err)
@@ -129,5 +135,5 @@ func (s *QueryRegistrySuite) TestQueryRegistry() {
 	s.Equal(QueryStateExpired, q8.State())
 	q8, err = qr.GetQuery(queries[8].ID())
 	s.Nil(q8)
-	s.Error(err)
+	s.Equal(errQueryNotFound, err)
 }

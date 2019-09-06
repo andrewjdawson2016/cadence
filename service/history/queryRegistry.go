@@ -38,7 +38,7 @@ type (
 	// QueryRegistry keeps track of all outstanding queries for a single workflow execution
 	QueryRegistry interface {
 		BufferQuery(*shared.WorkflowQuery) Query
-		StartBuffered() ([]*shared.WorkflowQuery, error)
+		StartBuffered() (map[string]*shared.WorkflowQuery, error)
 		GetQuery(string) (Query, error)
 	}
 
@@ -51,7 +51,7 @@ type (
 )
 
 // NewQueryRegistry constructs a new QueryRegistry.
-// One QueryRegistry exists per workflowExecutionContext, and it should be accessed through the workflowExecutionContext.
+// One QueryRegistry exists per mutableState, and it should be accessed through mutableState.
 func NewQueryRegistry() QueryRegistry {
 	return &queryRegistry{
 		buffered: make(map[string]Query),
@@ -69,16 +69,16 @@ func (r *queryRegistry) BufferQuery(queryInput *shared.WorkflowQuery) Query {
 	return query
 }
 
-func (r *queryRegistry) StartBuffered() ([]*shared.WorkflowQuery, error) {
+func (r *queryRegistry) StartBuffered() (map[string]*shared.WorkflowQuery, error) {
 	r.Lock()
 	var queries []Query
 	for _, q := range r.buffered {
 		queries = append(queries, q)
 	}
 	r.Unlock()
-	var result []*shared.WorkflowQuery
+	result := make(map[string]*shared.WorkflowQuery)
 	for _, q := range queries {
-		result = append(result, q.QueryInput())
+		result[q.ID()] = q.QueryInput()
 		if _, err := q.RecordEvent(QueryEventStart, nil); err != nil {
 			return nil, err
 		}
