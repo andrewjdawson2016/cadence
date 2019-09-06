@@ -150,6 +150,8 @@ func (handler *decisionHandlerImpl) handleDecisionTaskStarted(
 	requestID := req.GetRequestId()
 
 	var resp *h.RecordDecisionTaskStartedResponse
+
+	// TODO: here we should only update the workflow execution in persistence if it is not query only
 	err = handler.historyEngine.updateWorkflowExecutionWithAction(ctx, domainID, execution,
 		func(msBuilder mutableState, tBuilder *timerBuilder) (*updateWorkflowAction, error) {
 			if !msBuilder.IsWorkflowExecutionRunning() {
@@ -177,13 +179,9 @@ func (handler *decisionHandlerImpl) handleDecisionTaskStarted(
 
 			updateAction := &updateWorkflowAction{}
 
-			queryMap, err := msBuilder.GetQueryRegistry().StartBuffered()
+			queries, err := msBuilder.GetQueryRegistry().StartBuffered()
 			if err != nil {
 				return nil, err
-			}
-			var queries []*workflow.WorkflowQuery
-			for _, q := range queryMap {
-				queries = append(queries, q)
 			}
 			if decision.StartedID != common.EmptyEventID {
 				// If decision is started as part of the current request scope then return a positive response
@@ -578,7 +576,7 @@ func (handler *decisionHandlerImpl) createRecordDecisionTaskStartedResponse(
 	msBuilder mutableState,
 	decision *decisionInfo,
 	identity string,
-	queries []*workflow.WorkflowQuery,
+	queries map[string]*workflow.WorkflowQuery,
 ) *h.RecordDecisionTaskStartedResponse {
 
 	response := &h.RecordDecisionTaskStartedResponse{}

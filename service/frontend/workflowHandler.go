@@ -3315,6 +3315,7 @@ func (wh *WorkflowHandler) createPollForDecisionTaskResponse(
 		WorkflowExecutionTaskList: matchingResp.WorkflowExecutionTaskList,
 		ScheduledTimestamp:        matchingResp.ScheduledTimestamp,
 		StartedTimestamp:          matchingResp.StartedTimestamp,
+		Queries:                   matchingResp.Queries,
 	}
 
 	return resp, nil
