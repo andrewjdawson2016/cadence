@@ -261,7 +261,7 @@ func (e *matchingEngineImpl) AddInMemoryDecisionTask(ctx context.Context, addReq
 	}
 
 	return tlMgr.AddInMemoryTask(ctx, addInMemoryParams{
-		domainID: domainID,
+		domainID:      domainID,
 		execution:     addRequest.Execution,
 		forwardedFrom: addRequest.GetForwardedFrom(),
 	})

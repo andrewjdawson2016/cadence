@@ -54,8 +54,8 @@ type (
 	}
 
 	addInMemoryParams struct {
-		domainID               string
-		execution *s.WorkflowExecution
+		domainID      string
+		execution     *s.WorkflowExecution
 		forwardedFrom string
 	}
 

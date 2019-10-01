@@ -93,8 +93,8 @@ func newInternalQueryTask(
 
 func newInternalInMemoryTask(forwardedFrom string) *internalTask {
 	return &internalTask{
-		inMemoryTask: true,
-		responseC: make(chan error, 1),
+		inMemoryTask:  true,
+		responseC:     make(chan error, 1),
 		forwardedFrom: forwardedFrom,
 	}
 }
