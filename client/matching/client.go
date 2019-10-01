@@ -105,6 +105,27 @@ func (c *clientImpl) AddDecisionTask(
 	return client.AddDecisionTask(ctx, request, opts...)
 }
 
+func (c *clientImpl) AddInMemoryDecisionTask(
+	ctx context.Context,
+	request *m.AddInMemoryDecisionTaskRequest,
+	opts ...yarpc.CallOption) error {
+	opts = common.AggregateYarpcOptions(ctx, opts...)
+	partition := c.loadBalancer.PickWritePartition(
+		request.GetDomainUUID(),
+		*request.GetTaskList(),
+		persistence.TaskListTypeDecision,
+		request.GetForwardedFrom(),
+	)
+	request.TaskList.Name = &partition
+	client, err := c.getClientForTasklist(request.TaskList.GetName())
+	if err != nil {
+		return err
+	}
+	ctx, cancel := c.createContext(ctx)
+	defer cancel()
+	return client.AddInMemoryDecisionTask(ctx, request, opts...)
+}
+
 func (c *clientImpl) PollForActivityTask(
 	ctx context.Context,
 	request *m.PollForActivityTaskRequest,

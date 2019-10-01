@@ -46,6 +46,11 @@ type Interface interface {
 		AddRequest *matching.AddDecisionTaskRequest,
 	) error
 
+	AddInMemoryDecisionTask(
+		ctx context.Context,
+		AddRequest *matching.AddInMemoryDecisionTaskRequest,
+	) error
+
 	CancelOutstandingPoll(
 		ctx context.Context,
 		Request *matching.CancelOutstandingPollRequest,
@@ -107,6 +112,17 @@ func New(impl Interface, opts ...thrift.RegisterOption) []transport.Procedure {
 					Unary: thrift.UnaryHandler(h.AddDecisionTask),
 				},
 				Signature:    "AddDecisionTask(AddRequest *matching.AddDecisionTaskRequest)",
+				ThriftModule: matching.ThriftModule,
+			},
+
+			thrift.Method{
+				Name: "AddInMemoryDecisionTask",
+				HandlerSpec: thrift.HandlerSpec{
+
+					Type:  transport.Unary,
+					Unary: thrift.UnaryHandler(h.AddInMemoryDecisionTask),
+				},
+				Signature:    "AddInMemoryDecisionTask(AddRequest *matching.AddInMemoryDecisionTaskRequest)",
 				ThriftModule: matching.ThriftModule,
 			},
 
@@ -178,7 +194,7 @@ func New(impl Interface, opts ...thrift.RegisterOption) []transport.Procedure {
 		},
 	}
 
-	procedures := make([]transport.Procedure, 0, 8)
+	procedures := make([]transport.Procedure, 0, 9)
 	procedures = append(procedures, thrift.BuildProcedures(service, opts...)...)
 	return procedures
 }
@@ -214,6 +230,25 @@ func (h handler) AddDecisionTask(ctx context.Context, body wire.Value) (thrift.R
 
 	hadError := err != nil
 	result, err := matching.MatchingService_AddDecisionTask_Helper.WrapResponse(err)
+
+	var response thrift.Response
+	if err == nil {
+		response.IsApplicationError = hadError
+		response.Body = result
+	}
+	return response, err
+}
+
+func (h handler) AddInMemoryDecisionTask(ctx context.Context, body wire.Value) (thrift.Response, error) {
+	var args matching.MatchingService_AddInMemoryDecisionTask_Args
+	if err := args.FromWire(body); err != nil {
+		return thrift.Response{}, err
+	}
+
+	err := h.impl.AddInMemoryDecisionTask(ctx, args.AddRequest)
+
+	hadError := err != nil
+	result, err := matching.MatchingService_AddInMemoryDecisionTask_Helper.WrapResponse(err)
 
 	var response thrift.Response
 	if err == nil {

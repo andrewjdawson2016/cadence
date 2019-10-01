@@ -175,6 +175,23 @@ func (h *Handler) AddDecisionTask(ctx context.Context, addRequest *m.AddDecision
 	return h.handleErr(err, scope)
 }
 
+// AddInMemoryDecisionTask - adds an in memory decision task.
+func (h *Handler) AddInMemoryDecisionTask(ctx context.Context, addRequest *m.AddInMemoryDecisionTaskRequest) (retError error) {
+	defer log.CapturePanic(h.GetLogger(), &retError)
+	scope := metrics.MatchingAddInMemoryDecisionTaskScope
+	sw := h.startRequestProfile("AddInMemoryDecisionTask", scope)
+	defer sw.Stop()
+
+	if addRequest.GetForwardedFrom() != "" {
+		h.metricsClient.IncCounter(scope, metrics.ForwardedCounter)
+	}
+
+	if ok := h.rateLimiter.Allow(); !ok {
+		return h.handleErr(errMatchingHostThrottle, scope)
+	}
+	return h.handleErr(h.engine.AddInMemoryDecisionTask(ctx, addRequest), scope)
+}
+
 // PollForActivityTask - long poll for an activity task.
 func (h *Handler) PollForActivityTask(ctx context.Context,
 	pollRequest *m.PollForActivityTaskRequest) (resp *gen.PollForActivityTaskResponse, retError error) {

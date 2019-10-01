@@ -69,6 +69,18 @@ func (c *retryableClient) AddDecisionTask(
 	return backoff.Retry(op, c.policy, c.isRetryable)
 }
 
+func (c *retryableClient) AddInMemoryDecisionTask(
+	ctx context.Context,
+	addRequest *m.AddInMemoryDecisionTaskRequest,
+	opts ...yarpc.CallOption) error {
+
+	op := func() error {
+		return c.client.AddInMemoryDecisionTask(ctx, addRequest, opts...)
+	}
+
+	return backoff.Retry(op, c.policy, c.isRetryable)
+}
+
 func (c *retryableClient) PollForActivityTask(
 	ctx context.Context,
 	pollRequest *m.PollForActivityTaskRequest,

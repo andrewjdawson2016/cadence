@@ -64,6 +64,13 @@ struct AddDecisionTaskRequest {
   60: optional string forwardedFrom
 }
 
+struct AddInMemoryDecisionTaskRequest {
+  10: optional string domainUUID
+  20: optional shared.WorkflowExecution execution
+  30: optional shared.TaskList taskList
+  60: optional string forwardedFrom
+}
+
 struct AddActivityTaskRequest {
   10: optional string domainUUID
   20: optional shared.WorkflowExecution execution
@@ -143,6 +150,18 @@ service MatchingService {
       3: shared.ServiceBusyError serviceBusyError,
       4: shared.LimitExceededError limitExceededError,
       5: shared.DomainNotActiveError domainNotActiveError,
+    )
+
+  /**
+  * AddInMemoryDecisionTask is called by history service when an in memory decision task is scheduled, so it can be
+  * dispatched by the MatchingEngine.
+  **/
+  void AddInMemoryDecisionTask(1: AddInMemoryDecisionTaskRequest addRequest)
+    throws (
+      1: shared.BadRequestError badRequestError,
+      2: shared.InternalServiceError internalServiceError,
+      3: shared.ServiceBusyError serviceBusyError,
+      4: shared.LimitExceededError limitExceededError,
     )
 
   /**

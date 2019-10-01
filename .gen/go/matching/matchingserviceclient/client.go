@@ -50,6 +50,12 @@ type Interface interface {
 		opts ...yarpc.CallOption,
 	) error
 
+	AddInMemoryDecisionTask(
+		ctx context.Context,
+		AddRequest *matching.AddInMemoryDecisionTaskRequest,
+		opts ...yarpc.CallOption,
+	) error
+
 	CancelOutstandingPoll(
 		ctx context.Context,
 		Request *matching.CancelOutstandingPollRequest,
@@ -154,6 +160,29 @@ func (c client) AddDecisionTask(
 	}
 
 	err = matching.MatchingService_AddDecisionTask_Helper.UnwrapResponse(&result)
+	return
+}
+
+func (c client) AddInMemoryDecisionTask(
+	ctx context.Context,
+	_AddRequest *matching.AddInMemoryDecisionTaskRequest,
+	opts ...yarpc.CallOption,
+) (err error) {
+
+	args := matching.MatchingService_AddInMemoryDecisionTask_Helper.Args(_AddRequest)
+
+	var body wire.Value
+	body, err = c.c.Call(ctx, args, opts...)
+	if err != nil {
+		return
+	}
+
+	var result matching.MatchingService_AddInMemoryDecisionTask_Result
+	if err = result.FromWire(body); err != nil {
+		return
+	}
+
+	err = matching.MatchingService_AddInMemoryDecisionTask_Helper.UnwrapResponse(&result)
 	return
 }
 

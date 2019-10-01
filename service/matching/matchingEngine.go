@@ -237,6 +237,36 @@ func (e *matchingEngineImpl) AddDecisionTask(ctx context.Context, addRequest *m.
 	})
 }
 
+// AddInMemoryDecisionTask attempts to deliver task to waiting poller. If there is no waiting poller
+// an error is returned. In memory decision tasks can be added on cluster regardless of active status.
+func (e *matchingEngineImpl) AddInMemoryDecisionTask(ctx context.Context, addRequest *m.AddInMemoryDecisionTaskRequest) error {
+	domainID := addRequest.GetDomainUUID()
+	taskListName := addRequest.TaskList.GetName()
+	taskListKind := common.TaskListKindPtr(addRequest.TaskList.GetKind())
+
+	e.logger.Debug(
+		fmt.Sprintf("Received AddInMemoryDecisionTask for taskList=%v, WorkflowID=%v, RunID=%v",
+			addRequest.TaskList.GetName(),
+			addRequest.Execution.GetWorkflowId(),
+			addRequest.Execution.GetRunId()))
+
+	taskList, err := newTaskListID(domainID, taskListName, persistence.TaskListTypeDecision)
+	if err != nil {
+		return err
+	}
+
+	tlMgr, err := e.getTaskListManager(taskList, taskListKind)
+	if err != nil {
+		return err
+	}
+
+	return tlMgr.AddInMemoryTask(ctx, addInMemoryParams{
+		domainID: domainID,
+		execution:     addRequest.Execution,
+		forwardedFrom: addRequest.GetForwardedFrom(),
+	})
+}
+
 // AddActivityTask either delivers task directly to waiting poller or save it into task list persistence.
 func (e *matchingEngineImpl) AddActivityTask(ctx context.Context, addRequest *m.AddActivityTaskRequest) (bool, error) {
 	domainID := addRequest.GetDomainUUID()

@@ -91,6 +91,29 @@ func (c *metricClient) AddDecisionTask(
 	return err
 }
 
+func (c *metricClient) AddInMemoryDecisionTask(
+	ctx context.Context,
+	request *m.AddInMemoryDecisionTaskRequest,
+	opts ...yarpc.CallOption) error {
+	c.metricsClient.IncCounter(metrics.MatchingClientAddInMemoryDecisionTaskScope, metrics.CadenceClientRequests)
+	sw := c.metricsClient.StartTimer(metrics.MatchingClientAddInMemoryDecisionTaskScope, metrics.CadenceClientLatency)
+
+	c.emitForwardedFromStats(
+		metrics.MatchingClientAddInMemoryDecisionTaskScope,
+		request.GetForwardedFrom(),
+		request.TaskList,
+	)
+
+	err := c.client.AddInMemoryDecisionTask(ctx, request, opts...)
+	sw.Stop()
+
+	if err != nil {
+		c.metricsClient.IncCounter(metrics.MatchingClientAddInMemoryDecisionTaskScope, metrics.CadenceClientFailures)
+	}
+
+	return err
+}
+
 func (c *metricClient) PollForActivityTask(
 	ctx context.Context,
 	request *m.PollForActivityTaskRequest,

@@ -127,6 +127,37 @@ func (mr *_MockClientRecorder) AddDecisionTask(
 	return mr.mock.ctrl.RecordCall(mr.mock, "AddDecisionTask", args...)
 }
 
+// AddInMemoryDecisionTask responds to a AddInMemoryDecisionTask call based on the mock expectations. This
+// call will fail if the mock does not expect this call. Use EXPECT to expect
+// a call to this function.
+//
+// 	client.EXPECT().AddInMemoryDecisionTask(gomock.Any(), ...).Return(...)
+// 	... := client.AddInMemoryDecisionTask(...)
+func (m *MockClient) AddInMemoryDecisionTask(
+	ctx context.Context,
+	_AddRequest *matching.AddInMemoryDecisionTaskRequest,
+	opts ...yarpc.CallOption,
+) (err error) {
+
+	args := []interface{}{ctx, _AddRequest}
+	for _, o := range opts {
+		args = append(args, o)
+	}
+	i := 0
+	ret := m.ctrl.Call(m, "AddInMemoryDecisionTask", args...)
+	err, _ = ret[i].(error)
+	return
+}
+
+func (mr *_MockClientRecorder) AddInMemoryDecisionTask(
+	ctx interface{},
+	_AddRequest interface{},
+	opts ...interface{},
+) *gomock.Call {
+	args := append([]interface{}{ctx, _AddRequest}, opts...)
+	return mr.mock.ctrl.RecordCall(mr.mock, "AddInMemoryDecisionTask", args...)
+}
+
 // CancelOutstandingPoll responds to a CancelOutstandingPoll call based on the mock expectations. This
 // call will fail if the mock does not expect this call. Use EXPECT to expect
 // a call to this function.

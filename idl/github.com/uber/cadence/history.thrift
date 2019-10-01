@@ -193,6 +193,7 @@ struct RecordDecisionTaskStartedRequest {
   40: optional i64 (js.type = "Long") taskId
   45: optional string requestId // Unique id of each poll request. Used to ensure at most once delivery of tasks.
   50: optional shared.PollForDecisionTaskRequest pollRequest
+  60: optional bool inMemoryDecisionTask
 }
 
 struct RecordDecisionTaskStartedResponse {
@@ -207,8 +208,9 @@ struct RecordDecisionTaskStartedResponse {
   90: optional shared.TaskList WorkflowExecutionTaskList
   100: optional i32 eventStoreVersion
   110: optional binary branchToken
-  120:  optional i64 (js.type = "Long") scheduledTimestamp
-  130:  optional i64 (js.type = "Long") startedTimestamp
+  120: optional i64 (js.type = "Long") scheduledTimestamp
+  130: optional i64 (js.type = "Long") startedTimestamp
+  140: optional list<shared.WorkflowQuery> bufferedQueries
 }
 
 struct SignalWorkflowExecutionRequest {

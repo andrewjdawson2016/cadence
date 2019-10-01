@@ -23,6 +23,7 @@ package matching
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -52,6 +53,12 @@ type (
 		forwardedFrom string
 	}
 
+	addInMemoryParams struct {
+		domainID               string
+		execution *s.WorkflowExecution
+		forwardedFrom string
+	}
+
 	taskListManager interface {
 		Start() error
 		Stop()
@@ -59,6 +66,8 @@ type (
 		// match with a poller. When that fails, task will be written to database and later
 		// asynchronously matched with a poller
 		AddTask(ctx context.Context, params addTaskParams) (syncMatch bool, err error)
+		// AddInMemoryTask adds a task to the task list. This method will only attempt a synchronous match with a poller.
+		AddInMemoryTask(ctx context.Context, params addInMemoryParams) error
 		// GetTask blocks waiting for a task Returns error when context deadline is exceeded
 		// maxDispatchPerSecond is the max rate at which tasks are allowed to be dispatched
 		// from this task list to pollers
@@ -215,7 +224,7 @@ func (c *taskListManagerImpl) AddTask(ctx context.Context, params addTaskParams)
 			return r, err
 		}
 
-		syncMatch, err = c.trySyncMatch(ctx, params)
+		syncMatch, err = c.trySyncMatch(ctx, newInternalTask(params.taskInfo, c.completeTask, params.forwardedFrom, true))
 		if syncMatch {
 			return &persistence.CreateTasksResponse{}, err
 		}
@@ -228,6 +237,22 @@ func (c *taskListManagerImpl) AddTask(ctx context.Context, params addTaskParams)
 		c.taskReader.Signal()
 	}
 	return syncMatch, err
+}
+
+// AddInMemoryTask adds a task to the task list. This method will only attempt a synchronous match with a poller.
+func (c *taskListManagerImpl) AddInMemoryTask(ctx context.Context, params addInMemoryParams) error {
+	c.startWG.Wait()
+	_, err := c.executeWithRetry(func() (interface{}, error) {
+		syncMatch, err := c.trySyncMatch(ctx, newInternalInMemoryTask(params.forwardedFrom))
+		if err != nil {
+			return nil, err
+		}
+		if !syncMatch {
+			return nil, errors.New("could not sync match")
+		}
+		return nil, nil
+	})
+	return err
 }
 
 // DispatchTask dispatches a task to a poller. When there are no pollers to pick
@@ -488,9 +513,8 @@ func (c *taskListManagerImpl) executeWithRetry(
 	return
 }
 
-func (c *taskListManagerImpl) trySyncMatch(ctx context.Context, params addTaskParams) (bool, error) {
+func (c *taskListManagerImpl) trySyncMatch(ctx context.Context, task *internalTask) (bool, error) {
 	childCtx, cancel := c.newChildContext(ctx, maxSyncMatchWaitTime, time.Second)
-	task := newInternalTask(params.taskInfo, c.completeTask, params.forwardedFrom, true)
 	matched, err := c.matcher.Offer(childCtx, task)
 	cancel()
 	return matched, err
