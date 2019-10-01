@@ -390,6 +390,10 @@ pollLoop:
 			return e.createPollForDecisionTaskResponse(task, resp), nil
 		}
 
+		if task.inMemoryTask {
+			// TODO: handle the in memory case
+		}
+
 		resp, err := e.recordDecisionTaskStarted(ctx, request, task)
 		if err != nil {
 			switch err.(type) {

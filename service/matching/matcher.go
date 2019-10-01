@@ -41,6 +41,11 @@ type TaskMatcher struct {
 	// are interested in queryTasks but not others. Example is when domain is
 	// not active in a cluster
 	queryTaskC chan *internalTask
+	// synchronous task channel to match in memory produce/consumer tasks.
+	// the reason to have separate channel for this is because there are cases when consumers
+	// are interested in in memory tasks but not others. Example is when domain is
+	//not active in a cluster
+	inMemoryTaskC chan *internalTask
 	// ratelimiter that limits the rate at which tasks can be dispatched to consumers
 	limiter *quotas.RateLimiter
 
@@ -68,6 +73,7 @@ func newTaskMatcher(config *taskListConfig, fwdr *Forwarder, scopeFunc func() me
 		fwdr:          fwdr,
 		taskC:         make(chan *internalTask),
 		queryTaskC:    make(chan *internalTask),
+		inMemoryTaskC: make(chan *internalTask),
 		numPartitions: config.NumReadPartitions,
 	}
 }
@@ -123,6 +129,45 @@ func (tm *TaskMatcher) Offer(ctx context.Context, task *internalTask) (bool, err
 			rsv.Cancel()
 		}
 		return false, nil
+	}
+}
+
+// OfferInMemory offers an in memory task to a potential consumer
+// This method will retry until context expires
+func (tm *TaskMatcher) OfferInMemory(ctx context.Context, task *internalTask) error {
+	select {
+	case tm.inMemoryTaskC <- task:
+		var err error
+		select {
+		case err = <-task.responseC:
+		case <-ctx.Done():
+			err = ctx.Err()
+		}
+		return err
+	default:
+	}
+
+retryLoop:
+	for {
+		select {
+		case tm.inMemoryTaskC <- task:
+			var err error
+			select {
+			case err = <-task.responseC:
+			case <-ctx.Done():
+				err = ctx.Err()
+			}
+			return err
+		case token := <-tm.fwdrAddReqTokenC():
+			if err := tm.fwdr.ForwardTask(ctx, task); err == nil {
+				token.release()
+				return nil
+			}
+			token.release()
+			continue retryLoop
+		case <-ctx.Done():
+			return ctx.Err()
+		}
 	}
 }
 

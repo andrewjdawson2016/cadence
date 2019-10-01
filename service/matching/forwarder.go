@@ -138,17 +138,30 @@ func (fwdr *Forwarder) ForwardTask(ctx context.Context, task *internalTask) erro
 
 	switch fwdr.taskListID.taskType {
 	case persistence.TaskListTypeDecision:
-		err = fwdr.client.AddDecisionTask(ctx, &gen.AddDecisionTaskRequest{
-			DomainUUID: &task.event.DomainID,
-			Execution:  task.workflowExecution(),
-			TaskList: &shared.TaskList{
-				Name: &name,
-				Kind: &fwdr.taskListKind,
-			},
-			ScheduleId:                    &task.event.ScheduleID,
-			ScheduleToStartTimeoutSeconds: &task.event.ScheduleToStartTimeout,
-			ForwardedFrom:                 &fwdr.taskListID.name,
-		})
+		if task.inMemoryTask {
+			err = fwdr.client.AddInMemoryDecisionTask(ctx, &gen.AddInMemoryDecisionTaskRequest{
+				DomainUUID: &task.event.DomainID,
+				Execution:  task.workflowExecution(),
+				TaskList: &shared.TaskList{
+					Name: &name,
+					Kind: &fwdr.taskListKind,
+				},
+				ForwardedFrom: &fwdr.taskListID.name,
+			})
+		} else {
+			err = fwdr.client.AddDecisionTask(ctx, &gen.AddDecisionTaskRequest{
+				DomainUUID: &task.event.DomainID,
+				Execution:  task.workflowExecution(),
+				TaskList: &shared.TaskList{
+					Name: &name,
+					Kind: &fwdr.taskListKind,
+				},
+				ScheduleId:                    &task.event.ScheduleID,
+				ScheduleToStartTimeoutSeconds: &task.event.ScheduleToStartTimeout,
+				ForwardedFrom:                 &fwdr.taskListID.name,
+			})
+		}
+
 	case persistence.TaskListTypeActivity:
 		err = fwdr.client.AddActivityTask(ctx, &gen.AddActivityTaskRequest{
 			DomainUUID:       &fwdr.taskListID.domainID,

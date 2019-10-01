@@ -23,7 +23,6 @@ package matching
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -54,9 +53,8 @@ type (
 	}
 
 	addInMemoryParams struct {
-		domainID      string
-		execution     *s.WorkflowExecution
-		forwardedFrom string
+		domainID  string
+		execution *s.WorkflowExecution
 	}
 
 	taskListManager interface {
@@ -224,7 +222,10 @@ func (c *taskListManagerImpl) AddTask(ctx context.Context, params addTaskParams)
 			return r, err
 		}
 
-		syncMatch, err = c.trySyncMatch(ctx, newInternalTask(params.taskInfo, c.completeTask, params.forwardedFrom, true))
+		// try sync match
+		childCtx, cancel := c.newChildContext(ctx, maxSyncMatchWaitTime, time.Second)
+		syncMatch, err = c.matcher.Offer(childCtx, newInternalTask(params.taskInfo, c.completeTask, params.forwardedFrom, true))
+		cancel()
 		if syncMatch {
 			return &persistence.CreateTasksResponse{}, err
 		}
@@ -243,12 +244,11 @@ func (c *taskListManagerImpl) AddTask(ctx context.Context, params addTaskParams)
 func (c *taskListManagerImpl) AddInMemoryTask(ctx context.Context, params addInMemoryParams) error {
 	c.startWG.Wait()
 	_, err := c.executeWithRetry(func() (interface{}, error) {
-		syncMatch, err := c.trySyncMatch(ctx, newInternalInMemoryTask(params.forwardedFrom))
+		childCtx, cancel := c.newChildContext(ctx, maxSyncMatchWaitTime, time.Second)
+		err := c.matcher.OfferInMemory(childCtx, newInternalInMemoryTask())
+		cancel()
 		if err != nil {
 			return nil, err
-		}
-		if !syncMatch {
-			return nil, errors.New("could not sync match")
 		}
 		return nil, nil
 	})
@@ -511,13 +511,6 @@ func (c *taskListManagerImpl) executeWithRetry(
 		c.Stop()
 	}
 	return
-}
-
-func (c *taskListManagerImpl) trySyncMatch(ctx context.Context, task *internalTask) (bool, error) {
-	childCtx, cancel := c.newChildContext(ctx, maxSyncMatchWaitTime, time.Second)
-	matched, err := c.matcher.Offer(childCtx, task)
-	cancel()
-	return matched, err
 }
 
 // newChildContext creates a child context with desired timeout.
