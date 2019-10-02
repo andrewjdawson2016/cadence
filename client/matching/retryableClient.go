@@ -69,13 +69,13 @@ func (c *retryableClient) AddDecisionTask(
 	return backoff.Retry(op, c.policy, c.isRetryable)
 }
 
-func (c *retryableClient) AddInMemoryDecisionTask(
+func (c *retryableClient) AddEphemeralDecisionTask(
 	ctx context.Context,
-	addRequest *m.AddInMemoryDecisionTaskRequest,
+	addRequest *m.AddEphemeralDecisionTaskRequest,
 	opts ...yarpc.CallOption) error {
 
 	op := func() error {
-		return c.client.AddInMemoryDecisionTask(ctx, addRequest, opts...)
+		return c.client.AddEphemeralDecisionTask(ctx, addRequest, opts...)
 	}
 
 	return backoff.Retry(op, c.policy, c.isRetryable)

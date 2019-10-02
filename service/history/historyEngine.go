@@ -717,7 +717,7 @@ func (e *historyEngineImpl) QueryWorkflow(
 			retErr = err
 			return
 		}
-		msBuilder.DeleteInMemoryDecisionTask()
+		msBuilder.DeleteEphemeralDecisionTask()
 		release(nil)
 	}()
 
@@ -734,7 +734,7 @@ retryLoop:
 			return nil, err
 		}
 		// a scheduled decision task already exists - no need to schedule an in memory decision task
-		if (msBuilder.HasPendingDecision() && !msBuilder.HasInFlightDecision()) || msBuilder.HasScheduledInMemoryDecisionTask() {
+		if (msBuilder.HasPendingDecision() && !msBuilder.HasInFlightDecision()) || msBuilder.HasScheduledEphemeralDecisionTask() {
 			release(nil)
 			break retryLoop
 		}
@@ -752,7 +752,7 @@ retryLoop:
 			}
 		}
 		// there is no scheduled or started decision task - schedule in memory decision task
-		if err := msBuilder.AddInMemoryDecisionTaskScheduled(ttl); err != nil {
+		if err := msBuilder.AddEphemeralDecisionTaskScheduled(ttl); err != nil {
 			release(err)
 			return nil, err
 		}

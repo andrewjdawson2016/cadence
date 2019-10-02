@@ -50,9 +50,9 @@ type Interface interface {
 		opts ...yarpc.CallOption,
 	) error
 
-	AddInMemoryDecisionTask(
+	AddEphemeralDecisionTask(
 		ctx context.Context,
-		AddRequest *matching.AddInMemoryDecisionTaskRequest,
+		AddRequest *matching.AddEphemeralDecisionTaskRequest,
 		opts ...yarpc.CallOption,
 	) error
 
@@ -163,13 +163,13 @@ func (c client) AddDecisionTask(
 	return
 }
 
-func (c client) AddInMemoryDecisionTask(
+func (c client) AddEphemeralDecisionTask(
 	ctx context.Context,
-	_AddRequest *matching.AddInMemoryDecisionTaskRequest,
+	_AddRequest *matching.AddEphemeralDecisionTaskRequest,
 	opts ...yarpc.CallOption,
 ) (err error) {
 
-	args := matching.MatchingService_AddInMemoryDecisionTask_Helper.Args(_AddRequest)
+	args := matching.MatchingService_AddEphemeralDecisionTask_Helper.Args(_AddRequest)
 
 	var body wire.Value
 	body, err = c.c.Call(ctx, args, opts...)
@@ -177,12 +177,12 @@ func (c client) AddInMemoryDecisionTask(
 		return
 	}
 
-	var result matching.MatchingService_AddInMemoryDecisionTask_Result
+	var result matching.MatchingService_AddEphemeralDecisionTask_Result
 	if err = result.FromWire(body); err != nil {
 		return
 	}
 
-	err = matching.MatchingService_AddInMemoryDecisionTask_Helper.UnwrapResponse(&result)
+	err = matching.MatchingService_AddEphemeralDecisionTask_Helper.UnwrapResponse(&result)
 	return
 }
 

@@ -138,8 +138,8 @@ func (fwdr *Forwarder) ForwardTask(ctx context.Context, task *internalTask) erro
 
 	switch fwdr.taskListID.taskType {
 	case persistence.TaskListTypeDecision:
-		if task.inMemoryTask {
-			err = fwdr.client.AddInMemoryDecisionTask(ctx, &gen.AddInMemoryDecisionTaskRequest{
+		if task.isEphemeralTask {
+			err = fwdr.client.AddEphemeralDecisionTask(ctx, &gen.AddEphemeralDecisionTaskRequest{
 				DomainUUID: &task.event.DomainID,
 				Execution:  task.workflowExecution(),
 				TaskList: &shared.TaskList{

@@ -143,19 +143,19 @@ func (s *mutableStateSuite) TestInMemDecisionTask() {
 	s.assertMemDecisionTaskState(false, false, false, false, false)
 
 	// error on start mem decision task before schedule
-	s.Error(s.msBuilder.AddInMemoryDecisionTaskStarted())
+	s.Error(s.msBuilder.AddEphemeralDecisionTaskStarted())
 	s.assertMemDecisionTaskState(false, false, false, false, false)
 
 	// no error on schedule in mem decision task
-	s.NoError(s.msBuilder.AddInMemoryDecisionTaskScheduled(time.Second))
+	s.NoError(s.msBuilder.AddEphemeralDecisionTaskScheduled(time.Second))
 	s.assertMemDecisionTaskState(true, true, false, false, false)
 
 	// attempt to schedule mem decision task again is an error
-	s.Error(s.msBuilder.AddInMemoryDecisionTaskScheduled(time.Second))
+	s.Error(s.msBuilder.AddEphemeralDecisionTaskScheduled(time.Second))
 	s.assertMemDecisionTaskState(true, true, false, false, false)
 
 	// no error on start decision task
-	s.NoError(s.msBuilder.AddInMemoryDecisionTaskStarted())
+	s.NoError(s.msBuilder.AddEphemeralDecisionTaskStarted())
 	s.assertMemDecisionTaskState(true, false, true, false, false)
 
 	// attempting to schedule decision task with started mem decision task is an error
@@ -177,7 +177,7 @@ func (s *mutableStateSuite) TestInMemDecisionTask() {
 	s.assertMemDecisionTaskState(false, false, false, true, false)
 
 	// it is an error to try to schedule a mem decision task while there is a scheduled decision task
-	s.Error(s.msBuilder.AddInMemoryDecisionTaskScheduled(time.Second))
+	s.Error(s.msBuilder.AddEphemeralDecisionTaskScheduled(time.Second))
 	s.assertMemDecisionTaskState(false, false, false, true, false)
 
 	// start the decision task
@@ -196,7 +196,7 @@ func (s *mutableStateSuite) TestInMemDecisionTask() {
 	s.assertMemDecisionTaskState(false, false, false, true, true)
 
 	// error to schedule mem decision task while there is started decision task
-	s.Error(s.msBuilder.AddInMemoryDecisionTaskScheduled(time.Second))
+	s.Error(s.msBuilder.AddEphemeralDecisionTaskScheduled(time.Second))
 	s.assertMemDecisionTaskState(false, false, false, true, true)
 
 	// delete decision task
@@ -204,15 +204,15 @@ func (s *mutableStateSuite) TestInMemDecisionTask() {
 	s.assertMemDecisionTaskState(false, false, false, false, false)
 
 	// no error on schedule mem decision task
-	s.NoError(s.msBuilder.AddInMemoryDecisionTaskScheduled(time.Second))
+	s.NoError(s.msBuilder.AddEphemeralDecisionTaskScheduled(time.Second))
 	s.assertMemDecisionTaskState(true, true, false, false, false)
 
 	// delete mem decision task
-	s.msBuilder.DeleteInMemoryDecisionTask()
+	s.msBuilder.DeleteEphemeralDecisionTask()
 	s.assertMemDecisionTaskState(false, false, false, false, false)
 
 	// no error on schedule mem decision task
-	s.NoError(s.msBuilder.AddInMemoryDecisionTaskScheduled(time.Second))
+	s.NoError(s.msBuilder.AddEphemeralDecisionTaskScheduled(time.Second))
 	s.assertMemDecisionTaskState(true, true, false, false, false)
 
 	// schedule decision task to overwrite mem decision task
@@ -223,9 +223,9 @@ func (s *mutableStateSuite) TestInMemDecisionTask() {
 }
 
 func (s *mutableStateSuite) assertMemDecisionTaskState(hasMemDecisionTask, hasMemScheduledDecisionTask, hasMemStartedDecisionTask, hasPending, hasInflight bool) {
-	s.Equal(hasMemDecisionTask, s.msBuilder.HasInMemoryDecisionTask())
-	s.Equal(hasMemScheduledDecisionTask, s.msBuilder.HasScheduledInMemoryDecisionTask())
-	s.Equal(hasMemStartedDecisionTask, s.msBuilder.HasStartedInMemoryDecisionTask())
+	s.Equal(hasMemDecisionTask, s.msBuilder.HasEphemeralDecisionTask())
+	s.Equal(hasMemScheduledDecisionTask, s.msBuilder.HasScheduledEphemeralDecisionTask())
+	s.Equal(hasMemStartedDecisionTask, s.msBuilder.HasStartedEphemeralDecisionTask())
 	s.Equal(hasPending, s.msBuilder.HasPendingDecision())
 	s.Equal(hasInflight, s.msBuilder.HasInFlightDecision())
 }

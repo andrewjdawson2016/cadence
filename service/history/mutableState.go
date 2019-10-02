@@ -52,12 +52,12 @@ type (
 	}
 
 	mutableState interface {
-		AddInMemoryDecisionTaskScheduled(time.Duration) error
-		AddInMemoryDecisionTaskStarted() error
-		DeleteInMemoryDecisionTask()
-		HasScheduledInMemoryDecisionTask() bool
-		HasStartedInMemoryDecisionTask() bool
-		HasInMemoryDecisionTask() bool
+		AddEphemeralDecisionTaskScheduled(time.Duration) error
+		AddEphemeralDecisionTaskStarted() error
+		DeleteEphemeralDecisionTask()
+		HasScheduledEphemeralDecisionTask() bool
+		HasStartedEphemeralDecisionTask() bool
+		HasEphemeralDecisionTask() bool
 		GetEmptyDecisionInfo() *decisionInfo
 
 		AddActivityTaskCancelRequestedEvent(int64, string, string) (*workflow.HistoryEvent, *persistence.ActivityInfo, error)

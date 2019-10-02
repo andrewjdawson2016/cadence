@@ -51,7 +51,7 @@ type (
 		event            *genericTaskInfo // non-nil for activity or decision task that's locally generated
 		query            *queryTaskInfo   // non-nil for a query task that's locally sync matched
 		started          *startedTaskInfo // non-nil for a task received from a parent partition which is already started
-		inMemoryTask     bool             // true if task is in memory task, if true then event, query and started are nil
+		isEphemeralTask  bool             // true if task is ephemeral task, if true then event, query and started are nil
 		domainName       string
 		forwardedFrom    string     // name of the child partition this task is forwarded from (empty if not forwarded)
 		responseC        chan error // non-nil only where there is a caller waiting for response (sync-match)
@@ -91,10 +91,10 @@ func newInternalQueryTask(
 	}
 }
 
-func newInternalInMemoryTask() *internalTask {
+func newInternalEphemeralTask() *internalTask {
 	return &internalTask{
-		inMemoryTask: true,
-		responseC:    make(chan error, 1),
+		isEphemeralTask: true,
+		responseC:       make(chan error, 1),
 	}
 }
 

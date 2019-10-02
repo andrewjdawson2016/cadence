@@ -47,7 +47,7 @@ struct PollForDecisionTaskResponse {
   130: optional i64 (js.type = "Long") scheduledTimestamp
   140: optional i64 (js.type = "Long") startedTimestamp
   150: optional list<shared.WorkflowQuery> bufferedQueries
-  160: optional bool isInMemoryDecisionTask
+  160: optional bool isEphemeralDecisionTask
 }
 
 struct PollForActivityTaskRequest {
@@ -66,11 +66,11 @@ struct AddDecisionTaskRequest {
   60: optional string forwardedFrom
 }
 
-struct AddInMemoryDecisionTaskRequest {
+struct AddEphemeralDecisionTaskRequest {
   10: optional string domainUUID
   20: optional shared.WorkflowExecution execution
   30: optional shared.TaskList taskList
-  60: optional string forwardedFrom
+  40: optional string forwardedFrom
 }
 
 struct AddActivityTaskRequest {
@@ -155,10 +155,10 @@ service MatchingService {
     )
 
   /**
-  * AddInMemoryDecisionTask is called by history service when an in memory decision task is scheduled, so it can be
+  * AddEphemeralDecisionTask is called by history service when an ephemeral decision task is scheduled, so it can be
   * dispatched by the MatchingEngine.
   **/
-  void AddInMemoryDecisionTask(1: AddInMemoryDecisionTaskRequest addRequest)
+  void AddEphemeralDecisionTask(1: AddEphemeralDecisionTaskRequest addRequest)
     throws (
       1: shared.BadRequestError badRequestError,
       2: shared.InternalServiceError internalServiceError,

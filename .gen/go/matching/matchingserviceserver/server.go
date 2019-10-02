@@ -46,9 +46,9 @@ type Interface interface {
 		AddRequest *matching.AddDecisionTaskRequest,
 	) error
 
-	AddInMemoryDecisionTask(
+	AddEphemeralDecisionTask(
 		ctx context.Context,
-		AddRequest *matching.AddInMemoryDecisionTaskRequest,
+		AddRequest *matching.AddEphemeralDecisionTaskRequest,
 	) error
 
 	CancelOutstandingPoll(
@@ -116,13 +116,13 @@ func New(impl Interface, opts ...thrift.RegisterOption) []transport.Procedure {
 			},
 
 			thrift.Method{
-				Name: "AddInMemoryDecisionTask",
+				Name: "AddEphemeralDecisionTask",
 				HandlerSpec: thrift.HandlerSpec{
 
 					Type:  transport.Unary,
-					Unary: thrift.UnaryHandler(h.AddInMemoryDecisionTask),
+					Unary: thrift.UnaryHandler(h.AddEphemeralDecisionTask),
 				},
-				Signature:    "AddInMemoryDecisionTask(AddRequest *matching.AddInMemoryDecisionTaskRequest)",
+				Signature:    "AddEphemeralDecisionTask(AddRequest *matching.AddEphemeralDecisionTaskRequest)",
 				ThriftModule: matching.ThriftModule,
 			},
 
@@ -239,16 +239,16 @@ func (h handler) AddDecisionTask(ctx context.Context, body wire.Value) (thrift.R
 	return response, err
 }
 
-func (h handler) AddInMemoryDecisionTask(ctx context.Context, body wire.Value) (thrift.Response, error) {
-	var args matching.MatchingService_AddInMemoryDecisionTask_Args
+func (h handler) AddEphemeralDecisionTask(ctx context.Context, body wire.Value) (thrift.Response, error) {
+	var args matching.MatchingService_AddEphemeralDecisionTask_Args
 	if err := args.FromWire(body); err != nil {
 		return thrift.Response{}, err
 	}
 
-	err := h.impl.AddInMemoryDecisionTask(ctx, args.AddRequest)
+	err := h.impl.AddEphemeralDecisionTask(ctx, args.AddRequest)
 
 	hadError := err != nil
-	result, err := matching.MatchingService_AddInMemoryDecisionTask_Helper.WrapResponse(err)
+	result, err := matching.MatchingService_AddEphemeralDecisionTask_Helper.WrapResponse(err)
 
 	var response thrift.Response
 	if err == nil {

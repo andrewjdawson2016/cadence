@@ -41,11 +41,8 @@ type TaskMatcher struct {
 	// are interested in queryTasks but not others. Example is when domain is
 	// not active in a cluster
 	queryTaskC chan *internalTask
-	// synchronous task channel to match in memory produce/consumer tasks.
-	// the reason to have separate channel for this is because there are cases when consumers
-	// are interested in in memory tasks but not others. Example is when domain is
-	//not active in a cluster
-	inMemoryTaskC chan *internalTask
+	// synchronous task channel to match ephemeral tasks.
+	ephemeralTaskC chan *internalTask
 	// ratelimiter that limits the rate at which tasks can be dispatched to consumers
 	limiter *quotas.RateLimiter
 
@@ -68,13 +65,13 @@ func newTaskMatcher(config *taskListConfig, fwdr *Forwarder, scopeFunc func() me
 	dPtr := _defaultTaskDispatchRPS
 	limiter := quotas.NewRateLimiter(&dPtr, _defaultTaskDispatchRPSTTL, config.MinTaskThrottlingBurstSize())
 	return &TaskMatcher{
-		limiter:       limiter,
-		scope:         scopeFunc,
-		fwdr:          fwdr,
-		taskC:         make(chan *internalTask),
-		queryTaskC:    make(chan *internalTask),
-		inMemoryTaskC: make(chan *internalTask),
-		numPartitions: config.NumReadPartitions,
+		limiter:        limiter,
+		scope:          scopeFunc,
+		fwdr:           fwdr,
+		taskC:          make(chan *internalTask),
+		queryTaskC:     make(chan *internalTask),
+		ephemeralTaskC: make(chan *internalTask),
+		numPartitions:  config.NumReadPartitions,
 	}
 }
 
@@ -132,11 +129,10 @@ func (tm *TaskMatcher) Offer(ctx context.Context, task *internalTask) (bool, err
 	}
 }
 
-// OfferInMemory offers an in memory task to a potential consumer
-// This method will retry until context expires
-func (tm *TaskMatcher) OfferInMemory(ctx context.Context, task *internalTask) error {
+// OfferEphemeral offers an ephemeral task to a potential consumer. This method will retry until context expires.
+func (tm *TaskMatcher) OfferEphemeral(ctx context.Context, task *internalTask) error {
 	select {
-	case tm.inMemoryTaskC <- task:
+	case tm.ephemeralTaskC <- task:
 		var err error
 		select {
 		case err = <-task.responseC:
@@ -150,7 +146,7 @@ func (tm *TaskMatcher) OfferInMemory(ctx context.Context, task *internalTask) er
 retryLoop:
 	for {
 		select {
-		case tm.inMemoryTaskC <- task:
+		case tm.ephemeralTaskC <- task:
 			var err error
 			select {
 			case err = <-task.responseC:
@@ -289,13 +285,13 @@ func (tm *TaskMatcher) PollForQuery(ctx context.Context) (*internalTask, error) 
 // can be dispatched on either the active or standby cluster. Return ErrNoTasks when context deadline is exceeded.
 func (tm *TaskMatcher) PollNonActiveTasks(ctx context.Context) (*internalTask, error) {
 	// try local match first without blocking until context timeout
-	if task, err := tm.pollNonBlocking(ctx, tm.inMemoryTaskC, tm.queryTaskC); err == nil {
+	if task, err := tm.pollNonBlocking(ctx, tm.ephemeralTaskC, tm.queryTaskC); err == nil {
 		return task, nil
 	}
 	// there is no local poller available to pickup this task. Now block waiting
 	// either for a local poller or a forwarding token to be available. When a
 	// forwarding token becomes available, send this poll to a parent partition
-	return tm.pollOrForward(ctx, tm.inMemoryTaskC, tm.queryTaskC)
+	return tm.pollOrForward(ctx, tm.ephemeralTaskC, tm.queryTaskC)
 }
 
 // UpdateRatelimit updates the task dispatch rate

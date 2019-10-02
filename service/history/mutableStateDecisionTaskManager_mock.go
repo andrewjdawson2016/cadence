@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2017 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -55,6 +55,102 @@ func NewMockmutableStateDecisionTaskManager(ctrl *gomock.Controller) *Mockmutabl
 // EXPECT returns an object that allows the caller to indicate expected use
 func (m *MockmutableStateDecisionTaskManager) EXPECT() *MockmutableStateDecisionTaskManagerMockRecorder {
 	return m.recorder
+}
+
+// AddEphemeralDecisionTaskScheduled mocks base method
+func (m *MockmutableStateDecisionTaskManager) AddEphemeralDecisionTaskScheduled(arg0 time.Duration) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddEphemeralDecisionTaskScheduled", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddEphemeralDecisionTaskScheduled indicates an expected call of AddEphemeralDecisionTaskScheduled
+func (mr *MockmutableStateDecisionTaskManagerMockRecorder) AddEphemeralDecisionTaskScheduled(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddEphemeralDecisionTaskScheduled", reflect.TypeOf((*MockmutableStateDecisionTaskManager)(nil).AddEphemeralDecisionTaskScheduled), arg0)
+}
+
+// AddEphemeralDecisionTaskStarted mocks base method
+func (m *MockmutableStateDecisionTaskManager) AddEphemeralDecisionTaskStarted() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddEphemeralDecisionTaskStarted")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddEphemeralDecisionTaskStarted indicates an expected call of AddEphemeralDecisionTaskStarted
+func (mr *MockmutableStateDecisionTaskManagerMockRecorder) AddEphemeralDecisionTaskStarted() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddEphemeralDecisionTaskStarted", reflect.TypeOf((*MockmutableStateDecisionTaskManager)(nil).AddEphemeralDecisionTaskStarted))
+}
+
+// DeleteEphemeralDecisionTask mocks base method
+func (m *MockmutableStateDecisionTaskManager) DeleteEphemeralDecisionTask() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "DeleteEphemeralDecisionTask")
+}
+
+// DeleteEphemeralDecisionTask indicates an expected call of DeleteEphemeralDecisionTask
+func (mr *MockmutableStateDecisionTaskManagerMockRecorder) DeleteEphemeralDecisionTask() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEphemeralDecisionTask", reflect.TypeOf((*MockmutableStateDecisionTaskManager)(nil).DeleteEphemeralDecisionTask))
+}
+
+// HasScheduledEphemeralDecisionTask mocks base method
+func (m *MockmutableStateDecisionTaskManager) HasScheduledEphemeralDecisionTask() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HasScheduledEphemeralDecisionTask")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// HasScheduledEphemeralDecisionTask indicates an expected call of HasScheduledEphemeralDecisionTask
+func (mr *MockmutableStateDecisionTaskManagerMockRecorder) HasScheduledEphemeralDecisionTask() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasScheduledEphemeralDecisionTask", reflect.TypeOf((*MockmutableStateDecisionTaskManager)(nil).HasScheduledEphemeralDecisionTask))
+}
+
+// HasStartedEphemeralDecisionTask mocks base method
+func (m *MockmutableStateDecisionTaskManager) HasStartedEphemeralDecisionTask() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HasStartedEphemeralDecisionTask")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// HasStartedEphemeralDecisionTask indicates an expected call of HasStartedEphemeralDecisionTask
+func (mr *MockmutableStateDecisionTaskManagerMockRecorder) HasStartedEphemeralDecisionTask() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasStartedEphemeralDecisionTask", reflect.TypeOf((*MockmutableStateDecisionTaskManager)(nil).HasStartedEphemeralDecisionTask))
+}
+
+// HasEphemeralDecisionTask mocks base method
+func (m *MockmutableStateDecisionTaskManager) HasEphemeralDecisionTask() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HasEphemeralDecisionTask")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// HasEphemeralDecisionTask indicates an expected call of HasEphemeralDecisionTask
+func (mr *MockmutableStateDecisionTaskManagerMockRecorder) HasEphemeralDecisionTask() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasEphemeralDecisionTask", reflect.TypeOf((*MockmutableStateDecisionTaskManager)(nil).HasEphemeralDecisionTask))
+}
+
+// GetEmptyDecisionInfo mocks base method
+func (m *MockmutableStateDecisionTaskManager) GetEmptyDecisionInfo() *decisionInfo {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEmptyDecisionInfo")
+	ret0, _ := ret[0].(*decisionInfo)
+	return ret0
+}
+
+// GetEmptyDecisionInfo indicates an expected call of GetEmptyDecisionInfo
+func (mr *MockmutableStateDecisionTaskManagerMockRecorder) GetEmptyDecisionInfo() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEmptyDecisionInfo", reflect.TypeOf((*MockmutableStateDecisionTaskManager)(nil).GetEmptyDecisionInfo))
 }
 
 // ReplicateDecisionTaskScheduledEvent mocks base method
@@ -262,88 +358,6 @@ func (m *MockmutableStateDecisionTaskManager) AddDecisionTaskTimedOutEvent(sched
 func (mr *MockmutableStateDecisionTaskManagerMockRecorder) AddDecisionTaskTimedOutEvent(scheduleEventID, startedEventID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddDecisionTaskTimedOutEvent", reflect.TypeOf((*MockmutableStateDecisionTaskManager)(nil).AddDecisionTaskTimedOutEvent), scheduleEventID, startedEventID)
-}
-
-// AddInMemoryDecisionTaskScheduled mocks base method
-func (m *MockmutableStateDecisionTaskManager) AddInMemoryDecisionTaskScheduled(arg0 time.Duration) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddInMemoryDecisionTaskScheduled", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// AddInMemoryDecisionTaskScheduled indicates an expected call of AddInMemoryDecisionTaskScheduled
-func (mr *MockmutableStateDecisionTaskManagerMockRecorder) AddInMemoryDecisionTaskScheduled(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddInMemoryDecisionTaskScheduled", reflect.TypeOf((*MockmutableStateDecisionTaskManager)(nil).AddInMemoryDecisionTaskScheduled), arg0)
-}
-
-// AddInMemoryDecisionTaskStarted mocks base method
-func (m *MockmutableStateDecisionTaskManager) AddInMemoryDecisionTaskStarted() error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddInMemoryDecisionTaskStarted")
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// AddInMemoryDecisionTaskStarted indicates an expected call of AddInMemoryDecisionTaskStarted
-func (mr *MockmutableStateDecisionTaskManagerMockRecorder) AddInMemoryDecisionTaskStarted() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddInMemoryDecisionTaskStarted", reflect.TypeOf((*MockmutableStateDecisionTaskManager)(nil).AddInMemoryDecisionTaskStarted))
-}
-
-// DeleteInMemoryDecisionTask mocks base method
-func (m *MockmutableStateDecisionTaskManager) DeleteInMemoryDecisionTask() {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "DeleteInMemoryDecisionTask")
-}
-
-// DeleteInMemoryDecisionTask indicates an expected call of DeleteInMemoryDecisionTask
-func (mr *MockmutableStateDecisionTaskManagerMockRecorder) DeleteInMemoryDecisionTask() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteInMemoryDecisionTask", reflect.TypeOf((*MockmutableStateDecisionTaskManager)(nil).DeleteInMemoryDecisionTask))
-}
-
-// HasScheduledInMemoryDecisionTask mocks base method
-func (m *MockmutableStateDecisionTaskManager) HasScheduledInMemoryDecisionTask() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HasScheduledInMemoryDecisionTask")
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// HasScheduledInMemoryDecisionTask indicates an expected call of HasScheduledInMemoryDecisionTask
-func (mr *MockmutableStateDecisionTaskManagerMockRecorder) HasScheduledInMemoryDecisionTask() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasScheduledInMemoryDecisionTask", reflect.TypeOf((*MockmutableStateDecisionTaskManager)(nil).HasScheduledInMemoryDecisionTask))
-}
-
-// HasStartedInMemoryDecisionTask mocks base method
-func (m *MockmutableStateDecisionTaskManager) HasStartedInMemoryDecisionTask() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HasStartedInMemoryDecisionTask")
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// HasStartedInMemoryDecisionTask indicates an expected call of HasStartedInMemoryDecisionTask
-func (mr *MockmutableStateDecisionTaskManagerMockRecorder) HasStartedInMemoryDecisionTask() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasStartedInMemoryDecisionTask", reflect.TypeOf((*MockmutableStateDecisionTaskManager)(nil).HasStartedInMemoryDecisionTask))
-}
-
-// HasInMemoryDecisionTask mocks base method
-func (m *MockmutableStateDecisionTaskManager) HasInMemoryDecisionTask() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HasInMemoryDecisionTask")
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// HasInMemoryDecisionTask indicates an expected call of HasInMemoryDecisionTask
-func (mr *MockmutableStateDecisionTaskManagerMockRecorder) HasInMemoryDecisionTask() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasInMemoryDecisionTask", reflect.TypeOf((*MockmutableStateDecisionTaskManager)(nil).HasInMemoryDecisionTask))
 }
 
 // FailDecision mocks base method

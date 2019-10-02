@@ -175,11 +175,11 @@ func (h *Handler) AddDecisionTask(ctx context.Context, addRequest *m.AddDecision
 	return h.handleErr(err, scope)
 }
 
-// AddInMemoryDecisionTask - adds an in memory decision task.
-func (h *Handler) AddInMemoryDecisionTask(ctx context.Context, addRequest *m.AddInMemoryDecisionTaskRequest) (retError error) {
+// AddEphemeralDecisionTask - adds an in memory decision task.
+func (h *Handler) AddEphemeralDecisionTask(ctx context.Context, addRequest *m.AddEphemeralDecisionTaskRequest) (retError error) {
 	defer log.CapturePanic(h.GetLogger(), &retError)
-	scope := metrics.MatchingAddInMemoryDecisionTaskScope
-	sw := h.startRequestProfile("AddInMemoryDecisionTask", scope)
+	scope := metrics.MatchingAddEphemeralDecisionTaskScope
+	sw := h.startRequestProfile("AddEphemeralDecisionTask", scope)
 	defer sw.Stop()
 
 	if addRequest.GetForwardedFrom() != "" {
@@ -189,7 +189,7 @@ func (h *Handler) AddInMemoryDecisionTask(ctx context.Context, addRequest *m.Add
 	if ok := h.rateLimiter.Allow(); !ok {
 		return h.handleErr(errMatchingHostThrottle, scope)
 	}
-	return h.handleErr(h.engine.AddInMemoryDecisionTask(ctx, addRequest), scope)
+	return h.handleErr(h.engine.AddEphemeralDecisionTask(ctx, addRequest), scope)
 }
 
 // PollForActivityTask - long poll for an activity task.

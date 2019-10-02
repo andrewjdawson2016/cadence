@@ -52,7 +52,7 @@ type (
 		forwardedFrom string
 	}
 
-	addInMemoryParams struct {
+	addEphemeralParams struct {
 		domainID  string
 		execution *s.WorkflowExecution
 	}
@@ -64,8 +64,8 @@ type (
 		// match with a poller. When that fails, task will be written to database and later
 		// asynchronously matched with a poller
 		AddTask(ctx context.Context, params addTaskParams) (syncMatch bool, err error)
-		// AddInMemoryTask adds a task to the task list. This method will only attempt a synchronous match with a poller.
-		AddInMemoryTask(ctx context.Context, params addInMemoryParams) error
+		// AddEphemeralDecisionTask adds a task to the task list. This method will only attempt a synchronous match with a poller.
+		AddEphemeralDecisionTask(ctx context.Context, params addEphemeralParams) error
 		// GetTask blocks waiting for a task Returns error when context deadline is exceeded
 		// maxDispatchPerSecond is the max rate at which tasks are allowed to be dispatched
 		// from this task list to pollers
@@ -240,12 +240,12 @@ func (c *taskListManagerImpl) AddTask(ctx context.Context, params addTaskParams)
 	return syncMatch, err
 }
 
-// AddInMemoryTask adds a task to the task list. This method will only attempt a synchronous match with a poller.
-func (c *taskListManagerImpl) AddInMemoryTask(ctx context.Context, params addInMemoryParams) error {
+// AddEphemeralDecisionTask adds a task to the task list. This method will only attempt a synchronous match with a poller.
+func (c *taskListManagerImpl) AddEphemeralDecisionTask(ctx context.Context, params addEphemeralParams) error {
 	c.startWG.Wait()
 	_, err := c.executeWithRetry(func() (interface{}, error) {
 		childCtx, cancel := c.newChildContext(ctx, maxSyncMatchWaitTime, time.Second)
-		err := c.matcher.OfferInMemory(childCtx, newInternalInMemoryTask())
+		err := c.matcher.OfferEphemeral(childCtx, newInternalEphemeralTask())
 		cancel()
 		if err != nil {
 			return nil, err

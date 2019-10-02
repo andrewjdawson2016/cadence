@@ -91,24 +91,24 @@ func (c *metricClient) AddDecisionTask(
 	return err
 }
 
-func (c *metricClient) AddInMemoryDecisionTask(
+func (c *metricClient) AddEphemeralDecisionTask(
 	ctx context.Context,
-	request *m.AddInMemoryDecisionTaskRequest,
+	request *m.AddEphemeralDecisionTaskRequest,
 	opts ...yarpc.CallOption) error {
-	c.metricsClient.IncCounter(metrics.MatchingClientAddInMemoryDecisionTaskScope, metrics.CadenceClientRequests)
-	sw := c.metricsClient.StartTimer(metrics.MatchingClientAddInMemoryDecisionTaskScope, metrics.CadenceClientLatency)
+	c.metricsClient.IncCounter(metrics.MatchingClientAddEphemeralDecisionTaskScope, metrics.CadenceClientRequests)
+	sw := c.metricsClient.StartTimer(metrics.MatchingClientAddEphemeralDecisionTaskScope, metrics.CadenceClientLatency)
 
 	c.emitForwardedFromStats(
-		metrics.MatchingClientAddInMemoryDecisionTaskScope,
+		metrics.MatchingClientAddEphemeralDecisionTaskScope,
 		request.GetForwardedFrom(),
 		request.TaskList,
 	)
 
-	err := c.client.AddInMemoryDecisionTask(ctx, request, opts...)
+	err := c.client.AddEphemeralDecisionTask(ctx, request, opts...)
 	sw.Stop()
 
 	if err != nil {
-		c.metricsClient.IncCounter(metrics.MatchingClientAddInMemoryDecisionTaskScope, metrics.CadenceClientFailures)
+		c.metricsClient.IncCounter(metrics.MatchingClientAddEphemeralDecisionTaskScope, metrics.CadenceClientFailures)
 	}
 
 	return err

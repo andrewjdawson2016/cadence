@@ -3035,8 +3035,8 @@ func (_m *mockMutableState) CloseTransactionAsSnapshot(_a0 time.Time, _a1 transa
 	return r0, r1, r2
 }
 
-// AddInMemoryDecisionTaskScheduled provides a mock function with given fields: _a0
-func (_m *mockMutableState) AddInMemoryDecisionTaskScheduled(_a0 time.Duration) error {
+// AddEphemeralDecisionTaskScheduled provides a mock function with given fields: _a0
+func (_m *mockMutableState) AddEphemeralDecisionTaskScheduled(_a0 time.Duration) error {
 	ret := _m.Called(_a0)
 
 	var r0 error
@@ -3051,8 +3051,8 @@ func (_m *mockMutableState) AddInMemoryDecisionTaskScheduled(_a0 time.Duration) 
 	return r0
 }
 
-// AddInMemoryDecisionTaskStarted provides a mock function with given fields:
-func (_m *mockMutableState) AddInMemoryDecisionTaskStarted() error {
+// AddEphemeralDecisionTaskStarted provides a mock function with given fields:
+func (_m *mockMutableState) AddEphemeralDecisionTaskStarted() error {
 	ret := _m.Called()
 
 	var r0 error
@@ -3067,13 +3067,13 @@ func (_m *mockMutableState) AddInMemoryDecisionTaskStarted() error {
 	return r0
 }
 
-// DeleteInMemoryDecisionTask provides a mock function with given fields:
-func (_m *mockMutableState) DeleteInMemoryDecisionTask() {
+// DeleteEphemeralDecisionTask provides a mock function with given fields:
+func (_m *mockMutableState) DeleteEphemeralDecisionTask() {
 	_m.Called()
 }
 
-// HasScheduledInMemoryDecisionTask provides a mock function with given fields:
-func (_m *mockMutableState) HasScheduledInMemoryDecisionTask() bool {
+// HasScheduledEphemeralDecisionTask provides a mock function with given fields:
+func (_m *mockMutableState) HasScheduledEphemeralDecisionTask() bool {
 	ret := _m.Called()
 
 	var r0 bool
@@ -3088,8 +3088,8 @@ func (_m *mockMutableState) HasScheduledInMemoryDecisionTask() bool {
 	return r0
 }
 
-// HasStartedInMemoryDecisionTask provides a mock function with given fields:
-func (_m *mockMutableState) HasStartedInMemoryDecisionTask() bool {
+// HasStartedEphemeralDecisionTask provides a mock function with given fields:
+func (_m *mockMutableState) HasStartedEphemeralDecisionTask() bool {
 	ret := _m.Called()
 
 	var r0 bool
@@ -3104,8 +3104,8 @@ func (_m *mockMutableState) HasStartedInMemoryDecisionTask() bool {
 	return r0
 }
 
-// HasInMemoryDecisionTask provides a mock function with given fields:
-func (_m *mockMutableState) HasInMemoryDecisionTask() bool {
+// HasEphemeralDecisionTask provides a mock function with given fields:
+func (_m *mockMutableState) HasEphemeralDecisionTask() bool {
 	ret := _m.Called()
 
 	var r0 bool
@@ -3114,6 +3114,21 @@ func (_m *mockMutableState) HasInMemoryDecisionTask() bool {
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(bool)
+		}
+	}
+
+	return r0
+}
+
+func (_m *mockMutableState) GetEmptyDecisionInfo() *decisionInfo {
+	ret := _m.Called()
+
+	var r0 *decisionInfo
+	if rf, ok := ret.Get(0).(func() *decisionInfo); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*decisionInfo)
 		}
 	}
 

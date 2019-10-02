@@ -237,15 +237,15 @@ func (e *matchingEngineImpl) AddDecisionTask(ctx context.Context, addRequest *m.
 	})
 }
 
-// AddInMemoryDecisionTask attempts to deliver task to waiting poller. If there is no waiting poller
-// an error is returned. In memory decision tasks can be added on cluster regardless of active status.
-func (e *matchingEngineImpl) AddInMemoryDecisionTask(ctx context.Context, addRequest *m.AddInMemoryDecisionTaskRequest) error {
+// AddEphemeralDecisionTask attempts to deliver task to waiting poller. If there is no waiting poller
+// an error is returned. Ephemeral decision tasks can be added on cluster regardless of active status.
+func (e *matchingEngineImpl) AddEphemeralDecisionTask(ctx context.Context, addRequest *m.AddEphemeralDecisionTaskRequest) error {
 	domainID := addRequest.GetDomainUUID()
 	taskListName := addRequest.TaskList.GetName()
 	taskListKind := common.TaskListKindPtr(addRequest.TaskList.GetKind())
 
 	e.logger.Debug(
-		fmt.Sprintf("Received AddInMemoryDecisionTask for taskList=%v, WorkflowID=%v, RunID=%v",
+		fmt.Sprintf("Received AddEphemeralDecisionTask for taskList=%v, WorkflowID=%v, RunID=%v",
 			addRequest.TaskList.GetName(),
 			addRequest.Execution.GetWorkflowId(),
 			addRequest.Execution.GetRunId()))
@@ -260,7 +260,7 @@ func (e *matchingEngineImpl) AddInMemoryDecisionTask(ctx context.Context, addReq
 		return err
 	}
 
-	return tlMgr.AddInMemoryTask(ctx, addInMemoryParams{
+	return tlMgr.AddEphemeralDecisionTask(ctx, addEphemeralParams{
 		domainID:  domainID,
 		execution: addRequest.Execution,
 	})
@@ -752,7 +752,7 @@ func (e *matchingEngineImpl) recordDecisionTaskStarted(
 		PollRequest:       pollReq,
 	}
 
-	if !task.inMemoryTask {
+	if !task.isEphemeralTask {
 		request.ScheduleId = &task.event.ScheduleID
 		request.TaskId = &task.event.TaskID
 	}

@@ -105,9 +105,9 @@ func (c *clientImpl) AddDecisionTask(
 	return client.AddDecisionTask(ctx, request, opts...)
 }
 
-func (c *clientImpl) AddInMemoryDecisionTask(
+func (c *clientImpl) AddEphemeralDecisionTask(
 	ctx context.Context,
-	request *m.AddInMemoryDecisionTaskRequest,
+	request *m.AddEphemeralDecisionTaskRequest,
 	opts ...yarpc.CallOption) error {
 	opts = common.AggregateYarpcOptions(ctx, opts...)
 	partition := c.loadBalancer.PickWritePartition(
@@ -123,7 +123,7 @@ func (c *clientImpl) AddInMemoryDecisionTask(
 	}
 	ctx, cancel := c.createContext(ctx)
 	defer cancel()
-	return client.AddInMemoryDecisionTask(ctx, request, opts...)
+	return client.AddEphemeralDecisionTask(ctx, request, opts...)
 }
 
 func (c *clientImpl) PollForActivityTask(

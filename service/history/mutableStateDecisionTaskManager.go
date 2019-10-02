@@ -36,12 +36,12 @@ import (
 
 type (
 	mutableStateDecisionTaskManager interface {
-		AddInMemoryDecisionTaskScheduled(time.Duration) error
-		AddInMemoryDecisionTaskStarted() error
-		DeleteInMemoryDecisionTask()
-		HasScheduledInMemoryDecisionTask() bool
-		HasStartedInMemoryDecisionTask() bool
-		HasInMemoryDecisionTask() bool
+		AddEphemeralDecisionTaskScheduled(time.Duration) error
+		AddEphemeralDecisionTaskStarted() error
+		DeleteEphemeralDecisionTask()
+		HasScheduledEphemeralDecisionTask() bool
+		HasStartedEphemeralDecisionTask() bool
+		HasEphemeralDecisionTask() bool
 		GetEmptyDecisionInfo() *decisionInfo
 
 		ReplicateDecisionTaskScheduledEvent(
@@ -112,32 +112,28 @@ type (
 	}
 
 	mutableStateDecisionTaskManagerImpl struct {
-		msb             *mutableStateBuilder
-		memDecisionTask *memDecisionTask
+		msb                   *mutableStateBuilder
+		ephemeralDecisionTask *ephemeralDecisionTask
 	}
 
-	memDecisionTaskState int
+	ephemeralDecisionTaskState int
 
-	// memDecisionTask represents a decisionTask which only ever exists in memory.
-	// This decisionTask will never be persisted and does not contain a *decisionInfo.
-	// Currently the only use case for memDecisionTask is query, but other potential use cases exist.
-	// While memDecisionTask will not be persisted it does impact the logic of decision state machine.
-	memDecisionTask struct {
-		state  memDecisionTaskState
+	ephemeralDecisionTask struct {
+		state  ephemeralDecisionTaskState
 		expiry time.Time
 	}
 )
 
 const (
-	memDecisionTaskStateNone memDecisionTaskState = iota
-	memDecisionTaskStateScheduled
-	memDecisionTaskStateStarted
+	ephemeralDecisionTaskStateNone ephemeralDecisionTaskState = iota
+	ephemeralDecisionTaskStateScheduled
+	ephemeralDecisionTaskStateStarted
 )
 
 func newMutableStateDecisionTaskManager(msb *mutableStateBuilder) mutableStateDecisionTaskManager {
 	return &mutableStateDecisionTaskManagerImpl{
-		msb:             msb,
-		memDecisionTask: &memDecisionTask{},
+		msb:                   msb,
+		ephemeralDecisionTask: &ephemeralDecisionTask{},
 	}
 }
 
@@ -311,7 +307,7 @@ func (m *mutableStateDecisionTaskManagerImpl) AddDecisionTaskScheduledEventAsHea
 ) (*decisionInfo, error) {
 	defer m.ensureMemDecisionTaskValid()
 	opTag := tag.WorkflowActionDecisionTaskScheduled
-	if m.HasPendingDecision() || m.HasStartedInMemoryDecisionTask() {
+	if m.HasPendingDecision() || m.HasStartedEphemeralDecisionTask() {
 		m.msb.logger.Warn(mutableStateInvalidHistoryActionMsg, opTag,
 			tag.WorkflowEventID(m.msb.GetNextEventID()),
 			tag.ErrorTypeInvalidHistoryAction,
@@ -437,7 +433,7 @@ func (m *mutableStateDecisionTaskManagerImpl) AddDecisionTaskStartedEvent(
 	defer m.ensureMemDecisionTaskValid()
 	opTag := tag.WorkflowActionDecisionTaskStarted
 	decision, ok := m.GetDecisionInfo(scheduleEventID)
-	if !ok || decision.StartedID != common.EmptyEventID || m.HasStartedInMemoryDecisionTask() {
+	if !ok || decision.StartedID != common.EmptyEventID || m.HasStartedEphemeralDecisionTask() {
 		m.msb.logger.Warn(mutableStateInvalidHistoryActionMsg, opTag,
 			tag.WorkflowEventID(m.msb.GetNextEventID()),
 			tag.ErrorTypeInvalidHistoryAction,
@@ -593,44 +589,44 @@ func (m *mutableStateDecisionTaskManagerImpl) AddDecisionTaskTimedOutEvent(
 	return event, nil
 }
 
-func (m *mutableStateDecisionTaskManagerImpl) AddInMemoryDecisionTaskScheduled(ttl time.Duration) error {
+func (m *mutableStateDecisionTaskManagerImpl) AddEphemeralDecisionTaskScheduled(ttl time.Duration) error {
 	defer m.ensureMemDecisionTaskValid()
-	opTag := tag.WorkflowActionInMemoryDecisionTaskScheduled
-	if m.HasPendingDecision() || m.HasInMemoryDecisionTask() {
+	opTag := tag.WorkflowActionEphemeralDecisionTaskScheduled
+	if m.HasPendingDecision() || m.HasEphemeralDecisionTask() {
 		m.msb.logger.Warn(mutableStateInvalidHistoryActionMsg, opTag, tag.ErrorTypeInvalidMemDecisionTaskAction)
 		return m.msb.createInternalServerError(opTag)
 	}
-	m.memDecisionTask.state = memDecisionTaskStateScheduled
-	m.memDecisionTask.expiry = m.msb.timeSource.Now().Add(ttl)
+	m.ephemeralDecisionTask.state = ephemeralDecisionTaskStateScheduled
+	m.ephemeralDecisionTask.expiry = m.msb.timeSource.Now().Add(ttl)
 	return nil
 }
 
-func (m *mutableStateDecisionTaskManagerImpl) AddInMemoryDecisionTaskStarted() error {
+func (m *mutableStateDecisionTaskManagerImpl) AddEphemeralDecisionTaskStarted() error {
 	defer m.ensureMemDecisionTaskValid()
-	opTag := tag.WorkflowActionInMemoryDecisionTaskStarted
-	if m.HasPendingDecision() || !m.HasScheduledInMemoryDecisionTask() {
+	opTag := tag.WorkflowActionEphemeralDecisionTaskStarted
+	if m.HasPendingDecision() || !m.HasScheduledEphemeralDecisionTask() {
 		m.msb.logger.Warn(mutableStateInvalidHistoryActionMsg, opTag, tag.ErrorTypeInvalidMemDecisionTaskAction)
 		return m.msb.createInternalServerError(opTag)
 	}
-	m.memDecisionTask.state = memDecisionTaskStateStarted
+	m.ephemeralDecisionTask.state = ephemeralDecisionTaskStateStarted
 	return nil
 }
 
-func (m *mutableStateDecisionTaskManagerImpl) DeleteInMemoryDecisionTask() {
-	m.memDecisionTask.state = memDecisionTaskStateNone
-	m.memDecisionTask.expiry = time.Time{}
+func (m *mutableStateDecisionTaskManagerImpl) DeleteEphemeralDecisionTask() {
+	m.ephemeralDecisionTask.state = ephemeralDecisionTaskStateNone
+	m.ephemeralDecisionTask.expiry = time.Time{}
 }
 
-func (m *mutableStateDecisionTaskManagerImpl) HasScheduledInMemoryDecisionTask() bool {
-	return m.memDecisionTask.state == memDecisionTaskStateScheduled && m.memDecisionTask.expiry.After(m.msb.timeSource.Now())
+func (m *mutableStateDecisionTaskManagerImpl) HasScheduledEphemeralDecisionTask() bool {
+	return m.ephemeralDecisionTask.state == ephemeralDecisionTaskStateScheduled && m.ephemeralDecisionTask.expiry.After(m.msb.timeSource.Now())
 }
 
-func (m *mutableStateDecisionTaskManagerImpl) HasStartedInMemoryDecisionTask() bool {
-	return m.memDecisionTask.state == memDecisionTaskStateStarted && m.memDecisionTask.expiry.After(m.msb.timeSource.Now())
+func (m *mutableStateDecisionTaskManagerImpl) HasStartedEphemeralDecisionTask() bool {
+	return m.ephemeralDecisionTask.state == ephemeralDecisionTaskStateStarted && m.ephemeralDecisionTask.expiry.After(m.msb.timeSource.Now())
 }
 
-func (m *mutableStateDecisionTaskManagerImpl) HasInMemoryDecisionTask() bool {
-	return m.memDecisionTask.state != memDecisionTaskStateNone && m.memDecisionTask.expiry.After(m.msb.timeSource.Now())
+func (m *mutableStateDecisionTaskManagerImpl) HasEphemeralDecisionTask() bool {
+	return m.ephemeralDecisionTask.state != ephemeralDecisionTaskStateNone && m.ephemeralDecisionTask.expiry.After(m.msb.timeSource.Now())
 }
 
 func (m *mutableStateDecisionTaskManagerImpl) GetEmptyDecisionInfo() *decisionInfo {
@@ -814,10 +810,10 @@ func (m *mutableStateDecisionTaskManagerImpl) afterAddDecisionTaskCompletedEvent
 }
 
 func (m *mutableStateDecisionTaskManagerImpl) ensureMemDecisionTaskValid() {
-	// it is invalid to ever ever have both memDecisionTask and realDecisionTask
-	// if this state arises it either indicates a bug or it indicates a scheduled memDecisionTask
-	// is being converted to a real decisionTask in either case the correct thing to do is delete the memDecisionTask
-	if m.HasInMemoryDecisionTask() && m.HasPendingDecision() {
-		m.DeleteInMemoryDecisionTask()
+	// it is invalid to ever ever have both ephemeralDecisionTask and realDecisionTask
+	// if this state arises it either indicates a bug or it indicates a scheduled ephemeralDecisionTask
+	// is being converted to a real decisionTask in either case the correct thing to do is delete the ephemeralDecisionTask
+	if m.HasEphemeralDecisionTask() && m.HasPendingDecision() {
+		m.DeleteEphemeralDecisionTask()
 	}
 }

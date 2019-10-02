@@ -127,15 +127,15 @@ func (mr *_MockClientRecorder) AddDecisionTask(
 	return mr.mock.ctrl.RecordCall(mr.mock, "AddDecisionTask", args...)
 }
 
-// AddInMemoryDecisionTask responds to a AddInMemoryDecisionTask call based on the mock expectations. This
+// AddEphemeralDecisionTask responds to a AddEphemeralDecisionTask call based on the mock expectations. This
 // call will fail if the mock does not expect this call. Use EXPECT to expect
 // a call to this function.
 //
-// 	client.EXPECT().AddInMemoryDecisionTask(gomock.Any(), ...).Return(...)
-// 	... := client.AddInMemoryDecisionTask(...)
-func (m *MockClient) AddInMemoryDecisionTask(
+// 	client.EXPECT().AddEphemeralDecisionTask(gomock.Any(), ...).Return(...)
+// 	... := client.AddEphemeralDecisionTask(...)
+func (m *MockClient) AddEphemeralDecisionTask(
 	ctx context.Context,
-	_AddRequest *matching.AddInMemoryDecisionTaskRequest,
+	_AddRequest *matching.AddEphemeralDecisionTaskRequest,
 	opts ...yarpc.CallOption,
 ) (err error) {
 
@@ -144,18 +144,18 @@ func (m *MockClient) AddInMemoryDecisionTask(
 		args = append(args, o)
 	}
 	i := 0
-	ret := m.ctrl.Call(m, "AddInMemoryDecisionTask", args...)
+	ret := m.ctrl.Call(m, "AddEphemeralDecisionTask", args...)
 	err, _ = ret[i].(error)
 	return
 }
 
-func (mr *_MockClientRecorder) AddInMemoryDecisionTask(
+func (mr *_MockClientRecorder) AddEphemeralDecisionTask(
 	ctx interface{},
 	_AddRequest interface{},
 	opts ...interface{},
 ) *gomock.Call {
 	args := append([]interface{}{ctx, _AddRequest}, opts...)
-	return mr.mock.ctrl.RecordCall(mr.mock, "AddInMemoryDecisionTask", args...)
+	return mr.mock.ctrl.RecordCall(mr.mock, "AddEphemeralDecisionTask", args...)
 }
 
 // CancelOutstandingPoll responds to a CancelOutstandingPoll call based on the mock expectations. This

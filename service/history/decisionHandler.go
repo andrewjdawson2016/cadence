@@ -137,8 +137,8 @@ func (handler *decisionHandlerImpl) handleDecisionTaskStarted(
 	ctx ctx.Context,
 	req *h.RecordDecisionTaskStartedRequest,
 ) (*h.RecordDecisionTaskStartedResponse, error) {
-	if req.GetInMemoryDecisionTask() {
-		return handler.handleDecisionTaskStartedInMemory(ctx, req)
+	if req.GetIsEphemeralDecisionTask() {
+		return handler.handleEphemeralDecisionTaskStarted(ctx, req)
 	}
 
 	domainEntry, err := handler.historyEngine.getActiveDomainEntry(req.DomainUUID)
@@ -218,7 +218,7 @@ func (handler *decisionHandlerImpl) handleDecisionTaskStarted(
 	return resp, nil
 }
 
-func (handler *decisionHandlerImpl) handleDecisionTaskStartedInMemory(
+func (handler *decisionHandlerImpl) handleEphemeralDecisionTaskStarted(
 	ctx ctx.Context,
 	req *h.RecordDecisionTaskStartedRequest,
 ) (*h.RecordDecisionTaskStartedResponse, error) {
@@ -231,10 +231,10 @@ func (handler *decisionHandlerImpl) handleDecisionTaskStartedInMemory(
 	var err error
 	err = handler.historyEngine.updateWorkflowExecutionWithAction(ctx, domainID, execution,
 		func(msBuilder mutableState, tBuilder *timerBuilder) (*updateWorkflowAction, error) {
-			if !msBuilder.HasScheduledInMemoryDecisionTask() {
+			if !msBuilder.HasScheduledEphemeralDecisionTask() {
 				return nil, &workflow.InternalServiceError{Message: "In memory task has been converted to readl task, dropping in memory task"}
 			}
-			if err = msBuilder.AddInMemoryDecisionTaskStarted(); err != nil {
+			if err = msBuilder.AddEphemeralDecisionTaskStarted(); err != nil {
 				return nil, &workflow.InternalServiceError{Message: "Could not start in memory decision task"}
 			}
 			resp, err = handler.createRecordDecisionTaskStartedResponse(domainID, msBuilder, msBuilder.GetEmptyDecisionInfo(), req.PollRequest.GetIdentity())
@@ -653,10 +653,9 @@ func (handler *decisionHandlerImpl) createRecordDecisionTaskStartedResponse(
 		return nil, err
 	}
 	response.BranchToken = currentBranchToken
-	response.IsInMemoryDecisionTask = common.BoolPtr(msBuilder.HasInMemoryDecisionTask())
+	response.IsEphemeralDecisionTask = common.BoolPtr(msBuilder.HasEphemeralDecisionTask())
 
 	// get buffered queries
-
 
 	return response, nil
 }
