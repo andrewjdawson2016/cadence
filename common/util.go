@@ -292,7 +292,11 @@ func GenerateRandomString(n int) string {
 }
 
 // CreateMatchingPollForDecisionTaskResponse create response for matching's PollForDecisionTask
-func CreateMatchingPollForDecisionTaskResponse(historyResponse *h.RecordDecisionTaskStartedResponse, workflowExecution *workflow.WorkflowExecution, token []byte) *m.PollForDecisionTaskResponse {
+func CreateMatchingPollForDecisionTaskResponse(
+	historyResponse *h.RecordDecisionTaskStartedResponse,
+	workflowExecution *workflow.WorkflowExecution,
+	token []byte,
+) *m.PollForDecisionTaskResponse {
 	matchingResp := &m.PollForDecisionTaskResponse{
 		WorkflowExecution:         workflowExecution,
 		TaskToken:                 token,
@@ -307,6 +311,7 @@ func CreateMatchingPollForDecisionTaskResponse(historyResponse *h.RecordDecision
 		BranchToken:               historyResponse.BranchToken,
 		ScheduledTimestamp:        historyResponse.ScheduledTimestamp,
 		StartedTimestamp:          historyResponse.StartedTimestamp,
+		BufferedQueries:           historyResponse.BufferedQueries,
 	}
 	if historyResponse.GetPreviousStartedEventId() != EmptyEventID {
 		matchingResp.PreviousStartedEventId = historyResponse.PreviousStartedEventId

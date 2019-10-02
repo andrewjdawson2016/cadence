@@ -254,6 +254,10 @@ func (e *mutableStateBuilder) HasInMemoryDecisionTask() bool {
 	return e.decisionTaskManager.HasInMemoryDecisionTask()
 }
 
+func (e *mutableStateBuilder) GetEmptyDecisionInfo() *decisionInfo {
+	return e.decisionTaskManager.GetEmptyDecisionInfo()
+}
+
 func (e *mutableStateBuilder) CopyToPersistence() *persistence.WorkflowMutableState {
 	state := &persistence.WorkflowMutableState{}
 

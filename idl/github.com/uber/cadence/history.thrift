@@ -211,6 +211,7 @@ struct RecordDecisionTaskStartedResponse {
   120: optional i64 (js.type = "Long") scheduledTimestamp
   130: optional i64 (js.type = "Long") startedTimestamp
   140: optional list<shared.WorkflowQuery> bufferedQueries
+  150: optional bool isInMemoryDecisionTask
 }
 
 struct SignalWorkflowExecutionRequest {

@@ -343,7 +343,7 @@ func (c *taskListManagerImpl) getTask(ctx context.Context, maxDispatchPerSecond 
 	c.matcher.UpdateRatelimit(maxDispatchPerSecond)
 
 	if domainEntry.GetDomainNotActiveErr() != nil {
-		return c.matcher.PollForQuery(childCtx)
+		return c.matcher.PollNonActiveTasks(childCtx)
 	}
 
 	return c.matcher.Poll(childCtx)

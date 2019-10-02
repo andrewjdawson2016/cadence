@@ -137,6 +137,9 @@ func (handler *decisionHandlerImpl) handleDecisionTaskStarted(
 	ctx ctx.Context,
 	req *h.RecordDecisionTaskStartedRequest,
 ) (*h.RecordDecisionTaskStartedResponse, error) {
+	if req.GetInMemoryDecisionTask() {
+		return handler.handleDecisionTaskStartedInMemory(ctx, req)
+	}
 
 	domainEntry, err := handler.historyEngine.getActiveDomainEntry(req.DomainUUID)
 	if err != nil {
@@ -209,6 +212,37 @@ func (handler *decisionHandlerImpl) handleDecisionTaskStarted(
 			return updateAction, nil
 		})
 
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (handler *decisionHandlerImpl) handleDecisionTaskStartedInMemory(
+	ctx ctx.Context,
+	req *h.RecordDecisionTaskStartedRequest,
+) (*h.RecordDecisionTaskStartedResponse, error) {
+	domainID := *req.DomainUUID
+	execution := workflow.WorkflowExecution{
+		WorkflowId: req.WorkflowExecution.WorkflowId,
+		RunId:      req.WorkflowExecution.RunId,
+	}
+	var resp *h.RecordDecisionTaskStartedResponse
+	var err error
+	err = handler.historyEngine.updateWorkflowExecutionWithAction(ctx, domainID, execution,
+		func(msBuilder mutableState, tBuilder *timerBuilder) (*updateWorkflowAction, error) {
+			if !msBuilder.HasScheduledInMemoryDecisionTask() {
+				return nil, &workflow.InternalServiceError{Message: "In memory task has been converted to readl task, dropping in memory task"}
+			}
+			if err = msBuilder.AddInMemoryDecisionTaskStarted(); err != nil {
+				return nil, &workflow.InternalServiceError{Message: "Could not start in memory decision task"}
+			}
+			resp, err = handler.createRecordDecisionTaskStartedResponse(domainID, msBuilder, msBuilder.GetEmptyDecisionInfo(), req.PollRequest.GetIdentity())
+			if err != nil {
+				return nil, err
+			}
+			return &updateWorkflowAction{noop: true}, nil
+		})
 	if err != nil {
 		return nil, err
 	}
@@ -619,6 +653,10 @@ func (handler *decisionHandlerImpl) createRecordDecisionTaskStartedResponse(
 		return nil, err
 	}
 	response.BranchToken = currentBranchToken
+	response.IsInMemoryDecisionTask = common.BoolPtr(msBuilder.HasInMemoryDecisionTask())
+
+	// get buffered queries
+
 
 	return response, nil
 }

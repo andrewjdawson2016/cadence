@@ -285,6 +285,19 @@ func (tm *TaskMatcher) PollForQuery(ctx context.Context) (*internalTask, error) 
 	return tm.pollOrForward(ctx, nil, tm.queryTaskC)
 }
 
+// PollNonActiveTasks blocks until a query task or in memory task is found. These task types
+// can be dispatched on either the active or standby cluster. Return ErrNoTasks when context deadline is exceeded.
+func (tm *TaskMatcher) PollNonActiveTasks(ctx context.Context) (*internalTask, error) {
+	// try local match first without blocking until context timeout
+	if task, err := tm.pollNonBlocking(ctx, tm.inMemoryTaskC, tm.queryTaskC); err == nil {
+		return task, nil
+	}
+	// there is no local poller available to pickup this task. Now block waiting
+	// either for a local poller or a forwarding token to be available. When a
+	// forwarding token becomes available, send this poll to a parent partition
+	return tm.pollOrForward(ctx, tm.inMemoryTaskC, tm.queryTaskC)
+}
+
 // UpdateRatelimit updates the task dispatch rate
 func (tm *TaskMatcher) UpdateRatelimit(rps *float64) {
 	if rps == nil {

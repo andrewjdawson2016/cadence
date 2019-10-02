@@ -261,9 +261,8 @@ func (e *matchingEngineImpl) AddInMemoryDecisionTask(ctx context.Context, addReq
 	}
 
 	return tlMgr.AddInMemoryTask(ctx, addInMemoryParams{
-		domainID:      domainID,
-		execution:     addRequest.Execution,
-		forwardedFrom: addRequest.GetForwardedFrom(),
+		domainID:  domainID,
+		execution: addRequest.Execution,
 	})
 }
 
@@ -388,10 +387,6 @@ pollLoop:
 				BranchToken:               mutableStateResp.CurrentBranchToken,
 			}
 			return e.createPollForDecisionTaskResponse(task, resp), nil
-		}
-
-		if task.inMemoryTask {
-			// TODO: handle the in memory case
 		}
 
 		resp, err := e.recordDecisionTaskStarted(ctx, request, task)
@@ -753,11 +748,15 @@ func (e *matchingEngineImpl) recordDecisionTaskStarted(
 	request := &h.RecordDecisionTaskStartedRequest{
 		DomainUUID:        &task.event.DomainID,
 		WorkflowExecution: task.workflowExecution(),
-		ScheduleId:        &task.event.ScheduleID,
-		TaskId:            &task.event.TaskID,
 		RequestId:         common.StringPtr(uuid.New()),
 		PollRequest:       pollReq,
 	}
+
+	if !task.inMemoryTask {
+		request.ScheduleId = &task.event.ScheduleID
+		request.TaskId = &task.event.TaskID
+	}
+
 	var resp *h.RecordDecisionTaskStartedResponse
 	op := func() error {
 		var err error

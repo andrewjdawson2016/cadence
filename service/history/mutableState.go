@@ -58,6 +58,7 @@ type (
 		HasScheduledInMemoryDecisionTask() bool
 		HasStartedInMemoryDecisionTask() bool
 		HasInMemoryDecisionTask() bool
+		GetEmptyDecisionInfo() *decisionInfo
 
 		AddActivityTaskCancelRequestedEvent(int64, string, string) (*workflow.HistoryEvent, *persistence.ActivityInfo, error)
 		AddActivityTaskCanceledEvent(int64, int64, int64, []uint8, string) (*workflow.HistoryEvent, error)

@@ -42,6 +42,7 @@ type (
 		HasScheduledInMemoryDecisionTask() bool
 		HasStartedInMemoryDecisionTask() bool
 		HasInMemoryDecisionTask() bool
+		GetEmptyDecisionInfo() *decisionInfo
 
 		ReplicateDecisionTaskScheduledEvent(
 			version int64,
@@ -630,6 +631,19 @@ func (m *mutableStateDecisionTaskManagerImpl) HasStartedInMemoryDecisionTask() b
 
 func (m *mutableStateDecisionTaskManagerImpl) HasInMemoryDecisionTask() bool {
 	return m.memDecisionTask.state != memDecisionTaskStateNone && m.memDecisionTask.expiry.After(m.msb.timeSource.Now())
+}
+
+func (m *mutableStateDecisionTaskManagerImpl) GetEmptyDecisionInfo() *decisionInfo {
+	return &decisionInfo{
+		Version:                    common.EmptyVersion,
+		ScheduleID:                 common.EmptyEventID,
+		StartedID:                  common.EmptyEventID,
+		RequestID:                  emptyUUID,
+		DecisionTimeout:            0,
+		StartedTimestamp:           0,
+		TaskList:                   "",
+		OriginalScheduledTimestamp: 0,
+	}
 }
 
 func (m *mutableStateDecisionTaskManagerImpl) FailDecision(
