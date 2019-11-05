@@ -1562,6 +1562,27 @@ func (wh *WorkflowHandler) RespondQueryTaskCompleted(
 	)
 	defer sw.Stop()
 
+	sizeLimitError := wh.config.BlobSizeLimitError(domainEntry.GetInfo().Name)
+	sizeLimitWarn := wh.config.BlobSizeLimitWarn(domainEntry.GetInfo().Name)
+
+	if err := common.CheckEventBlobSizeLimit(
+		len(completeRequest.QueryResult),
+		sizeLimitWarn,
+		sizeLimitError,
+		queryTaskToken.DomainID,
+		"",
+		"",
+		scope,
+		wh.GetThrottledLogger(),
+	); err != nil {
+		completeRequest = &shared.RespondQueryTaskCompletedRequest{
+			TaskToken:     completeRequest.TaskToken,
+			CompletedType: common.QueryTaskCompletedTypePtr(gen.QueryTaskCompletedTypeFailed),
+			QueryResult:   nil,
+			ErrorMessage:  common.StringPtr(err.Error()),
+		}
+	}
+
 	matchingRequest := &m.RespondQueryTaskCompletedRequest{
 		DomainUUID:       common.StringPtr(queryTaskToken.DomainID),
 		TaskList:         &gen.TaskList{Name: common.StringPtr(queryTaskToken.TaskList)},
