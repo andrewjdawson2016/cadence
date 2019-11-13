@@ -309,6 +309,11 @@ struct TaskList {
   20: optional TaskListKind kind
 }
 
+struct WorkerVersionInfo {
+  10: optional string clientFeatureVersion
+  20: optional string clientImpl
+}
+
 enum EncodingType {
   ThriftRW,
   JSON,
@@ -1382,6 +1387,7 @@ struct QueryRejected {
 struct QueryWorkflowResponse {
   10: optional binary queryResult
   20: optional QueryRejected queryRejected
+  30: optional WorkerVersionInfo workerVersionInfo
 }
 
 struct WorkflowQuery {
@@ -1404,6 +1410,7 @@ struct RespondQueryTaskCompletedRequest {
   20: optional QueryTaskCompletedType completedType
   30: optional binary queryResult
   40: optional string errorMessage
+  50: optional WorkerVersionInfo workerVersionInfo
 }
 
 struct WorkflowQueryResult {

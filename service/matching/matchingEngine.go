@@ -49,26 +49,33 @@ import (
 // Implements matching.Engine
 // TODO: Switch implementation from lock/channel based to a partitioned agent
 // to simplify code and reduce possiblity of synchronization errors.
-type matchingEngineImpl struct {
-	taskManager     persistence.TaskManager
-	historyService  history.Client
-	matchingClient  matching.Client
-	tokenSerializer common.TaskTokenSerializer
-	logger          log.Logger
-	metricsClient   metrics.Client
-	taskListsLock   sync.RWMutex                   // locks mutation of taskLists
-	taskLists       map[taskListID]taskListManager // Convert to LRU cache
-	config          *Config
-	queryMapLock    sync.Mutex
-	// map from query TaskID (which is a UUID generated in QueryWorkflow() call) to a channel that QueryWorkflow()
-	// will block and wait for. The RespondQueryTaskCompleted() call will send the data through that channel which will
-	// unblock QueryWorkflow() call.
-	queryTaskMap map[string]chan *queryResult
-	domainCache  cache.DomainCache
-}
+type (
+	matchingEngineImpl struct {
+		taskManager     persistence.TaskManager
+		historyService  history.Client
+		matchingClient  matching.Client
+		tokenSerializer common.TaskTokenSerializer
+		logger          log.Logger
+		metricsClient   metrics.Client
+		taskListsLock   sync.RWMutex                   // locks mutation of taskLists
+		taskLists       map[taskListID]taskListManager // Convert to LRU cache
+		config          *Config
+		queryMapLock    sync.Mutex
+		// map from query TaskID (which is a UUID generated in QueryWorkflow() call) to a channel that QueryWorkflow()
+		// will block and wait for. The RespondQueryTaskCompleted() call will send the data through that channel which will
+		// unblock QueryWorkflow() call.
+		lockableQueryTaskMap lockableQueryTaskMap
+		domainCache  cache.DomainCache
+	}
 
-type pollerIDCtxKey string
-type identityCtxKey string
+	pollerIDCtxKey string
+	identityCtxKey string
+
+	lockableQueryTaskMap struct {
+		sync.Mutex
+		queryTaskMap map[string]chan *queryResult
+	}
+)
 
 var (
 	// EmptyPollForDecisionTaskResponse is the response when there are no decision tasks to hand out
@@ -111,7 +118,7 @@ func NewEngine(taskManager persistence.TaskManager,
 		metricsClient:   metricsClient,
 		matchingClient:  matchingClient,
 		config:          config,
-		queryTaskMap:    make(map[string]chan *queryResult),
+		lockableQueryTaskMap:    lockableQueryTaskMap{queryTaskMap:make(map[string]chan *queryResult)},
 		domainCache:     domainCache,
 	}
 }
@@ -334,8 +341,7 @@ pollLoop:
 
 			if mutableStateResp.GetPreviousStartedEventId() <= 0 {
 				// first decision task is not processed by worker yet.
-				e.deliverQueryResult(task.query.taskID,
-					&queryResult{err: errQueryBeforeFirstDecisionCompleted, waitNextEventID: mutableStateResp.GetNextEventId()})
+				e.deliverQueryResult(task.query.taskID, &queryResult{err: errQueryBeforeFirstDecisionCompleted})
 				return emptyPollForDecisionTaskResponse, nil
 			}
 
@@ -464,57 +470,53 @@ query_loop:
 
 		if result != nil {
 			// task was remotely matched on another host, directly send the response
-			return &workflow.QueryWorkflowResponse{QueryResult: result}, nil
+			return result, nil
 		}
 
 		queryResultCh := make(chan *queryResult, 1)
-		e.queryMapLock.Lock()
-		e.queryTaskMap[taskID] = queryResultCh
-		e.queryMapLock.Unlock()
-		defer func() {
-			e.queryMapLock.Lock()
-			delete(e.queryTaskMap, taskID)
-			e.queryMapLock.Unlock()
-		}()
+		e.lockableQueryTaskMap.put(taskID, queryResultCh)
 
 		select {
 		case result := <-queryResultCh:
 			if result.err == nil {
-				return &workflow.QueryWorkflowResponse{QueryResult: result.result}, nil
+				e.lockableQueryTaskMap.delete(taskID)
+				return &workflow.QueryWorkflowResponse{
+					QueryResult: result.result,
+					WorkerVersionInfo: result.workerVersionInfo,
+				}, nil
 			}
 
 			lastErr = result.err // lastErr will not be nil
 			if result.err == errQueryBeforeFirstDecisionCompleted {
 				// query before first decision completed, so wait for first decision task to complete
 				expectedNextEventID := result.waitNextEventID
-			wait_loop:
 				for j := 0; j < maxQueryWaitCount; j++ {
 					ms, err := e.historyService.PollMutableState(ctx, &h.PollMutableStateRequest{
 						DomainUUID:          queryRequest.DomainUUID,
 						Execution:           queryRequest.QueryRequest.Execution,
 						ExpectedNextEventId: common.Int64Ptr(expectedNextEventID),
 					})
-					if err == nil {
-						if ms.GetPreviousStartedEventId() > 0 {
-							// now we have at least one decision task completed, so retry query
-							continue query_loop
-						}
 
-						if ms.GetWorkflowCloseState() != persistence.WorkflowCloseStatusNone {
-							return nil, &workflow.QueryFailedError{Message: "workflow closed without making any progress"}
-						}
-
-						if expectedNextEventID >= ms.GetNextEventId() {
-							// this should not happen, check to prevent busy loop
-							return nil, &workflow.QueryFailedError{Message: "workflow not making any progress"}
-						}
-
-						// keep waiting
-						expectedNextEventID = ms.GetNextEventId()
-						continue wait_loop
+					if err != nil {
+						return nil, &workflow.QueryFailedError{Message: err.Error()}
 					}
 
-					return nil, &workflow.QueryFailedError{Message: err.Error()}
+					if ms.GetPreviousStartedEventId() > 0 {
+						// now we have at least one decision task completed, so retry query
+						continue query_loop
+					}
+
+					if ms.GetWorkflowCloseState() != persistence.WorkflowCloseStatusNone {
+						return nil, &workflow.QueryFailedError{Message: "workflow closed without making any progress"}
+					}
+
+					if expectedNextEventID >= ms.GetNextEventId() {
+						// this should not happen, check to prevent busy loop
+						return nil, &workflow.QueryFailedError{Message: "workflow not making any progress"}
+					}
+
+					// keep waiting
+					expectedNextEventID = ms.GetNextEventId()
 				}
 			}
 
@@ -526,17 +528,49 @@ query_loop:
 	return nil, &workflow.QueryFailedError{Message: "query failed with max retry" + lastErr.Error()}
 }
 
+func (e *matchingEngineImpl) handledFirstDecision(
+	ctx context.Context,
+	queryRequest *m.QueryWorkflowRequest,
+	expectedNextEventID int64,
+) (bool, error){
+	ms, err := e.historyService.PollMutableState(ctx, &h.PollMutableStateRequest{
+		DomainUUID:          queryRequest.DomainUUID,
+		Execution:           queryRequest.QueryRequest.Execution,
+		ExpectedNextEventId: common.Int64Ptr(expectedNextEventID),
+	})
+
+	if err != nil {
+		return false, &workflow.QueryFailedError{Message: err.Error()}
+	}
+
+	//
+	if ms.GetPreviousStartedEventId() > 0 {
+		return true, nil
+	}
+
+	if ms.GetWorkflowCloseState() != persistence.WorkflowCloseStatusNone {
+		return false, &workflow.QueryFailedError{Message: "workflow closed without making any progress"}
+	}
+
+	if expectedNextEventID >= ms.GetNextEventId() {
+		// this should not happen, check to prevent busy loop
+		return false, &workflow.QueryFailedError{Message: "workflow not making any progress"}
+	}
+
+	// keep waiting
+	expectedNextEventID = ms.GetNextEventId()
+
+}
+
 type queryResult struct {
 	result          []byte
 	err             error
-	waitNextEventID int64
+	// waitNextEventID int64
+	workerVersionInfo *workflow.WorkerVersionInfo
 }
 
 func (e *matchingEngineImpl) deliverQueryResult(taskID string, queryResult *queryResult) error {
-	e.queryMapLock.Lock()
-	queryResultCh, ok := e.queryTaskMap[taskID]
-	e.queryMapLock.Unlock()
-
+	queryResultCh, ok := e.lockableQueryTaskMap.get(taskID)
 	if !ok {
 		e.metricsClient.IncCounter(metrics.MatchingRespondQueryTaskCompletedScope, metrics.RespondQueryTaskFailedCounter)
 		return &workflow.EntityNotExistsError{Message: "query task not found, or already expired"}
@@ -548,9 +582,15 @@ func (e *matchingEngineImpl) deliverQueryResult(taskID string, queryResult *quer
 
 func (e *matchingEngineImpl) RespondQueryTaskCompleted(ctx context.Context, request *m.RespondQueryTaskCompletedRequest) error {
 	if *request.CompletedRequest.CompletedType == workflow.QueryTaskCompletedTypeFailed {
-		e.deliverQueryResult(request.GetTaskID(), &queryResult{err: errors.New(request.CompletedRequest.GetErrorMessage())})
+		e.deliverQueryResult(request.GetTaskID(), &queryResult{
+			err: errors.New(request.CompletedRequest.GetErrorMessage()),
+			workerVersionInfo: request.GetCompletedRequest().GetWorkerVersionInfo(),
+		})
 	} else {
-		e.deliverQueryResult(request.GetTaskID(), &queryResult{result: request.CompletedRequest.QueryResult})
+		e.deliverQueryResult(request.GetTaskID(), &queryResult{
+			result: request.CompletedRequest.QueryResult,
+			workerVersionInfo: request.GetCompletedRequest().GetWorkerVersionInfo(),
+		})
 	}
 
 	return nil
@@ -776,4 +816,23 @@ func (e *matchingEngineImpl) emitForwardedFromStats(scope int, isTaskForwarded b
 	default:
 		e.metricsClient.IncCounter(scope, metrics.LocalToLocalMatchCounter)
 	}
+}
+
+func (qm *lockableQueryTaskMap) put(key string, value chan *queryResult) {
+	qm.Lock()
+	defer qm.Unlock()
+	qm.queryTaskMap[key] = value
+}
+
+func (qm *lockableQueryTaskMap) delete(key string) {
+	qm.Lock()
+	defer qm.Unlock()
+	delete(qm.queryTaskMap, key)
+}
+
+func (qm *lockableQueryTaskMap) get(key string) (chan *queryResult, bool) {
+	qm.Lock()
+	defer qm.Unlock()
+	ch, ok := qm.queryTaskMap[key]
+	return ch, ok
 }

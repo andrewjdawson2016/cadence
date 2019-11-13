@@ -69,7 +69,7 @@ type (
 		// DispatchQueryTask dispatches a query task to a poller. When there are no pollers
 		// to pick up the task, this method will return error. Task will not be persisted to
 		// db and no ratelimits are applied for this call
-		DispatchQueryTask(ctx context.Context, taskID string, request *matching.QueryWorkflowRequest) ([]byte, error)
+		DispatchQueryTask(ctx context.Context, taskID string, request *matching.QueryWorkflowRequest) (*s.QueryWorkflowResponse, error)
 		CancelPoller(pollerID string)
 		GetAllPollerInfo() []*s.PollerInfo
 		// DescribeTaskList returns information about the target tasklist
@@ -244,7 +244,7 @@ func (c *taskListManagerImpl) DispatchQueryTask(
 	ctx context.Context,
 	taskID string,
 	request *matching.QueryWorkflowRequest,
-) ([]byte, error) {
+) (*s.QueryWorkflowResponse, error) {
 	c.startWG.Wait()
 	task := newInternalQueryTask(taskID, request)
 	resp, err := c.matcher.OfferQuery(ctx, task)

@@ -137,6 +137,7 @@ type (
 		eventsReapplier           nDCEventsReapplier
 		matchingClient            matching.Client
 		rawMatchingClient         matching.Client
+		versionChecker            client.VersionChecker
 	}
 )
 
@@ -229,6 +230,7 @@ func NewEngineWithShardContext(
 		publicClient:      publicClient,
 		matchingClient:    matching,
 		rawMatchingClient: rawMatchingClient,
+		versionChecker:    client.NewVersionChecker(),
 	}
 
 	historyEngImpl.txProcessor = newTransferQueueProcessor(shard, historyEngImpl, visibilityMgr, matching, historyClient, logger)
@@ -858,7 +860,25 @@ func (e *historyEngineImpl) queryDirectlyThroughMatching(
 	msResp *h.GetMutableStateResponse,
 	domainID string,
 	queryRequest *workflow.QueryWorkflowRequest,
-) (*h.QueryWorkflowResponse, error) {
+) (resp *h.QueryWorkflowResponse, err error) {
+
+	defer func() {
+		// if user requests strongly consistent query and a result was received
+		// check to make sure worker supports consistent query, if not then drop response and return error
+		if queryRequest.GetQueryConsistencyLevel() == workflow.QueryConsistencyLevelStrong &&
+			resp != nil &&
+			err == nil &&
+			resp.Response != nil &&
+			resp.GetResponse().WorkerVersionInfo != nil {
+
+			workerVersionInfo := resp.GetResponse().GetWorkerVersionInfo()
+			if versionErr := e.versionChecker.SupportsConsistentQuery(workerVersionInfo.GetClientImpl(), workerVersionInfo.GetClientFeatureVersion()); versionErr != nil {
+				resp = nil
+				err = versionErr
+			}
+		}
+	}()
+
 	matchingRequest := &m.QueryWorkflowRequest{
 		DomainUUID:   common.StringPtr(domainID),
 		QueryRequest: queryRequest,

@@ -23,6 +23,7 @@ package matching
 import (
 	"context"
 	"errors"
+	"github.com/uber/cadence/.gen/go/shared"
 	"time"
 
 	"golang.org/x/time/rate"
@@ -130,7 +131,7 @@ func (tm *TaskMatcher) Offer(ctx context.Context, task *internalTask) (bool, err
 // OfferQuery offers a query task to a potential consumer (poller). If the task
 // is successfully matched, this method will return the query response. Otherwise
 // it returns error
-func (tm *TaskMatcher) OfferQuery(ctx context.Context, task *internalTask) ([]byte, error) {
+func (tm *TaskMatcher) OfferQuery(ctx context.Context, task *internalTask) (*shared.QueryWorkflowResponse, error) {
 	select {
 	case tm.queryTaskC <- task:
 		<-task.responseC
@@ -149,7 +150,7 @@ func (tm *TaskMatcher) OfferQuery(ctx context.Context, task *internalTask) ([]by
 			resp, err := tm.fwdr.ForwardQueryTask(ctx, task)
 			token.release()
 			if err == nil {
-				return resp.QueryResult, nil
+				return resp, nil
 			}
 			if err == errForwarderSlowDown {
 				// if we are rate limited, try only local match for the
