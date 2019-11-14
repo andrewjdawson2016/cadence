@@ -61,19 +61,25 @@ type (
 		taskLists       map[taskListID]taskListManager // Convert to LRU cache
 		config          *Config
 		queryMapLock    sync.Mutex
-		// map from query TaskID (which is a UUID generated in QueryWorkflow() call) to a channel that QueryWorkflow()
-		// will block and wait for. The RespondQueryTaskCompleted() call will send the data through that channel which will
-		// unblock QueryWorkflow() call.
-		lockableQueryTaskMap lockableQueryTaskMap
+		lockableQueryTaskResultMap lockableQueryTaskResultMap
 		domainCache  cache.DomainCache
 	}
 
 	pollerIDCtxKey string
 	identityCtxKey string
 
-	lockableQueryTaskMap struct {
+	// queryTaskResult contains either a response from the worker to the query (which could be an answer or an error)
+	// OR contains an internalError indicating that query could not be dispatched to worker
+	// only one of these two are non-nil
+	queryTaskResult struct {
+		workerResponse *workflow.RespondQueryTaskCompletedRequest
+		internalError error
+	}
+
+	// lockableQueryTaskResultMap provides a mapping from queryTaskID to queryTaskResult
+	lockableQueryTaskResultMap struct {
 		sync.Mutex
-		queryTaskMap map[string]chan *queryResult
+		queryTaskResultMap map[string]chan *queryTaskResult
 	}
 )
 
@@ -91,10 +97,6 @@ var (
 
 	pollerIDKey pollerIDCtxKey = "pollerID"
 	identityKey identityCtxKey = "identity"
-)
-
-const (
-	maxQueryWaitCount = 5
 )
 
 var _ Engine = (*matchingEngineImpl)(nil) // Asserts that interface is indeed implemented
@@ -118,7 +120,7 @@ func NewEngine(taskManager persistence.TaskManager,
 		metricsClient:   metricsClient,
 		matchingClient:  matchingClient,
 		config:          config,
-		lockableQueryTaskMap:    lockableQueryTaskMap{queryTaskMap:make(map[string]chan *queryResult)},
+		lockableQueryTaskResultMap:    lockableQueryTaskResultMap{queryTaskResultMap:make(map[string]chan *queryTaskResult)},
 		domainCache:     domainCache,
 	}
 }
@@ -283,8 +285,6 @@ func (e *matchingEngineImpl) AddActivityTask(ctx context.Context, addRequest *m.
 	})
 }
 
-var errQueryBeforeFirstDecisionCompleted = errors.New("query cannot be handled before first decision task is processed, please retry later")
-
 // PollForDecisionTask tries to get the decision task using exponential backoff.
 func (e *matchingEngineImpl) PollForDecisionTask(ctx context.Context, req *m.PollForDecisionTaskRequest) (
 	*m.PollForDecisionTaskResponse, error) {
@@ -335,13 +335,7 @@ pollLoop:
 			})
 			if err != nil {
 				// will notify query client that the query task failed
-				e.deliverQueryResult(task.query.taskID, &queryResult{err: err})
-				return emptyPollForDecisionTaskResponse, nil
-			}
-
-			if mutableStateResp.GetPreviousStartedEventId() <= 0 {
-				// first decision task is not processed by worker yet.
-				e.deliverQueryResult(task.query.taskID, &queryResult{err: errQueryBeforeFirstDecisionCompleted})
+				e.deliverQueryResult(task.query.taskID, &workflow.RespondQueryTaskCompletedRequest{ErrorMessage: common.StringPtr(err.Error())})
 				return emptyPollForDecisionTaskResponse, nil
 			}
 
@@ -455,129 +449,59 @@ func (e *matchingEngineImpl) QueryWorkflow(ctx context.Context, queryRequest *m.
 		return nil, err
 	}
 
-	var lastErr error
-query_loop:
-	for i := 0; i < maxQueryWaitCount; i++ {
-		tlMgr, err := e.getTaskListManager(taskList, taskListKind)
-		if err != nil {
-			return nil, err
-		}
-		taskID := uuid.New()
-		result, err := tlMgr.DispatchQueryTask(ctx, taskID, queryRequest)
-		if err != nil {
-			return nil, err
-		}
-
-		if result != nil {
-			// task was remotely matched on another host, directly send the response
-			return result, nil
-		}
-
-		queryResultCh := make(chan *queryResult, 1)
-		e.lockableQueryTaskMap.put(taskID, queryResultCh)
-
-		select {
-		case result := <-queryResultCh:
-			if result.err == nil {
-				e.lockableQueryTaskMap.delete(taskID)
-				return &workflow.QueryWorkflowResponse{
-					QueryResult: result.result,
-					WorkerVersionInfo: result.workerVersionInfo,
-				}, nil
-			}
-
-			lastErr = result.err // lastErr will not be nil
-			if result.err == errQueryBeforeFirstDecisionCompleted {
-				// query before first decision completed, so wait for first decision task to complete
-				expectedNextEventID := result.waitNextEventID
-				for j := 0; j < maxQueryWaitCount; j++ {
-					ms, err := e.historyService.PollMutableState(ctx, &h.PollMutableStateRequest{
-						DomainUUID:          queryRequest.DomainUUID,
-						Execution:           queryRequest.QueryRequest.Execution,
-						ExpectedNextEventId: common.Int64Ptr(expectedNextEventID),
-					})
-
-					if err != nil {
-						return nil, &workflow.QueryFailedError{Message: err.Error()}
-					}
-
-					if ms.GetPreviousStartedEventId() > 0 {
-						// now we have at least one decision task completed, so retry query
-						continue query_loop
-					}
-
-					if ms.GetWorkflowCloseState() != persistence.WorkflowCloseStatusNone {
-						return nil, &workflow.QueryFailedError{Message: "workflow closed without making any progress"}
-					}
-
-					if expectedNextEventID >= ms.GetNextEventId() {
-						// this should not happen, check to prevent busy loop
-						return nil, &workflow.QueryFailedError{Message: "workflow not making any progress"}
-					}
-
-					// keep waiting
-					expectedNextEventID = ms.GetNextEventId()
-				}
-			}
-
-			return nil, &workflow.QueryFailedError{Message: result.err.Error()}
-		case <-ctx.Done():
-			return nil, &workflow.QueryFailedError{Message: "timeout: workflow worker is not responding"}
-		}
-	}
-	return nil, &workflow.QueryFailedError{Message: "query failed with max retry" + lastErr.Error()}
-}
-
-func (e *matchingEngineImpl) handledFirstDecision(
-	ctx context.Context,
-	queryRequest *m.QueryWorkflowRequest,
-	expectedNextEventID int64,
-) (bool, error){
-	ms, err := e.historyService.PollMutableState(ctx, &h.PollMutableStateRequest{
-		DomainUUID:          queryRequest.DomainUUID,
-		Execution:           queryRequest.QueryRequest.Execution,
-		ExpectedNextEventId: common.Int64Ptr(expectedNextEventID),
-	})
-
+	tlMgr, err := e.getTaskListManager(taskList, taskListKind)
 	if err != nil {
-		return false, &workflow.QueryFailedError{Message: err.Error()}
+		return nil, err
+	}
+	taskID := uuid.New()
+	result, err := tlMgr.DispatchQueryTask(ctx, taskID, queryRequest)
+	if err != nil {
+		return nil, err
 	}
 
-	//
-	if ms.GetPreviousStartedEventId() > 0 {
-		return true, nil
+	if result != nil {
+		// task was remotely matched on another host, directly send the response
+		return result, nil
 	}
 
-	if ms.GetWorkflowCloseState() != persistence.WorkflowCloseStatusNone {
-		return false, &workflow.QueryFailedError{Message: "workflow closed without making any progress"}
+	queryResultCh := make(chan *queryTaskResult, 1)
+	e.lockableQueryTaskResultMap.put(taskID, queryResultCh)
+	defer e.lockableQueryTaskResultMap.delete(taskID)
+
+	select {
+	case result := <-queryResultCh:
+		// failed to dispatch query to worker
+		if result.internalError != nil {
+			return nil, &workflow.QueryFailedError{Message: result.internalError.Error()}
+		}
+
+		// worker responded back with a query result
+		workerResponse := result.workerResponse
+		switch workerResponse.GetCompletedType() {
+		case workflow.QueryTaskCompletedTypeCompleted:
+			return &workflow.QueryWorkflowResponse{
+				QueryResult: workerResponse.GetQueryResult(),
+				WorkerVersionInfo: workerResponse.GetWorkerVersionInfo(),
+			}, nil
+		case workflow.QueryTaskCompletedTypeFailed:
+			// returning an error is the wrong thing to do if this was consistent query and worker does not support consistent query
+			return nil, &workflow.QueryFailedError{Message: workerResponse.GetErrorMessage()}
+		default:
+			return nil, &workflow.QueryFailedError{Message: "query result is invalid"}
+		}
+	case <-ctx.Done():
+		return nil, &workflow.QueryFailedError{Message: "workflow worker is not responding"}
 	}
-
-	if expectedNextEventID >= ms.GetNextEventId() {
-		// this should not happen, check to prevent busy loop
-		return false, &workflow.QueryFailedError{Message: "workflow not making any progress"}
-	}
-
-	// keep waiting
-	expectedNextEventID = ms.GetNextEventId()
-
 }
 
-type queryResult struct {
-	result          []byte
-	err             error
-	// waitNextEventID int64
-	workerVersionInfo *workflow.WorkerVersionInfo
-}
-
-func (e *matchingEngineImpl) deliverQueryResult(taskID string, queryResult *queryResult) error {
+func (e *matchingEngineImpl) deliverQueryResult(taskID string, queryResult *queryResult) {
 	queryResultCh, ok := e.lockableQueryTaskMap.get(taskID)
 	if !ok {
 		e.metricsClient.IncCounter(metrics.MatchingRespondQueryTaskCompletedScope, metrics.RespondQueryTaskFailedCounter)
-		return &workflow.EntityNotExistsError{Message: "query task not found, or already expired"}
+		e.logger.Error("query task not found, or already expired")
 	}
 
 	queryResultCh <- queryResult
-	return nil
 }
 
 func (e *matchingEngineImpl) RespondQueryTaskCompleted(ctx context.Context, request *m.RespondQueryTaskCompletedRequest) error {
@@ -818,21 +742,21 @@ func (e *matchingEngineImpl) emitForwardedFromStats(scope int, isTaskForwarded b
 	}
 }
 
-func (qm *lockableQueryTaskMap) put(key string, value chan *queryResult) {
+func (qm *lockableQueryTaskResultMap) put(key string, value chan *queryTaskResult) {
 	qm.Lock()
 	defer qm.Unlock()
-	qm.queryTaskMap[key] = value
+	qm.queryTaskResultMap[key] = value
 }
 
-func (qm *lockableQueryTaskMap) delete(key string) {
+func (qm *lockableQueryTaskResultMap) delete(key string) {
 	qm.Lock()
 	defer qm.Unlock()
-	delete(qm.queryTaskMap, key)
+	delete(qm.queryTaskResultMap, key)
 }
 
-func (qm *lockableQueryTaskMap) get(key string) (chan *queryResult, bool) {
+func (qm *lockableQueryTaskResultMap) get(key string) (chan *queryTaskResult, bool) {
 	qm.Lock()
 	defer qm.Unlock()
-	ch, ok := qm.queryTaskMap[key]
+	ch, ok := qm.queryTaskResultMap[key]
 	return ch, ok
 }
