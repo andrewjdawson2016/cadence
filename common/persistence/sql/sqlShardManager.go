@@ -157,7 +157,7 @@ func (m *sqlShardManager) UpdateShard(request *persistence.UpdateShardRequest) e
 	})
 }
 
-func (m *sqlShardManager) ScanWorkflows(request *persistence.ScanWorkflowsRequest) (*persistence.ScanWorkflowsResponse, error){
+func (m *sqlShardManager) ScanWorkflows(request *persistence.ScanWorkflowsRequest) (*persistence.ScanWorkflowsResponse, error) {
 	// TODO https://github.com/uber/cadence/issues/2922
 	// Implement it when we need
 	return nil, &workflow.InternalServiceError{

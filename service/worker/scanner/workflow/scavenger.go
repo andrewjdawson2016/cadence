@@ -22,8 +22,9 @@ package workflow
 
 import (
 	"context"
-	"github.com/uber/cadence/.gen/go/shared"
 	"time"
+
+	"github.com/uber/cadence/.gen/go/shared"
 
 	"go.uber.org/cadence/activity"
 	"golang.org/x/time/rate"
@@ -45,7 +46,7 @@ type (
 		CurrentPage    int
 
 		// number of executions processed
-		ProcessedCount      int
+		ProcessedCount int
 		// number of workflows that are corrupted
 		CorruptionCount int
 		// number of task failure due to some errors
@@ -69,16 +70,16 @@ type (
 	// Today this Scavenger only detecting for a) without performing actions on it.
 	// TODO https://github.com/uber/cadence/issues/2926 for more details.
 	Scavenger struct {
-		shardDB     p.ShardManager
-		historyDB   p.HistoryManager
-		resource    resource.Resource
-		hbd      ScavengerHeartbeatDetails
-		rps      int
+		shardDB   p.ShardManager
+		historyDB p.HistoryManager
+		resource  resource.Resource
+		hbd       ScavengerHeartbeatDetails
+		rps       int
 		numShards int
-		limiter  *rate.Limiter
-		metrics  metrics.Client
-		logger   log.Logger
-		isInTest bool
+		limiter   *rate.Limiter
+		metrics   metrics.Client
+		logger    log.Logger
+		isInTest  bool
 	}
 
 	taskDetail struct {
@@ -91,14 +92,11 @@ type (
 		hbd ScavengerHeartbeatDetails
 	}
 
-	taskResult struct{
-		err  error
+	taskResult struct {
+		err       error
 		corrupted bool
 	}
-
 )
-
-
 
 const (
 	// used this to decide how many goroutines to process
@@ -116,7 +114,7 @@ const (
 //  - describe the corresponding workflow execution
 //  - deletion of history itself, if there are no workflow execution
 func NewScavenger(
-	shardDB   p.ShardManager,
+	shardDB p.ShardManager,
 	historyDB p.HistoryManager,
 	resource resource.Resource,
 	rps int,
@@ -129,15 +127,15 @@ func NewScavenger(
 	rateLimiter := rate.NewLimiter(rate.Limit(rps), rps)
 
 	return &Scavenger{
-		shardDB:shardDB,
-		historyDB:historyDB,
-		resource:resource,
-		hbd:     hbd,
-		rps:     rps,
-		numShards:numShards,
-		limiter: rateLimiter,
-		metrics: metricsClient,
-		logger:  logger,
+		shardDB:   shardDB,
+		historyDB: historyDB,
+		resource:  resource,
+		hbd:       hbd,
+		rps:       rps,
+		numShards: numShards,
+		limiter:   rateLimiter,
+		metrics:   metricsClient,
+		logger:    logger,
 	}
 }
 
@@ -160,7 +158,7 @@ func (s *Scavenger) Run(ctx context.Context) (ScavengerHeartbeatDetails, error) 
 			resp, err = s.shardDB.ScanWorkflows(&p.ScanWorkflowsRequest{
 				PageSize:      pageSize,
 				NextPageToken: s.hbd.NextPageToken,
-				ShardID: s.hbd.CurrentShardID,
+				ShardID:       s.hbd.CurrentShardID,
 			})
 			return err
 		}
@@ -175,14 +173,14 @@ func (s *Scavenger) Run(ctx context.Context) (ScavengerHeartbeatDetails, error) 
 		corruptionCount := 0
 		errorCount := 0
 		for _, wf := range resp.WorkflowExecutions {
-			if wf.IsCurrentWorkflow && p.IsWorkflowRunning(wf.State){
-				taskCount ++
+			if wf.IsCurrentWorkflow && p.IsWorkflowRunning(wf.State) {
+				taskCount++
 				taskCh <- taskDetail{
 					shardID:    s.hbd.CurrentShardID,
 					domainID:   wf.DomainID,
 					workflowID: wf.WorkflowID,
 					runID:      wf.RunID,
-					hbd:s.hbd,
+					hbd:        s.hbd,
 				}
 			}
 		}
@@ -193,7 +191,7 @@ func (s *Scavenger) Run(ctx context.Context) (ScavengerHeartbeatDetails, error) 
 			for {
 				select {
 				case resp := <-respCh:
-					taskCount --
+					taskCount--
 					if resp.err != nil {
 						s.metrics.IncCounter(metrics.MutableStateScavengerScope, metrics.MutableStateScavengerErrorCount)
 						errorCount++
@@ -218,10 +216,10 @@ func (s *Scavenger) Run(ctx context.Context) (ScavengerHeartbeatDetails, error) 
 		s.hbd.CorruptionCount += corruptionCount
 
 		if len(s.hbd.NextPageToken) == 0 {
-			if s.hbd.CurrentShardID == s.numShards - 1{
+			if s.hbd.CurrentShardID == s.numShards-1 {
 				break
 			}
-			s.hbd.CurrentShardID ++
+			s.hbd.CurrentShardID++
 		}
 		if !s.isInTest {
 			activity.RecordHeartbeat(ctx, s.hbd)
@@ -258,7 +256,7 @@ func (s *Scavenger) startTaskProcessor(
 			}
 
 			res.corrupted, res.err = s.processHistoryCorruptionTask(task)
-			if res.err != nil{
+			if res.err != nil {
 				s.logger.Error("encounter error when process task",
 					getTaskLoggingTags(res.err, task)...)
 			}
@@ -269,23 +267,23 @@ func (s *Scavenger) startTaskProcessor(
 
 func (s *Scavenger) processHistoryCorruptionTask(task taskDetail) (bool, error) {
 	mgr, err := s.resource.GetExecutionManager(task.shardID)
-	if err != nil{
+	if err != nil {
 		return false, err
 	}
 
 	var resp *p.GetWorkflowExecutionResponse
 	op := func() error {
 		resp, err = mgr.GetWorkflowExecution(&p.GetWorkflowExecutionRequest{
-			DomainID:task.domainID,
-			Execution:shared.WorkflowExecution{
-				WorkflowId:common.StringPtr(task.workflowID),
-				RunId:common.StringPtr(task.runID),
+			DomainID: task.domainID,
+			Execution: shared.WorkflowExecution{
+				WorkflowId: common.StringPtr(task.workflowID),
+				RunId:      common.StringPtr(task.runID),
 			},
 		})
 		return err
 	}
 	err = backoff.Retry(op, persistenceOperationRetryPolicy, common.IsPersistenceTransientError)
-	if err != nil{
+	if err != nil {
 		// TODO if mutable state doesn't exists, we should delete the current record
 		// this is case c) in https://github.com/uber/cadence/issues/2926
 		return false, err
@@ -293,21 +291,21 @@ func (s *Scavenger) processHistoryCorruptionTask(task taskDetail) (bool, error) 
 
 	op = func() error {
 		_, err = s.historyDB.ReadHistoryBranch(&p.ReadHistoryBranchRequest{
-			BranchToken:resp.State.ExecutionInfo.BranchToken,
-			MinEventID:common.FirstEventID,
-			MaxEventID:resp.State.ExecutionInfo.NextEventID,
-			PageSize:pageSize,
-			ShardID: &task.shardID,
+			BranchToken: resp.State.ExecutionInfo.BranchToken,
+			MinEventID:  common.FirstEventID,
+			MaxEventID:  resp.State.ExecutionInfo.NextEventID,
+			PageSize:    pageSize,
+			ShardID:     &task.shardID,
 		})
 		return err
 	}
 
 	err = backoff.Retry(op, persistenceOperationRetryPolicy, common.IsPersistenceTransientError)
-	if err == nil{
+	if err == nil {
 		// not corrupted
 		return false, nil
 	}
-	if _, ok := err.(*shared.InternalDataInconsistencyError); !ok{
+	if _, ok := err.(*shared.InternalDataInconsistencyError); !ok {
 		// some other error
 		return false, err
 	}

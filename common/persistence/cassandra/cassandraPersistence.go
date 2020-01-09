@@ -339,7 +339,7 @@ const (
 		`and visibility_ts = ? ` +
 		`and task_id = ?`
 
-	templateScanMutableStateQuery = `SELECT domain_id, workflow_id,run_id,current_run_id,`+
+	templateScanMutableStateQuery = `SELECT domain_id, workflow_id,run_id,current_run_id,` +
 		`execution.state, execution.start_time ` +
 		` FROM executions WHERE shard_id = ? AND type = ? `
 
@@ -1070,7 +1070,7 @@ func (d *cassandraPersistence) UpdateShard(request *p.UpdateShardRequest) error 
 
 func (d *cassandraPersistence) ScanWorkflows(
 	request *p.ScanWorkflowsRequest,
-) (*p.ScanWorkflowsResponse, error){
+) (*p.ScanWorkflowsResponse, error) {
 
 	query := d.session.Query(templateScanMutableStateQuery)
 
@@ -1091,15 +1091,15 @@ func (d *cassandraPersistence) ScanWorkflows(
 
 	for iter.Scan(&domainID, &workflowID, &runID, &currentRunID, &state) {
 		info := p.ScanWorkflowDetailInfo{
-			DomainID:domainID.String(),
-			WorkflowID:workflowID,
-			State:state,
+			DomainID:   domainID.String(),
+			WorkflowID: workflowID,
+			State:      state,
 		}
 
-		if runID.String() == permanentRunID{
+		if runID.String() == permanentRunID {
 			info.IsCurrentWorkflow = true
 			info.RunID = currentRunID.String()
-		}else{
+		} else {
 			//mutable state record
 			info.IsCurrentWorkflow = false
 			info.RunID = runID.String()

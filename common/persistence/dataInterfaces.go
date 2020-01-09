@@ -1429,14 +1429,14 @@ type (
 	ScanWorkflowsRequest struct {
 		// pagination token
 		NextPageToken []byte
-		PageSize int
-		ShardID  int
+		PageSize      int
+		ShardID       int
 	}
 
 	// ScanWorkflowsResponse is a response to ScanWorkflows
 	ScanWorkflowsResponse struct {
 		// pagination token
-		NextPageToken []byte
+		NextPageToken      []byte
 		WorkflowExecutions []ScanWorkflowDetailInfo
 	}
 
@@ -2507,7 +2507,7 @@ func NewGetReplicationTasksFromDLQRequest(
 	}
 }
 
-func IsWorkflowRunning(workflowState int) bool{
+func IsWorkflowRunning(workflowState int) bool {
 	switch workflowState {
 	case WorkflowStateCreated:
 		return true
@@ -2524,7 +2524,7 @@ func IsWorkflowRunning(workflowState int) bool{
 	}
 }
 
-func IsCurrentWorkflowGuaranteed(workflowState int) bool{
+func IsCurrentWorkflowGuaranteed(workflowState int) bool {
 	// stateInDB is used like a bloom filter:
 	//
 	// 1. stateInDB being created / running meaning that this workflow must be the current
