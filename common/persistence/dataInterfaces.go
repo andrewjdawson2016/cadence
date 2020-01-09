@@ -1425,6 +1425,30 @@ type (
 		Branches []HistoryBranchDetail
 	}
 
+	// ScanWorkflowsRequest is a request of ScanCurrentWorkflows
+	ScanWorkflowsRequest struct {
+		// pagination token
+		NextPageToken []byte
+		PageSize int
+		ShardID  int
+	}
+
+	// ScanWorkflowsResponse is a response to ScanWorkflows
+	ScanWorkflowsResponse struct {
+		// pagination token
+		NextPageToken []byte
+		WorkflowExecutions []ScanWorkflowDetailInfo
+	}
+
+	// ScanWorkflowDetailInfo is detail of ScanWorkflowsResponse
+	ScanWorkflowDetailInfo struct {
+		DomainID          string
+		WorkflowID        string
+		RunID             string
+		State             int
+		IsCurrentWorkflow bool
+	}
+
 	// Closeable is an interface for any entity that supports a close operation to release resources
 	Closeable interface {
 		Close()
@@ -1437,6 +1461,7 @@ type (
 		CreateShard(request *CreateShardRequest) error
 		GetShard(request *GetShardRequest) (*GetShardResponse, error)
 		UpdateShard(request *UpdateShardRequest) error
+		ScanWorkflows(request *ScanWorkflowsRequest) (*ScanWorkflowsResponse, error)
 	}
 
 	// ExecutionManager is used to manage workflow executions
@@ -2479,5 +2504,49 @@ func NewGetReplicationTasksFromDLQRequest(
 			BatchSize:     batchSize,
 			NextPageToken: nextPageToken,
 		},
+	}
+}
+
+func IsWorkflowRunning(workflowState int) bool{
+	switch workflowState {
+	case WorkflowStateCreated:
+		return true
+	case WorkflowStateRunning:
+		return true
+	case WorkflowStateCompleted:
+		return false
+	case WorkflowStateZombie:
+		return false
+	case WorkflowStateCorrupted:
+		return false
+	default:
+		panic(fmt.Sprintf("unknown workflow state: %v", workflowState))
+	}
+}
+
+func IsCurrentWorkflowGuaranteed(workflowState int) bool{
+	// stateInDB is used like a bloom filter:
+	//
+	// 1. stateInDB being created / running meaning that this workflow must be the current
+	//  workflow (assuming there is no rebuild of mutable state).
+	// 2. stateInDB being completed does not guarantee this workflow being the current workflow
+	// 3. stateInDB being zombie guarantees this workflow not being the current workflow
+	// 4. stateInDB cannot be void, void is only possible when mutable state is just initialized
+
+	switch workflowState {
+	case WorkflowStateVoid:
+		return false
+	case WorkflowStateCreated:
+		return true
+	case WorkflowStateRunning:
+		return true
+	case WorkflowStateCompleted:
+		return false
+	case WorkflowStateZombie:
+		return false
+	case WorkflowStateCorrupted:
+		return false
+	default:
+		panic(fmt.Sprintf("unknown workflow state: %v", workflowState))
 	}
 }

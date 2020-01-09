@@ -339,6 +339,10 @@ const (
 		`and visibility_ts = ? ` +
 		`and task_id = ?`
 
+	templateScanMutableStateQuery = `SELECT domain_id, workflow_id,run_id,current_run_id,`+
+		`execution.state, execution.start_time ` +
+		` FROM executions WHERE shard_id = ? AND type = ? `
+
 	templateUpdateShardQuery = `UPDATE executions ` +
 		`SET shard = ` + templateShardType + `, range_id = ? ` +
 		`WHERE shard_id = ? ` +
@@ -1062,6 +1066,58 @@ func (d *cassandraPersistence) UpdateShard(request *p.UpdateShardRequest) error 
 	}
 
 	return nil
+}
+
+func (d *cassandraPersistence) ScanWorkflows(
+	request *p.ScanWorkflowsRequest,
+) (*p.ScanWorkflowsResponse, error){
+
+	query := d.session.Query(templateScanMutableStateQuery)
+
+	iter := query.PageSize(int(request.PageSize)).PageState(request.NextPageToken).Iter()
+	if iter == nil {
+		return nil, &workflow.InternalServiceError{
+			Message: "ScanWorkflows operation failed.  Not able to create query iterator.",
+		}
+	}
+	pagingToken := iter.PageState()
+
+	infos := make([]p.ScanWorkflowDetailInfo, 0, int(request.PageSize))
+	domainID := gocql.UUID{}
+	workflowID := ""
+	runID := gocql.UUID{}
+	currentRunID := gocql.UUID{}
+	state := int(-1)
+
+	for iter.Scan(&domainID, &workflowID, &runID, &currentRunID, &state) {
+		info := p.ScanWorkflowDetailInfo{
+			DomainID:domainID.String(),
+			WorkflowID:workflowID,
+			State:state,
+		}
+
+		if runID.String() == permanentRunID{
+			info.IsCurrentWorkflow = true
+			info.RunID = currentRunID.String()
+		}else{
+			//mutable state record
+			info.IsCurrentWorkflow = false
+			info.RunID = runID.String()
+		}
+		infos = append(infos, info)
+	}
+
+	if err := iter.Close(); err != nil {
+		return nil, &workflow.InternalServiceError{
+			Message: fmt.Sprintf("ScanWorkflows. Close operation failed. Error: %v", err),
+		}
+	}
+
+	response := &p.ScanWorkflowsResponse{
+		NextPageToken: pagingToken,
+	}
+
+	return response, nil
 }
 
 func (d *cassandraPersistence) CreateWorkflowExecution(

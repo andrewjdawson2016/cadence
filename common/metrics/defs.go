@@ -962,6 +962,8 @@ const (
 	HistoryScavengerScope
 	// ParentClosePolicyProcessorScope is scope used by all metrics emitted by worker.ParentClosePolicyProcessor
 	ParentClosePolicyProcessorScope
+	// MutableStateScavengerScope is scope used by all metrics emitted by worker.history.Scavenger module
+	MutableStateScavengerScope
 
 	NumWorkerScopes
 )
@@ -1386,6 +1388,7 @@ var ScopeDefs = map[ServiceIdx]map[int]scopeDefinition{
 		ArchiverArchivalWorkflowScope:          {operation: "ArchiverArchivalWorkflow"},
 		TaskListScavengerScope:                 {operation: "tasklistscavenger"},
 		HistoryScavengerScope:                  {operation: "historyscavenger"},
+		MutableStateScavengerScope:             {operation: "mutablestatescavenger"},
 		BatcherScope:                           {operation: "batcher"},
 		ParentClosePolicyProcessorScope:        {operation: "ParentClosePolicyProcessor"},
 	},
@@ -1738,6 +1741,8 @@ const (
 	HistoryScavengerSkipCount
 	ParentClosePolicyProcessorSuccess
 	ParentClosePolicyProcessorFailures
+	MutableStateScavengerCorruptionCount
+	MutableStateScavengerErrorCount
 
 	NumWorkerMetrics
 )
@@ -2061,6 +2066,8 @@ var MetricDefs = map[ServiceIdx]map[int]metricDefinition{
 		HistoryScavengerSkipCount:                     {metricName: "scavenger_skips", metricType: Counter},
 		ParentClosePolicyProcessorSuccess:             {metricName: "parent_close_policy_processor_requests", metricType: Counter},
 		ParentClosePolicyProcessorFailures:            {metricName: "parent_close_policy_processor_errors", metricType: Counter},
+		MutableStateScavengerCorruptionCount:          {metricName: "ms_scavenger_corruption", metricType: Counter},
+		MutableStateScavengerErrorCount:               {metricName: "ms_scavenger_error", metricType: Counter},
 	},
 }
 
