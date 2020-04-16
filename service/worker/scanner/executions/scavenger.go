@@ -92,7 +92,7 @@ var (
 // complete iteration over all of the open workflow executions in the system. For
 // each executions, will attempt to validate the workflow execution and emit metrics/logs on validation failures.
 //
-// The scavenger will retry on all persistence errors infinitely and will only stop under
+// The scavenger will retry on all util errors infinitely and will only stop under
 // two conditions
 //  - either all executions are processed successfully (or)
 //  - Stop() method is called to stop the scavenger
