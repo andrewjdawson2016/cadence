@@ -53,7 +53,7 @@ func executionOpen(cr *CheckRequest) bool {
 		cr.State == persistence.WorkflowStateRunning
 }
 
-func validRequestHelper(cr *CheckRequest) bool {
+func validRequest(cr *CheckRequest) bool {
 	return len(cr.DomainID) > 0 &&
 		len(cr.WorkflowID) > 0 &&
 		len(cr.RunID) > 0 &&

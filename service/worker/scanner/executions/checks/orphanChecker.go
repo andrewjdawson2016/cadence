@@ -3,90 +3,97 @@ package checks
 import (
 	"github.com/uber/cadence/.gen/go/shared"
 	"github.com/uber/cadence/common/persistence"
-	"github.com/uber/cadence/common/quotas"
 	"github.com/uber/cadence/service/worker/scanner/executions/util"
 )
 
 type (
 	orphanExecutionChecker struct {
-		dbRateLimiter     *quotas.DynamicRateLimiter
-		executionStore    persistence.ExecutionStore
-		payloadSerializer persistence.PayloadSerializer
+		persistenceRetryer util.PersistenceRetryer
 	}
 )
 
-func newOrphanExecutionChecker(
-	dbRateLimiter *quotas.DynamicRateLimiter,
-	executionStore persistence.ExecutionStore,
-	payloadSerializer persistence.PayloadSerializer,
-) checker {
+// NewOrphanChecker constructs an orphanExecutionChecker
+func NewOrphanChecker(persistenceRetryer util.PersistenceRetryer) Checker {
 	return &orphanExecutionChecker{
-		dbRateLimiter:     dbRateLimiter,
-		executionStore:    executionStore,
-		payloadSerializer: payloadSerializer,
+		persistenceRetryer: persistenceRetryer,
 	}
 }
 
-func (c *orphanExecutionChecker) check(cr *checkRequest) *checkResponse {
-	result := &checkResponse{
-		checkType: checkTypeOrphanExecution,
+func (c *orphanExecutionChecker) Check(cr *CheckRequest) *CheckResponse {
+	if !validRequest(cr) {
+		return &CheckResponse{
+			ResultType: ResultTypeFailed,
+			FailedResult: &FailedResult{
+				Note: "invalid request",
+			},
+		}
 	}
 	if !executionOpen(cr) {
-		result.checkResponseStatus = checkResponseHealthy
-		return result
+		return &CheckResponse{
+			ResultType: ResultTypeHealthy,
+			HealthyResult: &HealthyResult{
+				Note: "execution is determined to be healthy because concrete execution is not open or doesn't exist",
+			},
+		}
 	}
 	getCurrentExecutionRequest := &persistence.GetCurrentExecutionRequest{
-		DomainID:   cr.domainID,
-		WorkflowID: cr.workflowID,
+		DomainID:   cr.DomainID,
+		WorkflowID: cr.WorkflowID,
 	}
-	currentExecution, currentErr := persistence.RetryGetCurrentExecution(
-		c.dbRateLimiter,
-		&result.totalDatabaseRequests,
-		c.executionStore,
-		getCurrentExecutionRequest)
-
-	stillOpen, concreteErr := concreteExecutionStillOpen(cr, c.executionStore, c.dbRateLimiter, &result.totalDatabaseRequests)
+	currentExecution, currentErr := c.persistenceRetryer.GetCurrentExecution(getCurrentExecutionRequest)
+	stillOpen, concreteErr := concreteExecutionStillOpen(cr, c.persistenceRetryer)
 	if concreteErr != nil {
-		result.checkResponseStatus = checkResponseFailed
-		result.errorInfo = &errorInfo{
-			note:    "failed to check if concrete execution is still open",
-			details: concreteErr.Error(),
+		return &CheckResponse{
+			ResultType: ResultTypeFailed,
+			FailedResult: &FailedResult{
+				Note: "failed to check if concrete execution is still open",
+				Details: concreteErr.Error(),
+			},
 		}
-		return result
 	}
 	if !stillOpen {
-		result.checkResponseStatus = checkResponseHealthy
-		return result
+		return &CheckResponse{
+			ResultType: ResultTypeHealthy,
+			HealthyResult: &HealthyResult{
+				Note: "execution is determined to be healthy because concrete execution is not open or doesn't exist",
+			},
+		}
 	}
-
 	if currentErr != nil {
 		switch currentErr.(type) {
 		case *shared.EntityNotExistsError:
-			result.checkResponseStatus = checkResponseCorrupted
-			result.errorInfo = &errorInfo{
-				note:    "execution is open without having current execution",
-				details: currentErr.Error(),
+			return &CheckResponse{
+				ResultType: ResultTypeCorrupted,
+				CorruptedResult: &CorruptedResult{
+					Note: "execution is open without having current execution",
+					Details: currentErr.Error(),
+				},
 			}
-			return result
 		}
-		result.checkResponseStatus = checkResponseFailed
-		result.errorInfo = &errorInfo{
-			note:    "failed to check if current execution exists",
-			details: currentErr.Error(),
+		return &CheckResponse{
+			ResultType: ResultTypeFailed,
+			FailedResult: &FailedResult{
+				Note:    "failed to check if current execution exists",
+				Details: currentErr.Error(),
+			},
 		}
-		return result
 	}
-	if currentExecution.RunID != cr.runID {
-		result.checkResponseStatus = checkResponseCorrupted
-		result.errorInfo = &errorInfo{
-			note: "execution is open but current points at a different execution",
+	if currentExecution.RunID != cr.RunID {
+		return &CheckResponse{
+			ResultType: ResultTypeCorrupted,
+			CorruptedResult: &CorruptedResult{
+				Note: "execution is open but current points at a different execution",
+			},
 		}
-		return result
 	}
-	result.checkResponseStatus = checkResponseHealthy
-	return result
+	return &CheckResponse{
+		ResultType: ResultTypeHealthy,
+		HealthyResult: &HealthyResult{
+			Note: "concrete and current both exist, concrete is open and current points at it",
+		},
+	}
 }
 
-func (c *orphanExecutionChecker) validRequest(cr *checkRequest) bool {
-	return validRequestHelper(cr)
+func (c *orphanExecutionChecker) CheckType() CheckType {
+	return "orphan"
 }

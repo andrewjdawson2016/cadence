@@ -13,58 +13,69 @@ type (
 	}
 )
 
-func newValidFirstEventChecker(
+// NewValidFirstEventChecker constructs a validFirstEventChecker
+func NewValidFirstEventChecker(
 	payloadSerializer persistence.PayloadSerializer,
-) checker {
+) Checker {
 	return &validFirstEventChecker{
 		payloadSerializer: payloadSerializer,
 	}
 }
 
-func (c *validFirstEventChecker) check(cr *checkRequest) *checkResponse {
-	result := &checkResponse{
-		checkType: checkTypeValidFirstEvent,
+func (c *validFirstEventChecker) Check(cr *CheckRequest) *CheckResponse {
+	if !validRequest(cr) {
+		return &CheckResponse{
+			ResultType: ResultTypeFailed,
+			FailedResult: &FailedResult{
+				Note: "invalid request",
+			},
+		}
 	}
-	history := cr.prerequisiteCheckPayload.(*persistence.InternalReadHistoryBranchResponse)
-	firstBatch, err := c.payloadSerializer.DeserializeBatchEvents(history.History[0])
+	if cr.Resources.History == nil || len(cr.Resources.History.History) == 0 {
+		return &CheckResponse{
+			ResultType: ResultTypeFailed,
+			FailedResult: &FailedResult{
+				Note: "invalid request, resources.history is not set",
+			},
+		}
+	}
+	firstBatch, err := c.payloadSerializer.DeserializeBatchEvents(cr.Resources.History.History[0])
 	if err != nil || len(firstBatch) == 0 {
-		result.checkResponseStatus = checkResponseFailed
-		result.errorInfo = &errorInfo{
-			note:    "failed to deserialize batch events",
-			details: err.Error(),
+		return &CheckResponse{
+			ResultType: ResultTypeFailed,
+			FailedResult: &FailedResult{
+				Note: "failed to deserialize batch events",
+				Details: err.Error(),
+			},
 		}
-		return result
 	}
-	if firstBatch[0].GetEventId() != common.FirstEventID {
-		result.checkResponseStatus = checkResponseCorrupted
-		result.errorInfo = &errorInfo{
-			note:    "got unexpected first eventID",
-			details: fmt.Sprintf("expected: %v but got %v", common.FirstEventID, firstBatch[0].GetEventId()),
+	firstEvent := firstBatch[0]
+	if firstEvent.GetEventId() != common.FirstEventID {
+		return &CheckResponse{
+			ResultType: ResultTypeCorrupted,
+			CorruptedResult: &CorruptedResult{
+				Note:  "got unexpected first eventID",
+				Details: fmt.Sprintf("expected: %v but got %v", common.FirstEventID, firstEvent.GetEventId()),
+			},
 		}
-		return result
 	}
-	if firstBatch[0].GetEventType() != shared.EventTypeWorkflowExecutionStarted {
-		result.checkResponseStatus = checkResponseCorrupted
-		result.errorInfo = &errorInfo{
-			note:    "got unexpected first eventType",
-			details: fmt.Sprintf("expected: %v but got %v", shared.EventTypeWorkflowExecutionStarted.String(), firstBatch[0].GetEventType().String()),
+	if firstEvent.GetEventType() != shared.EventTypeWorkflowExecutionStarted {
+		return &CheckResponse{
+			ResultType: ResultTypeCorrupted,
+			CorruptedResult: &CorruptedResult{
+				Note:  "got unexpected first eventType",
+				Details: fmt.Sprintf("expected: %v but got %v", shared.EventTypeWorkflowExecutionStarted.String(), firstEvent.GetEventType().String()),
+			},
 		}
-		return result
 	}
-	result.checkResponseStatus = checkResponseHealthy
-	return result
+	return &CheckResponse{
+		ResultType: ResultTypeHealthy,
+		HealthyResult: &HealthyResult{
+			Note: "got valid first history event",
+		},
+	}
 }
 
-func (c *validFirstEventChecker) validRequest(cr *checkRequest) bool {
-	if cr.prerequisiteCheckPayload == nil {
-		return false
-	}
-	history, ok := cr.prerequisiteCheckPayload.(*persistence.InternalReadHistoryBranchResponse)
-	if !ok {
-		return false
-	}
-	if history.History == nil || len(history.History) == 0 {
-		return false
-	}
-	return validRequestHelper(cr)
+func (c *validFirstEventChecker) CheckType() CheckType {
+	return "valid_first_event"
 }

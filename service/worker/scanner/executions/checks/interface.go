@@ -61,7 +61,7 @@ type (
 		TreeID     string
 		BranchID   string
 		State      int
-		Resources *RequestResources
+		Resources RequestResources
 	}
 
 	// RequestResources enables a check to provide resources which will be used by dependent checks
