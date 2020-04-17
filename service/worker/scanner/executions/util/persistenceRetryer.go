@@ -132,7 +132,6 @@ func (pr *persistenceRetryer) ReadHistoryBranch(
 		resp, err = pr.historyStore.ReadHistoryBranch(req)
 		return err
 	}
-
 	err := backoff.Retry(op, retryPolicy, common.IsPersistenceTransientError)
 	if err != nil {
 		return nil, err

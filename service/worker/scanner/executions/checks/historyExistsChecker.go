@@ -22,6 +22,7 @@ func NewHistoryExistsChecker(persistenceRetryer util.PersistenceRetryer) Checker
 	}
 }
 
+// Check checks that history exists
 func (c *historyExistsChecker) Check(cr *CheckRequest) *CheckResponse {
 	if !validRequest(cr) {
 		return &CheckResponse{

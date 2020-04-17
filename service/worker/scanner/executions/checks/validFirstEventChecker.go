@@ -41,11 +41,15 @@ func (c *validFirstEventChecker) Check(cr *CheckRequest) *CheckResponse {
 	}
 	firstBatch, err := c.payloadSerializer.DeserializeBatchEvents(cr.Resources.History.History[0])
 	if err != nil || len(firstBatch) == 0 {
+		details := ""
+		if err != nil {
+			details = err.Error()
+		}
 		return &CheckResponse{
 			ResultType: ResultTypeFailed,
 			FailedResult: &FailedResult{
 				Note: "failed to deserialize batch events",
-				Details: err.Error(),
+				Details: details,
 			},
 		}
 	}

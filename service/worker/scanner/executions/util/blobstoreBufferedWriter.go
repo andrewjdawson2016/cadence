@@ -9,7 +9,7 @@ type (
 	blobstoreBufferedWriter struct {}
 )
 
-// NewBlobstoreBufferedWriter constructs a fileBufferedWriter
+// NewBlobstoreBufferedWriter constructs a blobstoreBufferedWriter
 func NewBlobstoreBufferedWriter(f *os.File, flushThreshold int) BufferedWriter {
 	return &blobstoreBufferedWriter{}
 }
