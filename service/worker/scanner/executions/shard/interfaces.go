@@ -28,16 +28,25 @@ type (
 		Error        error
 	}
 
+	// Scanner scans over all executions in a shard.
+	// For each execution it runs a series of invariant checks.
+	// It produces a report of what was scanned and records corrupted and fails executions.
 	Scanner interface {
-		Scan() (*ScanReport, error)
+		Scan() *ScanReport
 	}
 
+	Cleaner interface {
+		Clean() *CleanReport
+	}
+
+	// ScanReport is the result of scanning a shard
 	ScanReport struct {
 		ShardID int
 		Scanned *Scanned
-		ScanFailures []*ScanFailure
+		Failures []*ScanFailure
 	}
 
+	// Scanned is the part of the ScanReport which indicates the executions which were scanned
 	Scanned struct {
 		ExecutionsCount int64
 		CorruptedCount  int64
@@ -46,7 +55,29 @@ type (
 		CorruptOpenCount int64
 	}
 
+	// ScanFailure indicates a failure to scan
 	ScanFailure struct {
+		Note string
+		Details string
+	}
+
+	// CleanReport is the result of cleaning a shard
+	CleanReport struct {
+		ShardID int
+		Handled *Handled
+		Failures []*CleanFailure
+	}
+
+	// Handled is part of the CleanReport which indicates the executions which were handled
+	Handled struct {
+		ExecutionCount int64
+		CleanedCount int64
+		SkippedCount int64
+		FailedCount int64
+	}
+
+	// CleanFailure indicates a failure to clean
+	CleanFailure struct {
 		Note string
 		Details string
 	}

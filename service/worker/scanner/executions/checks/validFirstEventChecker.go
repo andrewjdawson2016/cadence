@@ -23,7 +23,7 @@ func NewValidFirstEventChecker(
 	}
 }
 
-func (c *validFirstEventChecker) Check(cr *CheckRequest) *CheckResponse {
+func (c *validFirstEventChecker) Check(cr *CheckRequest, resources *CheckResources) *CheckResponse {
 	if !validRequest(cr) {
 		return &CheckResponse{
 			ResultType: ResultTypeFailed,
@@ -32,7 +32,7 @@ func (c *validFirstEventChecker) Check(cr *CheckRequest) *CheckResponse {
 			},
 		}
 	}
-	if cr.Resources.History == nil || len(cr.Resources.History.History) == 0 {
+	if resources.History == nil || len(resources.History.History) == 0 {
 		return &CheckResponse{
 			ResultType: ResultTypeFailed,
 			FailedResult: &FailedResult{
@@ -40,7 +40,7 @@ func (c *validFirstEventChecker) Check(cr *CheckRequest) *CheckResponse {
 			},
 		}
 	}
-	firstBatch, err := c.payloadSerializer.DeserializeBatchEvents(cr.Resources.History.History[0])
+	firstBatch, err := c.payloadSerializer.DeserializeBatchEvents(resources.History.History[0])
 	if err != nil || len(firstBatch) == 0 {
 		details := ""
 		if err != nil {

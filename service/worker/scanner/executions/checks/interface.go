@@ -19,7 +19,7 @@ const (
 type (
 	Checker interface {
 		// Check is used to check that an invariant holds for a single execution
-		Check(*CheckRequest) *CheckResponse
+		Check(*CheckRequest, *CheckResources) *CheckResponse
 		// CheckType returns the type of check
 		CheckType() string
 	}
@@ -59,12 +59,11 @@ type (
 		TreeID     string
 		BranchID   string
 		State      int
-		Resources  RequestResources
 	}
 
-	// RequestResources enables a check to provide resources which will be used by dependent checks.
-	// RequestResources will only be modified on request if ResultType=ResultTypeHealthy
-	RequestResources struct {
+	// CheckResources enables a check to provide resources which will be used by dependent checks.
+	// CheckResources will only be modified on request if ResultType=ResultTypeHealthy
+	CheckResources struct {
 		History *persistence.InternalReadHistoryBranchResponse
 		// add other resources to future dependent checks here
 	}

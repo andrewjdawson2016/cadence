@@ -11,8 +11,6 @@ import (
 	"github.com/uber/cadence/service/worker/scanner/executions/util"
 )
 
-// TODO: double check that iterator always has non-nil result when error is nil - e.g. check that hasNext means it won't have an error
-
 const (
 	maxRetries = 10
 )
@@ -69,7 +67,7 @@ func (itr *persistenceCheckRequestIterator) Next() (*CheckRequestIteratorResult,
 }
 
 func (itr *persistenceCheckRequestIterator) HasNext() bool {
-	return itr.nextResult != nil
+	return itr.nextResult != nil && itr.nextError == nil
 }
 
 func (itr *persistenceCheckRequestIterator) advance() {

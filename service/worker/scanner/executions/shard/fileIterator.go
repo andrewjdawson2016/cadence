@@ -48,7 +48,7 @@ func (itr *fileCheckRequestIterator) Next() (*CheckRequestIteratorResult, error)
 }
 
 func (itr *fileCheckRequestIterator) HasNext() bool {
-	return itr.nextResult != nil
+	return itr.nextResult != nil && itr.nextError == nil
 }
 
 func (itr *fileCheckRequestIterator) advance() {

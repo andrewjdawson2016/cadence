@@ -6,6 +6,12 @@ import (
 	"github.com/uber/cadence/service/worker/scanner/executions/util"
 )
 
+// ExecutionOpen returns true if CheckRequest is for an open execution false otherwise
+func ExecutionOpen(cr *CheckRequest) bool {
+	return cr.State == persistence.WorkflowStateCreated ||
+		cr.State == persistence.WorkflowStateRunning
+}
+
 func concreteExecutionStillOpen(cr *CheckRequest, persistenceRetryer util.PersistenceRetryer) (bool, error) {
 	getConcreteExecution := &persistence.GetWorkflowExecutionRequest{
 		DomainID: cr.DomainID,
@@ -24,7 +30,7 @@ func concreteExecutionStillOpen(cr *CheckRequest, persistenceRetryer util.Persis
 			return false, err
 		}
 	}
-	return executionOpen(cr), nil
+	return ExecutionOpen(cr), nil
 }
 
 func concreteExecutionStillExists(cr *CheckRequest, persistenceRetryer util.PersistenceRetryer) (bool, error) {
@@ -46,11 +52,6 @@ func concreteExecutionStillExists(cr *CheckRequest, persistenceRetryer util.Pers
 	default:
 		return false, err
 	}
-}
-
-func executionOpen(cr *CheckRequest) bool {
-	return cr.State == persistence.WorkflowStateCreated ||
-		cr.State == persistence.WorkflowStateRunning
 }
 
 func validRequest(cr *CheckRequest) bool {

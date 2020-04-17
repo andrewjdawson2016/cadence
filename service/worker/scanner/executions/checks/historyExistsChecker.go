@@ -24,7 +24,7 @@ func NewHistoryExistsChecker(persistenceRetryer util.PersistenceRetryer) Checker
 }
 
 // Check checks that history exists
-func (c *historyExistsChecker) Check(cr *CheckRequest) *CheckResponse {
+func (c *historyExistsChecker) Check(cr *CheckRequest, resources *CheckResources) *CheckResponse {
 	if !validRequest(cr) {
 		return &CheckResponse{
 			ResultType: ResultTypeFailed,
@@ -86,7 +86,7 @@ func (c *historyExistsChecker) Check(cr *CheckRequest) *CheckResponse {
 			},
 		}
 	}
-	cr.Resources.History = history
+	resources.History = history
 	return &CheckResponse{
 		ResultType: ResultTypeHealthy,
 		HealthyResult: &HealthyResult{

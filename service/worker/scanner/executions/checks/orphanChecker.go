@@ -19,7 +19,7 @@ func NewOrphanChecker(persistenceRetryer util.PersistenceRetryer) Checker {
 	}
 }
 
-func (c *orphanExecutionChecker) Check(cr *CheckRequest) *CheckResponse {
+func (c *orphanExecutionChecker) Check(cr *CheckRequest, _ *CheckResources) *CheckResponse {
 	if !validRequest(cr) {
 		return &CheckResponse{
 			ResultType: ResultTypeFailed,
@@ -28,7 +28,7 @@ func (c *orphanExecutionChecker) Check(cr *CheckRequest) *CheckResponse {
 			},
 		}
 	}
-	if !executionOpen(cr) {
+	if !ExecutionOpen(cr) {
 		return &CheckResponse{
 			ResultType: ResultTypeHealthy,
 			HealthyResult: &HealthyResult{
