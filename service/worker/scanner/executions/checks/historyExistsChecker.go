@@ -95,6 +95,6 @@ func (c *historyExistsChecker) Check(cr *CheckRequest) *CheckResponse {
 	}
 }
 
-func (c *historyExistsChecker) CheckType() CheckType {
+func (c *historyExistsChecker) CheckType() string {
 	return "history_exists"
 }

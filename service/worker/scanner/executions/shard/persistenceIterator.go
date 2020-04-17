@@ -11,6 +11,8 @@ import (
 	"github.com/uber/cadence/service/worker/scanner/executions/util"
 )
 
+// TODO: double check that iterator always has non-nil result when error is nil - e.g. check that hasNext means it won't have an error
+
 const (
 	maxRetries = 10
 )

@@ -81,6 +81,6 @@ func (c *validFirstEventChecker) Check(cr *CheckRequest) *CheckResponse {
 	}
 }
 
-func (c *validFirstEventChecker) CheckType() CheckType {
+func (c *validFirstEventChecker) CheckType() string {
 	return "valid_first_event"
 }

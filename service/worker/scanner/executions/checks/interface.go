@@ -3,8 +3,6 @@ package checks
 import "github.com/uber/cadence/common/persistence"
 
 type (
-	// CheckType indicates the type of check
-	CheckType string
 	// CheckResult indicates the result of running a check
 	ResultType string
 )
@@ -23,7 +21,7 @@ type (
 		// Check is used to check that an invariant holds for a single execution
 		Check(*CheckRequest) *CheckResponse
 		// CheckType returns the type of check
-		CheckType() CheckType
+		CheckType() string
 	}
 
 	// CheckResponse is the response from Check.

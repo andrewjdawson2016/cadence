@@ -94,6 +94,6 @@ func (c *orphanExecutionChecker) Check(cr *CheckRequest) *CheckResponse {
 	}
 }
 
-func (c *orphanExecutionChecker) CheckType() CheckType {
+func (c *orphanExecutionChecker) CheckType() string {
 	return "orphan"
 }

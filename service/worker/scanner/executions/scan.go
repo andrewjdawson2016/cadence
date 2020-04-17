@@ -355,50 +355,6 @@ func getRateLimiter(startRPS int, targetRPS int, scaleUpSeconds int) *quotas.Dyn
 	return quotas.NewDynamicRateLimiter(rpsFn)
 }
 
-func getCheckRequest(
-	shardID int,
-	e *persistence.InternalListConcreteExecutionsEntity,
-	payloadSerializer persistence.PayloadSerializer,
-	branchDecoder *codec.ThriftRWEncoder,
-) (*CheckRequest, error) {
-	hb, err := getHistoryBranch(e, payloadSerializer, branchDecoder)
-	if err != nil {
-		return nil, err
-	}
-	return &CheckRequest{
-		ShardID:    shardID,
-		DomainID:   e.ExecutionInfo.DomainID,
-		WorkflowID: e.ExecutionInfo.WorkflowID,
-		RunID:      e.ExecutionInfo.RunID,
-		TreeID:     hb.GetTreeID(),
-		BranchID:   hb.GetBranchID(),
-		State:      e.ExecutionInfo.State,
-	}, nil
-}
-
-func getHistoryBranch(
-	e *persistence.InternalListConcreteExecutionsEntity,
-	payloadSerializer persistence.PayloadSerializer,
-	branchDecoder *codec.ThriftRWEncoder,
-) (*shared.HistoryBranch, error) {
-	branchTokenBytes := e.ExecutionInfo.BranchToken
-	if len(branchTokenBytes) == 0 {
-		if e.VersionHistories == nil {
-			return nil, errors.New("failed to get branch token")
-		}
-		vh, err := payloadSerializer.DeserializeVersionHistories(e.VersionHistories)
-		if err != nil {
-			return nil, err
-		}
-		branchTokenBytes = vh.GetHistories()[vh.GetCurrentVersionHistoryIndex()].GetBranchToken()
-	}
-	var branch shared.HistoryBranch
-	if err := branchDecoder.Decode(branchTokenBytes, &branch); err != nil {
-		return nil, err
-	}
-	return &branch, nil
-}
-
 func getChecks(
 	skipHistoryChecks bool,
 	limiter *quotas.DynamicRateLimiter,

@@ -31,7 +31,6 @@ type (
 	// ShardScanReport is the type that gets written to ShardScanReportFile
 	ShardScanReport struct {
 		ShardID         int
-		TotalDBRequests int64
 		Scanned         *ShardScanReportExecutionsScanned
 		Failure         *ShardScanReportFailure
 	}
@@ -95,9 +94,6 @@ type (
 		TotalHistoryMissing                            int64
 		TotalInvalidFirstEvent                         int64
 		TotalOpenExecutionInvalidCurrentExecution      int64
-		PercentageHistoryMissing                       float64
-		PercentageInvalidStartEvent                    float64
-		PercentageOpenExecutionInvalidCurrentExecution float64
 	}
 
 	// OpenCorruptions breaks down the count and percentage of open workflows which are corrupted

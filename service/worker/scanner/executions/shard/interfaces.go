@@ -27,4 +27,28 @@ type (
 		CheckRequest *checks.CheckRequest
 		Error        error
 	}
+
+	Scanner interface {
+		Scan() (*ScanReport, error)
+	}
+
+	ScanReport struct {
+		ShardID int
+		Scanned *Scanned
+		ScanFailures []*ScanFailure
+	}
+
+	Scanned struct {
+		ExecutionsCount int64
+		CorruptedCount  int64
+		CheckFailedCount     int64
+		CorruptionByType map[string]int64
+		CorruptOpenCount int64
+	}
+
+	ScanFailure struct {
+		Note string
+		Details string
+	}
 )
+
