@@ -7,12 +7,12 @@ import (
 )
 
 // ExecutionOpen returns true if CheckRequest is for an open execution false otherwise
-func ExecutionOpen(cr *CheckRequest) bool {
+func ExecutionOpen(cr CheckRequest) bool {
 	return cr.State == persistence.WorkflowStateCreated ||
 		cr.State == persistence.WorkflowStateRunning
 }
 
-func concreteExecutionStillOpen(cr *CheckRequest, persistenceRetryer util.PersistenceRetryer) (bool, error) {
+func concreteExecutionStillOpen(cr CheckRequest, persistenceRetryer util.PersistenceRetryer) (bool, error) {
 	getConcreteExecution := &persistence.GetWorkflowExecutionRequest{
 		DomainID: cr.DomainID,
 		Execution: shared.WorkflowExecution{
@@ -33,7 +33,7 @@ func concreteExecutionStillOpen(cr *CheckRequest, persistenceRetryer util.Persis
 	return ExecutionOpen(cr), nil
 }
 
-func concreteExecutionStillExists(cr *CheckRequest, persistenceRetryer util.PersistenceRetryer) (bool, error) {
+func concreteExecutionStillExists(cr CheckRequest, persistenceRetryer util.PersistenceRetryer) (bool, error) {
 	getConcreteExecution := &persistence.GetWorkflowExecutionRequest{
 		DomainID: cr.DomainID,
 		Execution: shared.WorkflowExecution{
@@ -54,7 +54,7 @@ func concreteExecutionStillExists(cr *CheckRequest, persistenceRetryer util.Pers
 	}
 }
 
-func validRequest(cr *CheckRequest) bool {
+func validRequest(cr CheckRequest) bool {
 	return len(cr.DomainID) > 0 &&
 		len(cr.WorkflowID) > 0 &&
 		len(cr.RunID) > 0 &&

@@ -1,13 +1,11 @@
 package shard
 
 import (
+	"fmt"
+	"github.com/uber/cadence/common"
 	"github.com/uber/cadence/common/persistence"
 	"github.com/uber/cadence/service/worker/scanner/executions/checks"
 	"github.com/uber/cadence/service/worker/scanner/executions/util"
-)
-
-const (
-	deleteMaxRetries = 10
 )
 
 type (
@@ -19,6 +17,12 @@ type (
 		checkers []checks.Checker
 		checkRequestIterator CheckRequestIterator
 		persistenceRetryer util.PersistenceRetryer
+		config *cleanerConfig
+	}
+
+	cleanerConfig struct {
+		maxRetries int
+		confirmCorruptedCount int
 	}
 )
 
@@ -31,6 +35,7 @@ func NewCleaner(
 	checkers []checks.Checker,
 	checkRequestIterator CheckRequestIterator,
 	persistenceRetryer util.PersistenceRetryer,
+	config *cleanerConfig,
 ) Cleaner {
 	return &cleaner{
 		shardID: shardID,
@@ -40,33 +45,18 @@ func NewCleaner(
 		checkers: checkers,
 		checkRequestIterator: checkRequestIterator,
 		persistenceRetryer: persistenceRetryer,
+		config: config,
 	}
 }
 
 func (c *cleaner) Clean() *CleanReport {
 	report := &CleanReport{
 		ShardID: c.shardID,
-		Handled: &Handled{},
 	}
 	defer func() {
-		if err := c.failedBufferedWriter.Flush(); err != nil {
-			report.Failures = append(report.Failures, &CleanFailure{
-				Note:    "failed to flush failedBufferedWriter",
-				Details: err.Error(),
-			})
-		}
-		if err := c.cleanedBufferedWriter.Flush(); err != nil {
-			report.Failures = append(report.Failures, &CleanFailure{
-				Note:    "failed to flush cleanedBufferedWriter",
-				Details: err.Error(),
-			})
-		}
-		if err := c.skippedBufferedWriter.Flush(); err != nil {
-			report.Failures = append(report.Failures, &CleanFailure{
-				Note:    "failed to flush skippedBufferedWriter",
-				Details: err.Error(),
-			})
-		}
+		flushCleanBuffer(c.failedBufferedWriter, report, "failed to flush failedBufferedWriter")
+		flushCleanBuffer(c.cleanedBufferedWriter, report, "failed to flush cleanedBufferedWriter")
+		flushCleanBuffer(c.skippedBufferedWriter, report, "failed to flush skippedBufferedWriter")
 	}()
 	for c.checkRequestIterator.HasNext() {
 		curr, err := c.checkRequestIterator.Next()
@@ -86,18 +76,27 @@ func (c *cleaner) Clean() *CleanReport {
 		}
 		report.Handled.ExecutionCount++
 		resources := &checks.CheckResources{}
-		verifiedCorruption := false
+		checkResponse := checks.CheckResponse{}
 		for _, checker := range c.checkers {
-			resp := checker.Check(curr.CheckRequest, resources)
-			if resp.ResultType == checks.ResultTypeCorrupted {
-				verifiedCorruption = true
-			}
-			if resp.ResultType != checks.ResultTypeHealthy {
+			checkResponse = checker.Check(curr.CheckRequest, resources)
+			if checkResponse.ResultType != checks.ResultTypeHealthy {
 				break
 			}
 		}
-		if !verifiedCorruption {
+		scannedRecordedEntity := ScannedRecordedEntity{
+			CheckRequest: curr.CheckRequest,
+			CheckResponse: checkResponse,
+		}
+		if checkResponse.ResultType != checks.ResultTypeCorrupted {
 			report.Handled.SkippedCount++
+			writeToCleanBuffer(
+				c.skippedBufferedWriter,
+				scannedRecordedEntity,
+				CleanResultTypeSkipped,
+				"skipped because could not verify corruption",
+				"",
+				report,
+				"failed to write to skippedBufferedWriter")
 			continue
 		}
 		deleteConcreteReq := &persistence.DeleteWorkflowExecutionRequest{
@@ -105,38 +104,116 @@ func (c *cleaner) Clean() *CleanReport {
 			WorkflowID: curr.CheckRequest.WorkflowID,
 			RunID:      curr.CheckRequest.RunID,
 		}
-		deletedConcrete := false
-		for i := 0; i < deleteMaxRetries; i++ {
-			if err := c.persistenceRetryer.DeleteWorkflowExecution(deleteConcreteReq); err == nil {
-				deletedConcrete = true
+		var concreteDeleteErr error
+		for i := 0; i < c.config.maxRetries; i++ {
+			if concreteDeleteErr = c.persistenceRetryer.DeleteWorkflowExecution(deleteConcreteReq); concreteDeleteErr == nil {
 				break
 			}
-			// TODO: also break out of this loop if its not a retryable persistence error
+			if !common.IsPersistenceTransientError(concreteDeleteErr) {
+				break
+			}
 		}
-		if !deletedConcrete {
-			// this is a failure
-		} else {
-			// we successfully deleted concrete
-		}
-
 		deleteCurrentReq := &persistence.DeleteCurrentWorkflowExecutionRequest{
 			DomainID:   curr.CheckRequest.DomainID,
 			WorkflowID: curr.CheckRequest.WorkflowID,
 			RunID:      curr.CheckRequest.RunID,
 		}
-		// deleting current execution is best effort, the success or failure of the cleanup
-		// is determined above based on if the concrete execution could be deleted
-		for i := 0; i < deleteMaxRetries; i++ {
-			if err := c.persistenceRetryer.DeleteCurrentWorkflowExecution(deleteCurrentReq); err == nil {
+		var currentDeleteErr error
+		for i := 0; i < c.config.maxRetries; i++ {
+			if currentDeleteErr = c.persistenceRetryer.DeleteCurrentWorkflowExecution(deleteCurrentReq); currentDeleteErr == nil {
 				break
 			}
+			if !common.IsPersistenceTransientError(currentDeleteErr) {
+				break
+			}
+		}
+
+		if concreteDeleteErr != nil && currentDeleteErr != nil {
+			report.Handled.FailedCount++
+			writeToCleanBuffer(
+				c.failedBufferedWriter,
+				scannedRecordedEntity,
+				CleanResultTypeFailed,
+				"failed to delete both concrete and current executions",
+				fmt.Sprintf("concreteErr: %v, currentErr: %v", concreteDeleteErr, currentDeleteErr),
+				report,
+				"failed to write to failedBufferedWriter")
+		} else if concreteDeleteErr != nil {
+			report.Handled.FailedCount++
+			writeToCleanBuffer(
+				c.failedBufferedWriter,
+				scannedRecordedEntity,
+				CleanResultTypeFailed,
+				"failed to delete concrete execution, but deleted current",
+				concreteDeleteErr.Error(),
+				report,
+				"failed to write to failedBufferedWriter")
+		} else if currentDeleteErr != nil {
+			report.Handled.FailedCount++
+			writeToCleanBuffer(
+				c.failedBufferedWriter,
+				scannedRecordedEntity,
+				CleanResultTypeFailed,
+				"failed to delete current execution, but deleted concrete",
+				currentDeleteErr.Error(),
+				report,
+				"failed to write to failedBufferedWriter")
+		} else {
+			report.Handled.CleanedCount++
+			writeToCleanBuffer(
+				c.cleanedBufferedWriter,
+				scannedRecordedEntity,
+				CleanResultTypeCleaned,
+				"successfully cleaned both concrete execution and current execution",
+				"",
+				report,
+				"failed to write to cleanedBufferedWriter")
 		}
 	}
 	return report
 }
 
+func writeToCleanBuffer(
+	buffer util.BufferedWriter,
+	scannedRecordedEntity ScannedRecordedEntity,
+	cleanResultType CleanResultType,
+	cleanNote string,
+	cleanDetails string,
+	cleanReport *CleanReport,
+	writeFailureNote string,
+) {
+	e := CleanedRecordedEntity{
+		ScannedRecordedEntity: scannedRecordedEntity,
+		CleanAttemptInfo:      CleanAttemptInfo{
+			ResultType: cleanResultType,
+			Note: cleanNote,
+			Details: cleanDetails,
+		},
+	}
+	if err := buffer.Add(e); err != nil {
+		cleanReport.Failures = append(cleanReport.Failures, &CleanFailure{
+			Note: writeFailureNote,
+			Details: err.Error(),
+		})
+	}
+}
+
+func flushCleanBuffer(
+	buffer util.BufferedWriter,
+	cleanReport *CleanReport,
+	flushFailureNote string,
+) {
+	if err := buffer.Flush(); err != nil {
+		cleanReport.Failures = append(cleanReport.Failures, &CleanFailure{
+			Note:    flushFailureNote,
+			Details: err.Error(),
+		})
+	}
+}
+
+
 // Tasks
-// 1. Finish cleaner implementation
+// 1. Review all code
 // 2. Write unit tests
 // 3. Write code which invokes scan and creates combined report
 // 4. Include output location in combined report

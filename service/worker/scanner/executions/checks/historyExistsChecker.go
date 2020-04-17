@@ -24,9 +24,9 @@ func NewHistoryExistsChecker(persistenceRetryer util.PersistenceRetryer) Checker
 }
 
 // Check checks that history exists
-func (c *historyExistsChecker) Check(cr *CheckRequest, resources *CheckResources) *CheckResponse {
+func (c *historyExistsChecker) Check(cr CheckRequest, resources *CheckResources) CheckResponse {
 	if !validRequest(cr) {
-		return &CheckResponse{
+		return CheckResponse{
 			ResultType: ResultTypeFailed,
 			FailedResult: &FailedResult{
 				Note: "invalid request",
@@ -44,7 +44,7 @@ func (c *historyExistsChecker) Check(cr *CheckRequest, resources *CheckResources
 	history, historyErr := c.persistenceRetryer.ReadHistoryBranch(readHistoryBranchReq)
 	stillExists, executionErr := concreteExecutionStillExists(cr, c.persistenceRetryer)
 	if executionErr != nil {
-		return &CheckResponse{
+		return CheckResponse{
 			ResultType: ResultTypeFailed,
 			FailedResult: &FailedResult{
 				Note:    "failed to verify if concrete execution still exists",
@@ -53,7 +53,7 @@ func (c *historyExistsChecker) Check(cr *CheckRequest, resources *CheckResources
 		}
 	}
 	if !stillExists {
-		return &CheckResponse{
+		return CheckResponse{
 			ResultType: ResultTypeHealthy,
 			HealthyResult: &HealthyResult{
 				Note: "concrete execution no longer exists",
@@ -62,7 +62,7 @@ func (c *historyExistsChecker) Check(cr *CheckRequest, resources *CheckResources
 	}
 	if historyErr != nil {
 		if historyErr == gocql.ErrNotFound {
-			return &CheckResponse{
+			return CheckResponse{
 				ResultType: ResultTypeCorrupted,
 				CorruptedResult: &CorruptedResult{
 					Note:    "concrete execution exists but history does not",
@@ -70,7 +70,7 @@ func (c *historyExistsChecker) Check(cr *CheckRequest, resources *CheckResources
 				},
 			}
 		}
-		return &CheckResponse{
+		return CheckResponse{
 			ResultType: ResultTypeFailed,
 			FailedResult: &FailedResult{
 				Note:    "failed to verify if history exists",
@@ -79,7 +79,7 @@ func (c *historyExistsChecker) Check(cr *CheckRequest, resources *CheckResources
 		}
 	}
 	if history == nil || len(history.History) == 0 {
-		return &CheckResponse{
+		return CheckResponse{
 			ResultType: ResultTypeCorrupted,
 			CorruptedResult: &CorruptedResult{
 				Note: "concrete execution exists but got empty history",
@@ -87,7 +87,7 @@ func (c *historyExistsChecker) Check(cr *CheckRequest, resources *CheckResources
 		}
 	}
 	resources.History = history
-	return &CheckResponse{
+	return CheckResponse{
 		ResultType: ResultTypeHealthy,
 		HealthyResult: &HealthyResult{
 			Note: "concrete execution exists and history exists",

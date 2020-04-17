@@ -9,7 +9,7 @@ import (
 
 type (
 	// CheckRequestConverterFn converts bytes to CheckRequest or returns error on failure
-	CheckRequestConverterFn func([]byte) (*checks.CheckRequest, error)
+	CheckRequestConverterFn func([]byte) (checks.CheckRequest, error)
 
 	fileCheckRequestIterator struct {
 		converter CheckRequestConverterFn

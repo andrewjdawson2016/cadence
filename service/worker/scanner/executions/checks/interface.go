@@ -19,7 +19,7 @@ const (
 type (
 	Checker interface {
 		// Check is used to check that an invariant holds for a single execution
-		Check(*CheckRequest, *CheckResources) *CheckResponse
+		Check(CheckRequest, *CheckResources) CheckResponse
 		// CheckType returns the type of check
 		CheckType() string
 	}

@@ -35,23 +35,13 @@ func NewScanner(
 func (s *scanner) Scan() *ScanReport {
 	report := &ScanReport{
 		ShardID: s.shardID,
-		Scanned: &Scanned{
+		Scanned: Scanned{
 			CorruptionByType: make(map[string]int64),
 		},
 	}
 	defer func() {
-		if err := s.failedBufferedWriter.Flush(); err != nil {
-			report.Failures = append(report.Failures, &ScanFailure{
-				Note:    "failed to flush failedBufferedWriter",
-				Details: err.Error(),
-			})
-		}
-		if err := s.corruptedBufferedWriter.Flush(); err != nil {
-			report.Failures = append(report.Failures, &ScanFailure{
-				Note:    "failed to flush corruptedBufferedWriter",
-				Details: err.Error(),
-			})
-		}
+		flushScanBuffer(s.failedBufferedWriter, report, "failed to flush failedBufferedWriter")
+		flushScanBuffer(s.corruptedBufferedWriter, report, "failed to flush corruptedBufferedWriter")
 	}()
 	for s.checkRequestIterator.HasNext() {
 		curr, err := s.checkRequestIterator.Next()
@@ -74,10 +64,6 @@ func (s *scanner) Scan() *ScanReport {
 	CheckerLoop:
 		for _, checker := range s.checkers {
 			resp := checker.Check(curr.CheckRequest, resources)
-			se := &ScannedRecordedEntity{
-				CheckRequest:  curr.CheckRequest,
-				CheckResponse: resp,
-			}
 			switch resp.ResultType {
 			case checks.ResultTypeCorrupted:
 				report.Scanned.CorruptedCount++
@@ -85,20 +71,10 @@ func (s *scanner) Scan() *ScanReport {
 				if checks.ExecutionOpen(curr.CheckRequest) {
 					report.Scanned.CorruptOpenCount++
 				}
-				if err := s.corruptedBufferedWriter.Add(se); err != nil {
-					report.Failures = append(report.Failures, &ScanFailure{
-						Note: "failed to add to corruptedBufferedWriter",
-						Details: err.Error(),
-					})
-				}
+				writeToScanBuffer(s.corruptedBufferedWriter, curr.CheckRequest, resp, report, "failed to add to corruptedBufferedWriter")
 			case checks.ResultTypeFailed:
 				report.Scanned.CheckFailedCount++
-				if err := s.failedBufferedWriter.Add(se); err != nil {
-					report.Failures = append(report.Failures, &ScanFailure{
-						Note: "failed to add to failedBufferedWriter",
-						Details: err.Error(),
-					})
-				}
+				writeToScanBuffer(s.failedBufferedWriter, curr.CheckRequest, resp, report, "failed to add to failedBufferedWriter")
 			}
 			if resp.ResultType != checks.ResultTypeHealthy {
 				break CheckerLoop
@@ -106,5 +82,37 @@ func (s *scanner) Scan() *ScanReport {
 		}
 	}
 	return report
+}
+
+func writeToScanBuffer(
+	buffer util.BufferedWriter,
+	checkRequest checks.CheckRequest,
+	checkResponse checks.CheckResponse,
+	scanReport *ScanReport,
+	writeFailureNote string,
+) {
+	e := ScannedRecordedEntity{
+		CheckRequest:  checkRequest,
+		CheckResponse: checkResponse,
+	}
+	if err := buffer.Add(e); err != nil {
+		scanReport.Failures = append(scanReport.Failures, &ScanFailure{
+			Note: writeFailureNote,
+			Details: err.Error(),
+		})
+	}
+}
+
+func flushScanBuffer(
+	buffer util.BufferedWriter,
+	scanReport *ScanReport,
+	flushFailureNote string,
+) {
+	if err := buffer.Flush(); err != nil {
+		scanReport.Failures = append(scanReport.Failures, &ScanFailure{
+			Note:    flushFailureNote,
+			Details: err.Error(),
+		})
+	}
 }
 

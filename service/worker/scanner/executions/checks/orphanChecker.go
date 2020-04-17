@@ -19,9 +19,9 @@ func NewOrphanChecker(persistenceRetryer util.PersistenceRetryer) Checker {
 	}
 }
 
-func (c *orphanExecutionChecker) Check(cr *CheckRequest, _ *CheckResources) *CheckResponse {
+func (c *orphanExecutionChecker) Check(cr CheckRequest, _ *CheckResources) CheckResponse {
 	if !validRequest(cr) {
-		return &CheckResponse{
+		return CheckResponse{
 			ResultType: ResultTypeFailed,
 			FailedResult: &FailedResult{
 				Note: "invalid request",
@@ -29,7 +29,7 @@ func (c *orphanExecutionChecker) Check(cr *CheckRequest, _ *CheckResources) *Che
 		}
 	}
 	if !ExecutionOpen(cr) {
-		return &CheckResponse{
+		return CheckResponse{
 			ResultType: ResultTypeHealthy,
 			HealthyResult: &HealthyResult{
 				Note: "execution is determined to be healthy because concrete execution is not open or doesn't exist",
@@ -43,7 +43,7 @@ func (c *orphanExecutionChecker) Check(cr *CheckRequest, _ *CheckResources) *Che
 	currentExecution, currentErr := c.persistenceRetryer.GetCurrentExecution(getCurrentExecutionRequest)
 	stillOpen, concreteErr := concreteExecutionStillOpen(cr, c.persistenceRetryer)
 	if concreteErr != nil {
-		return &CheckResponse{
+		return CheckResponse{
 			ResultType: ResultTypeFailed,
 			FailedResult: &FailedResult{
 				Note:    "failed to check if concrete execution is still open",
@@ -52,7 +52,7 @@ func (c *orphanExecutionChecker) Check(cr *CheckRequest, _ *CheckResources) *Che
 		}
 	}
 	if !stillOpen {
-		return &CheckResponse{
+		return CheckResponse{
 			ResultType: ResultTypeHealthy,
 			HealthyResult: &HealthyResult{
 				Note: "execution is determined to be healthy because concrete execution is not open or doesn't exist",
@@ -62,7 +62,7 @@ func (c *orphanExecutionChecker) Check(cr *CheckRequest, _ *CheckResources) *Che
 	if currentErr != nil {
 		switch currentErr.(type) {
 		case *shared.EntityNotExistsError:
-			return &CheckResponse{
+			return CheckResponse{
 				ResultType: ResultTypeCorrupted,
 				CorruptedResult: &CorruptedResult{
 					Note:    "execution is open without having current execution",
@@ -70,7 +70,7 @@ func (c *orphanExecutionChecker) Check(cr *CheckRequest, _ *CheckResources) *Che
 				},
 			}
 		}
-		return &CheckResponse{
+		return CheckResponse{
 			ResultType: ResultTypeFailed,
 			FailedResult: &FailedResult{
 				Note:    "failed to check if current execution exists",
@@ -79,14 +79,14 @@ func (c *orphanExecutionChecker) Check(cr *CheckRequest, _ *CheckResources) *Che
 		}
 	}
 	if currentExecution.RunID != cr.RunID {
-		return &CheckResponse{
+		return CheckResponse{
 			ResultType: ResultTypeCorrupted,
 			CorruptedResult: &CorruptedResult{
 				Note: "execution is open but current points at a different execution",
 			},
 		}
 	}
-	return &CheckResponse{
+	return CheckResponse{
 		ResultType: ResultTypeHealthy,
 		HealthyResult: &HealthyResult{
 			Note: "concrete and current both exist, concrete is open and current points at it",

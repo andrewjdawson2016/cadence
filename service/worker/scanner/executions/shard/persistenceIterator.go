@@ -136,12 +136,12 @@ func (itr *persistenceCheckRequestIterator) getNextPage() (*persistence.Internal
 	return resp, nil
 }
 
-func (itr *persistenceCheckRequestIterator) convertListEntityToCheckRequest(e *persistence.InternalListConcreteExecutionsEntity) (*checks.CheckRequest, error) {
+func (itr *persistenceCheckRequestIterator) convertListEntityToCheckRequest(e *persistence.InternalListConcreteExecutionsEntity) (checks.CheckRequest, error) {
 	hb, err := itr.historyBranch(e)
 	if err != nil {
-		return nil, err
+		return checks.CheckRequest{}, err
 	}
-	return &checks.CheckRequest{
+	return checks.CheckRequest{
 		ShardID:    itr.shardID,
 		DomainID:   e.ExecutionInfo.DomainID,
 		WorkflowID: e.ExecutionInfo.WorkflowID,

@@ -24,7 +24,7 @@ type (
 	// CheckRequestIteratorResult wraps a CheckRequest and an error.
 	// Exactly one of these will be non-nil.
 	CheckRequestIteratorResult struct {
-		CheckRequest *checks.CheckRequest
+		CheckRequest checks.CheckRequest
 		Error        error
 	}
 
@@ -42,7 +42,7 @@ type (
 	// ScanReport is the result of scanning a shard
 	ScanReport struct {
 		ShardID int
-		Scanned *Scanned
+		Scanned Scanned
 		Failures []*ScanFailure
 	}
 
@@ -64,7 +64,7 @@ type (
 	// CleanReport is the result of cleaning a shard
 	CleanReport struct {
 		ShardID int
-		Handled *Handled
+		Handled Handled
 		Failures []*CleanFailure
 	}
 

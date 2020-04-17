@@ -23,9 +23,9 @@ func NewValidFirstEventChecker(
 	}
 }
 
-func (c *validFirstEventChecker) Check(cr *CheckRequest, resources *CheckResources) *CheckResponse {
+func (c *validFirstEventChecker) Check(cr CheckRequest, resources *CheckResources) CheckResponse {
 	if !validRequest(cr) {
-		return &CheckResponse{
+		return CheckResponse{
 			ResultType: ResultTypeFailed,
 			FailedResult: &FailedResult{
 				Note: "invalid request",
@@ -33,7 +33,7 @@ func (c *validFirstEventChecker) Check(cr *CheckRequest, resources *CheckResourc
 		}
 	}
 	if resources.History == nil || len(resources.History.History) == 0 {
-		return &CheckResponse{
+		return CheckResponse{
 			ResultType: ResultTypeFailed,
 			FailedResult: &FailedResult{
 				Note: "invalid request, resources.history is not set",
@@ -46,7 +46,7 @@ func (c *validFirstEventChecker) Check(cr *CheckRequest, resources *CheckResourc
 		if err != nil {
 			details = err.Error()
 		}
-		return &CheckResponse{
+		return CheckResponse{
 			ResultType: ResultTypeFailed,
 			FailedResult: &FailedResult{
 				Note:    "failed to deserialize batch events",
@@ -56,7 +56,7 @@ func (c *validFirstEventChecker) Check(cr *CheckRequest, resources *CheckResourc
 	}
 	firstEvent := firstBatch[0]
 	if firstEvent.GetEventId() != common.FirstEventID {
-		return &CheckResponse{
+		return CheckResponse{
 			ResultType: ResultTypeCorrupted,
 			CorruptedResult: &CorruptedResult{
 				Note:    "got unexpected first eventID",
@@ -65,7 +65,7 @@ func (c *validFirstEventChecker) Check(cr *CheckRequest, resources *CheckResourc
 		}
 	}
 	if firstEvent.GetEventType() != shared.EventTypeWorkflowExecutionStarted {
-		return &CheckResponse{
+		return CheckResponse{
 			ResultType: ResultTypeCorrupted,
 			CorruptedResult: &CorruptedResult{
 				Note:    "got unexpected first eventType",
@@ -73,7 +73,7 @@ func (c *validFirstEventChecker) Check(cr *CheckRequest, resources *CheckResourc
 			},
 		}
 	}
-	return &CheckResponse{
+	return CheckResponse{
 		ResultType: ResultTypeHealthy,
 		HealthyResult: &HealthyResult{
 			Note: "got valid first history event",

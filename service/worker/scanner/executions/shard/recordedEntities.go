@@ -1,31 +1,31 @@
 package shard
 
 import (
-	"encoding/json"
-
 	"github.com/uber/cadence/service/worker/scanner/executions/checks"
 )
 
 type (
+	CleanResultType string
+
 	ScannedRecordedEntity struct {
-		CheckRequest *checks.CheckRequest
-		CheckResponse *checks.CheckResponse
+		CheckRequest checks.CheckRequest
+		CheckResponse checks.CheckResponse
 	}
 
 	CleanedRecordedEntity struct {
-		ScannedRecordedEntity *ScannedRecordedEntity
+		ScannedRecordedEntity ScannedRecordedEntity
+		CleanAttemptInfo CleanAttemptInfo
+	}
 
+	CleanAttemptInfo struct {
+		ResultType CleanResultType
+		Note string
+		Details string
 	}
 )
 
-func SerializeScannedExecution(se *ScannedRecordedEntity) ([]byte, error) {
-	return json.Marshal(se)
-}
-
-func DeserializeScannedExecution(data []byte) (*ScannedRecordedEntity, error) {
-	var se ScannedRecordedEntity
-	if err := json.Unmarshal(data, &se); err != nil {
-		return nil, err
-	}
-	return &se, nil
-}
+const (
+	CleanResultTypeSkipped CleanResultType = "skipped"
+	CleanResultTypeCleaned = "cleaned"
+	CleanResultTypeFailed = "failed"
+)
