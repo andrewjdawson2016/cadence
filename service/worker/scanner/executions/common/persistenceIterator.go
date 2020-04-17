@@ -1,4 +1,4 @@
-package shard
+package common
 
 import (
 	"errors"
@@ -8,7 +8,6 @@ import (
 	"github.com/uber/cadence/common/codec"
 	"github.com/uber/cadence/common/persistence"
 	"github.com/uber/cadence/service/worker/scanner/executions/checks"
-	"github.com/uber/cadence/service/worker/scanner/executions/util"
 )
 
 const (
@@ -18,7 +17,7 @@ const (
 type (
 	persistenceCheckRequestIterator struct {
 		shardID            int
-		persistenceRetryer util.PersistenceRetryer
+		persistenceRetryer common.PersistenceRetryer
 		pageSize           int
 		payloadSerializer  persistence.PayloadSerializer
 		branchDecoder      *codec.ThriftRWEncoder
@@ -35,7 +34,7 @@ type (
 // NewPersistenceCheckRequestIterator constructs a persistenceCheckRequestIterator
 func NewPersistenceCheckRequestIterator(
 	shardID int,
-	persistenceRetryer util.PersistenceRetryer,
+	persistenceRetryer common.PersistenceRetryer,
 	pageSize int,
 	payloadSerializer persistence.PayloadSerializer,
 	branchDecoder *codec.ThriftRWEncoder,

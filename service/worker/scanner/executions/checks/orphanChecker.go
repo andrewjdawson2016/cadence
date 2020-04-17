@@ -3,17 +3,17 @@ package checks
 import (
 	"github.com/uber/cadence/.gen/go/shared"
 	"github.com/uber/cadence/common/persistence"
-	"github.com/uber/cadence/service/worker/scanner/executions/util"
+	"github.com/uber/cadence/service/worker/scanner/executions/common"
 )
 
 type (
 	orphanExecutionChecker struct {
-		persistenceRetryer util.PersistenceRetryer
+		persistenceRetryer common.PersistenceRetryer
 	}
 )
 
 // NewOrphanChecker constructs an orphanExecutionChecker
-func NewOrphanChecker(persistenceRetryer util.PersistenceRetryer) Checker {
+func NewOrphanChecker(persistenceRetryer common.PersistenceRetryer) Checker {
 	return &orphanExecutionChecker{
 		persistenceRetryer: persistenceRetryer,
 	}

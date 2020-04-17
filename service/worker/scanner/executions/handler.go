@@ -36,7 +36,7 @@ const scannerTaskListPrefix = "cadence-sys-executions-scanner"
 
 // validateHandler validates a single execution.
 // It operates in two phases: collection step and validation step.
-// During collection step information from util is read for this workflow execution.
+// During collection step information from common is read for this workflow execution.
 // During validation step invariants are asserted over everything that was read.
 // In the future its possible to add a third step here which will additionally take automatic recovery actions if validation failed.
 func (s *Scavenger) validateHandler(key *executionKey) handlerStatus {

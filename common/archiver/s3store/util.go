@@ -41,7 +41,7 @@ import (
 	"github.com/uber/cadence/common/archiver"
 )
 
-// encoding & decoding util
+// encoding & decoding common
 
 func encode(v interface{}) ([]byte, error) {
 	return json.Marshal(v)

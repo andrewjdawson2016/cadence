@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package util
+package common
 
 import (
 	"context"
@@ -32,7 +32,7 @@ import (
 )
 
 type (
-	// PersistenceRetryer is used to retry and rate limit requests to util
+	// PersistenceRetryer is used to retry and rate limit requests to persistence
 	PersistenceRetryer interface {
 		ListConcreteExecutions(*persistence.ListConcreteExecutionsRequest) (*persistence.InternalListConcreteExecutionsResponse, error)
 		GetWorkflowExecution(*persistence.GetWorkflowExecutionRequest) (*persistence.InternalGetWorkflowExecutionResponse, error)

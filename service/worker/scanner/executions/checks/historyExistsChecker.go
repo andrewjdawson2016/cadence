@@ -5,19 +5,19 @@ import (
 
 	"github.com/uber/cadence/common"
 	"github.com/uber/cadence/common/persistence"
-	"github.com/uber/cadence/service/worker/scanner/executions/util"
+	"github.com/uber/cadence/service/worker/scanner/executions/common"
 )
 
 const historyPageSize = 1
 
 type (
 	historyExistsChecker struct {
-		persistenceRetryer util.PersistenceRetryer
+		persistenceRetryer common.PersistenceRetryer
 	}
 )
 
 // NewHistoryExistsChecker constructs a historyExistsChecker
-func NewHistoryExistsChecker(persistenceRetryer util.PersistenceRetryer) Checker {
+func NewHistoryExistsChecker(persistenceRetryer common.PersistenceRetryer) Checker {
 	return &historyExistsChecker{
 		persistenceRetryer: persistenceRetryer,
 	}

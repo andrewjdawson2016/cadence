@@ -29,7 +29,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/uber/cadence/service/worker/scanner/executions/util"
+	"github.com/uber/cadence/service/worker/scanner/executions/common"
 
 	"github.com/gocql/gocql"
 	"github.com/urfave/cli"
@@ -147,8 +147,8 @@ func scanShard(
 	report := &ShardScanReport{
 		ShardID: shardID,
 	}
-	checkFailureWriter := util.NewBufferedWriter(outputFiles.ExecutionCheckFailureFile)
-	corruptedExecutionWriter := util.NewBufferedWriter(outputFiles.CorruptedExecutionFile)
+	checkFailureWriter := common.NewBufferedWriter(outputFiles.ExecutionCheckFailureFile)
+	corruptedExecutionWriter := common.NewBufferedWriter(outputFiles.CorruptedExecutionFile)
 	defer func() {
 		checkFailureWriter.Flush()
 		corruptedExecutionWriter.Flush()

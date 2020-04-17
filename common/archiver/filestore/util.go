@@ -42,7 +42,7 @@ var (
 	errEmptyDirectoryPath = errors.New("directory path is empty")
 )
 
-// File I/O util
+// File I/O common
 
 func fileExists(filepath string) (bool, error) {
 	if info, err := os.Stat(filepath); err != nil {
@@ -137,7 +137,7 @@ func listFilesByPrefix(dirPath string, prefix string) ([]string, error) {
 	return filteredFileNames, nil
 }
 
-// encoding & decoding util
+// encoding & decoding common
 
 func encode(v interface{}) ([]byte, error) {
 	return json.Marshal(v)

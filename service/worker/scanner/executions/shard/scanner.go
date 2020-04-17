@@ -2,24 +2,24 @@ package shard
 
 import (
 	"github.com/uber/cadence/service/worker/scanner/executions/checks"
-	"github.com/uber/cadence/service/worker/scanner/executions/util"
+	"github.com/uber/cadence/service/worker/scanner/executions/common"
 )
 
 type (
 	scanner struct {
-		shardID int
-		failedBufferedWriter util.BufferedWriter
-		corruptedBufferedWriter util.BufferedWriter
-		checkers []checks.Checker
-		checkRequestIterator CheckRequestIterator
+		shardID                 int
+		failedBufferedWriter    common.BufferedWriter
+		corruptedBufferedWriter common.BufferedWriter
+		checkers                []checks.Checker
+		checkRequestIterator    CheckRequestIterator
 	}
 )
 
 // NewScanner constructs a new scanner
 func NewScanner(
 	shardID int,
-	failedBufferedWriter util.BufferedWriter,
-	corruptedBufferedWriter util.BufferedWriter,
+	failedBufferedWriter common.BufferedWriter,
+	corruptedBufferedWriter common.BufferedWriter,
 	checkers []checks.Checker,
 	checkRequestIterator CheckRequestIterator,
 ) Scanner {
@@ -85,7 +85,7 @@ func (s *scanner) Scan() *ScanReport {
 }
 
 func writeToScanBuffer(
-	buffer util.BufferedWriter,
+	buffer common.BufferedWriter,
 	checkRequest checks.CheckRequest,
 	checkResponse checks.CheckResponse,
 	scanReport *ScanReport,
@@ -104,7 +104,7 @@ func writeToScanBuffer(
 }
 
 func flushScanBuffer(
-	buffer util.BufferedWriter,
+	buffer common.BufferedWriter,
 	scanReport *ScanReport,
 	flushFailureNote string,
 ) {

@@ -270,7 +270,7 @@ func (s *TestBase) UpdateShard(updatedInfo *p.ShardInfo, previousRangeID int64) 
 	})
 }
 
-// CreateWorkflowExecutionWithBranchToken test util function
+// CreateWorkflowExecutionWithBranchToken test common function
 func (s *TestBase) CreateWorkflowExecutionWithBranchToken(domainID string, workflowExecution workflow.WorkflowExecution, taskList,
 	wType string, wTimeout int32, decisionTimeout int32, executionContext []byte, nextEventID int64, lastProcessedEventID int64,
 	decisionScheduleID int64, branchToken []byte, timerTasks []p.Task) (*p.CreateWorkflowExecutionResponse, error) {

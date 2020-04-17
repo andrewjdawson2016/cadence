@@ -1,19 +1,14 @@
-package shard
+package common
 
 import (
 	"bufio"
+	"encoding/json"
+	"errors"
 	"os"
-
-	"github.com/uber/cadence/service/worker/scanner/executions/checks"
 )
 
 type (
-	// CheckRequestConverterFn converts bytes to CheckRequest or returns error on failure
-	CheckRequestConverterFn func([]byte) (checks.CheckRequest, error)
-
 	fileCheckRequestIterator struct {
-		converter CheckRequestConverterFn
-
 		// the following keep track of the iterator's state
 		scanner *bufio.Scanner
 		nextResult    *CheckRequestIteratorResult
@@ -21,15 +16,14 @@ type (
 	}
 )
 
-// NewFileCheckRequestIterator constructs a fileCheckRequestIterator
-func NewFileCheckRequestIterator(
-	f *os.File,
-	converter CheckRequestConverterFn,
-) CheckRequestIterator {
+// NewFileCheckRequestIterator constructs a CheckRequestIterator backed by an os.File.
+// This CheckRequestIterator assumes the file given can be read from.
+// The responsibility to close the file belongs to the caller.
+// This CheckRequestIterator assumes the file contains newline separated entities,
+//where each entity can be json unmarshalled into a ScanOutputEntity.
+func NewFileCheckRequestIterator(f *os.File) CheckRequestIterator {
 	scanner := bufio.NewScanner(f)
 	itr := &fileCheckRequestIterator{
-		converter: converter,
-
 		scanner: scanner,
 		nextResult: nil,
 		nextError: nil,
@@ -52,6 +46,14 @@ func (itr *fileCheckRequestIterator) HasNext() bool {
 }
 
 func (itr *fileCheckRequestIterator) advance() {
+	defer func() {
+		if !ValidCheckRequestIteratorResult(itr.nextResult) {
+			itr.nextResult = &CheckRequestIteratorResult{
+				CheckRequest: CheckRequest{},
+				Error:        errors.New("iterator entered invalid state"),
+			}
+		}
+	}()
 	hasNext := itr.scanner.Scan()
 	if !hasNext {
 		itr.nextResult = nil
@@ -61,6 +63,17 @@ func (itr *fileCheckRequestIterator) advance() {
 		}
 		return
 	}
+	line := itr.scanner.Bytes()
+	var soe ScanOutputEntity
+	if err := json.Unmarshal(line, &soe); err != nil {
+		itr.nextResult = &CheckRequestIteratorResult{
+			CheckRequest: CheckRequest{},
+			Error:        err,
+		}
+	}
+
+
+
 	cr, err := itr.converter(itr.scanner.Bytes())
 	itr.nextResult = &CheckRequestIteratorResult{
 		CheckRequest: cr,

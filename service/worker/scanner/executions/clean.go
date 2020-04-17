@@ -30,7 +30,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/uber/cadence/service/worker/scanner/executions/util"
+	"github.com/uber/cadence/service/worker/scanner/executions/common"
 
 	"github.com/gocql/gocql"
 	"github.com/urfave/cli"
@@ -168,8 +168,8 @@ func cleanShard(
 	report := &ShardCleanReport{
 		ShardID: shardID,
 	}
-	failedCleanWriter := util.NewBufferedWriter(outputFiles.FailedCleanedFile)
-	successfullyCleanWriter := util.NewBufferedWriter(outputFiles.SuccessfullyCleanedFile)
+	failedCleanWriter := common.NewBufferedWriter(outputFiles.FailedCleanedFile)
+	successfullyCleanWriter := common.NewBufferedWriter(outputFiles.SuccessfullyCleanedFile)
 	defer func() {
 		failedCleanWriter.Flush()
 		successfullyCleanWriter.Flush()

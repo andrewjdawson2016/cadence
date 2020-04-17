@@ -1,4 +1,4 @@
-package util
+package common
 
 import (
 	"errors"
@@ -9,13 +9,13 @@ type (
 	blobstoreBufferedWriter struct{}
 )
 
-// NewBlobstoreBufferedWriter constructs a blobstoreBufferedWriter
+// NewBlobstoreBufferedWriter constructs a BufferedWriter backed by blobstore
 func NewBlobstoreBufferedWriter(f *os.File, flushThreshold int) BufferedWriter {
 	return &blobstoreBufferedWriter{}
 }
 
 // Add adds a new entity
-func (w *blobstoreBufferedWriter) Add(e interface{}) error {
+func (w *blobstoreBufferedWriter) Add(_ interface{}) error {
 	return errors.New("not yet implemented")
 }
 

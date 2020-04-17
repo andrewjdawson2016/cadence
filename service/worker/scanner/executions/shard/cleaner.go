@@ -5,19 +5,19 @@ import (
 	"github.com/uber/cadence/common"
 	"github.com/uber/cadence/common/persistence"
 	"github.com/uber/cadence/service/worker/scanner/executions/checks"
-	"github.com/uber/cadence/service/worker/scanner/executions/util"
+	"github.com/uber/cadence/service/worker/scanner/executions/common"
 )
 
 type (
 	cleaner struct {
-		shardID int
-		failedBufferedWriter util.BufferedWriter
-		cleanedBufferedWriter util.BufferedWriter
-		skippedBufferedWriter util.BufferedWriter
-		checkers []checks.Checker
-		checkRequestIterator CheckRequestIterator
-		persistenceRetryer util.PersistenceRetryer
-		config *cleanerConfig
+		shardID               int
+		failedBufferedWriter  common.BufferedWriter
+		cleanedBufferedWriter common.BufferedWriter
+		skippedBufferedWriter common.BufferedWriter
+		checkers              []checks.Checker
+		checkRequestIterator  CheckRequestIterator
+		persistenceRetryer    common.PersistenceRetryer
+		config                *cleanerConfig
 	}
 
 	cleanerConfig struct {
@@ -29,12 +29,12 @@ type (
 // NewCleaner constructs a new cleaner
 func NewCleaner(
 	shardID int,
-	failedBufferedWriter util.BufferedWriter,
-	cleanedBufferedWriter util.BufferedWriter,
-	skippedBufferedWriter util.BufferedWriter,
+	failedBufferedWriter common.BufferedWriter,
+	cleanedBufferedWriter common.BufferedWriter,
+	skippedBufferedWriter common.BufferedWriter,
 	checkers []checks.Checker,
 	checkRequestIterator CheckRequestIterator,
-	persistenceRetryer util.PersistenceRetryer,
+	persistenceRetryer common.PersistenceRetryer,
 	config *cleanerConfig,
 ) Cleaner {
 	return &cleaner{
@@ -174,7 +174,7 @@ func (c *cleaner) Clean() *CleanReport {
 }
 
 func writeToCleanBuffer(
-	buffer util.BufferedWriter,
+	buffer common.BufferedWriter,
 	scannedRecordedEntity ScannedRecordedEntity,
 	cleanResultType CleanResultType,
 	cleanNote string,
@@ -199,7 +199,7 @@ func writeToCleanBuffer(
 }
 
 func flushCleanBuffer(
-	buffer util.BufferedWriter,
+	buffer common.BufferedWriter,
 	cleanReport *CleanReport,
 	flushFailureNote string,
 ) {

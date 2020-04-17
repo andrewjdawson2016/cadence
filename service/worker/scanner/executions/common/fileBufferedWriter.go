@@ -1,4 +1,4 @@
-package util
+package common
 
 import (
 	"encoding/json"
@@ -14,7 +14,10 @@ type (
 	}
 )
 
-// NewFileBufferedWriter constructs a fileBufferedWriter
+// NewFileBufferedWriter constructs a BufferedWriter backed by os.File.
+// This BufferedWriter assumes the file given can be written to.
+// The responsibility to close the file belongs to the caller.
+// Added entities are serialized using json and outputted to file such that each entity is separated by a newline.
 func NewFileBufferedWriter(f *os.File, flushThreshold int) BufferedWriter {
 	return &fileBufferedWriter{
 		f:              f,

@@ -1,18 +1,17 @@
-package checks
+package common
 
 import (
 	"github.com/uber/cadence/.gen/go/shared"
 	"github.com/uber/cadence/common/persistence"
-	"github.com/uber/cadence/service/worker/scanner/executions/util"
 )
 
 // ExecutionOpen returns true if CheckRequest is for an open execution false otherwise
 func ExecutionOpen(cr CheckRequest) bool {
-	return cr.State == persistence.WorkflowStateCreated ||
-		cr.State == persistence.WorkflowStateRunning
+	return cr.State == persistence.WorkflowStateCreated || cr.State == persistence.WorkflowStateRunning
 }
 
-func concreteExecutionStillOpen(cr CheckRequest, persistenceRetryer util.PersistenceRetryer) (bool, error) {
+// StillOpen is used to determine if a workflow is still open.
+func StillOpen(cr CheckRequest, persistenceRetryer PersistenceRetryer) (bool, error) {
 	getConcreteExecution := &persistence.GetWorkflowExecutionRequest{
 		DomainID: cr.DomainID,
 		Execution: shared.WorkflowExecution{
@@ -33,7 +32,8 @@ func concreteExecutionStillOpen(cr CheckRequest, persistenceRetryer util.Persist
 	return ExecutionOpen(cr), nil
 }
 
-func concreteExecutionStillExists(cr CheckRequest, persistenceRetryer util.PersistenceRetryer) (bool, error) {
+// StillExists is used to determine if a workflow still exists
+func StillExists(cr CheckRequest, persistenceRetryer PersistenceRetryer) (bool, error) {
 	getConcreteExecution := &persistence.GetWorkflowExecutionRequest{
 		DomainID: cr.DomainID,
 		Execution: shared.WorkflowExecution{
@@ -54,10 +54,20 @@ func concreteExecutionStillExists(cr CheckRequest, persistenceRetryer util.Persi
 	}
 }
 
-func validRequest(cr CheckRequest) bool {
+// ValidRequest returns true if CheckRequest is valid, false otherwise.
+// TODO: consume this method
+func ValidCheckRequest(cr CheckRequest) bool {
 	return len(cr.DomainID) > 0 &&
 		len(cr.WorkflowID) > 0 &&
 		len(cr.RunID) > 0 &&
 		len(cr.TreeID) > 0 &&
 		len(cr.BranchID) > 0
+}
+
+// ValidCheckRequestIteratorResult returns true if CheckRequestIteratorResult is valid, false otherwise.
+func ValidCheckRequestIteratorResult(itrResult *CheckRequestIteratorResult) bool {
+	if itrResult.Error == nil {
+		return ValidCheckRequest(itrResult.CheckRequest)
+	}
+	return true
 }
