@@ -46,7 +46,7 @@ func (c *orphanExecutionChecker) Check(cr *CheckRequest) *CheckResponse {
 		return &CheckResponse{
 			ResultType: ResultTypeFailed,
 			FailedResult: &FailedResult{
-				Note: "failed to check if concrete execution is still open",
+				Note:    "failed to check if concrete execution is still open",
 				Details: concreteErr.Error(),
 			},
 		}
@@ -65,7 +65,7 @@ func (c *orphanExecutionChecker) Check(cr *CheckRequest) *CheckResponse {
 			return &CheckResponse{
 				ResultType: ResultTypeCorrupted,
 				CorruptedResult: &CorruptedResult{
-					Note: "execution is open without having current execution",
+					Note:    "execution is open without having current execution",
 					Details: currentErr.Error(),
 				},
 			}

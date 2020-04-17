@@ -8,8 +8,8 @@ import (
 
 type (
 	fileBufferedWriter struct {
-		f       *os.File
-		entries []interface{}
+		f              *os.File
+		entries        []interface{}
 		flushThreshold int
 	}
 )
@@ -17,7 +17,7 @@ type (
 // NewFileBufferedWriter constructs a fileBufferedWriter
 func NewFileBufferedWriter(f *os.File, flushThreshold int) BufferedWriter {
 	return &fileBufferedWriter{
-		f: f,
+		f:              f,
 		flushThreshold: flushThreshold,
 	}
 }

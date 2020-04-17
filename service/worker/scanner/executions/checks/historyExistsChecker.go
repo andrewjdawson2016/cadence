@@ -2,6 +2,7 @@ package checks
 
 import (
 	"github.com/gocql/gocql"
+
 	"github.com/uber/cadence/common"
 	"github.com/uber/cadence/common/persistence"
 	"github.com/uber/cadence/service/worker/scanner/executions/util"
@@ -46,7 +47,7 @@ func (c *historyExistsChecker) Check(cr *CheckRequest) *CheckResponse {
 		return &CheckResponse{
 			ResultType: ResultTypeFailed,
 			FailedResult: &FailedResult{
-				Note: "failed to verify if concrete execution still exists",
+				Note:    "failed to verify if concrete execution still exists",
 				Details: executionErr.Error(),
 			},
 		}
@@ -64,7 +65,7 @@ func (c *historyExistsChecker) Check(cr *CheckRequest) *CheckResponse {
 			return &CheckResponse{
 				ResultType: ResultTypeCorrupted,
 				CorruptedResult: &CorruptedResult{
-					Note: "concrete execution exists but history does not",
+					Note:    "concrete execution exists but history does not",
 					Details: historyErr.Error(),
 				},
 			}

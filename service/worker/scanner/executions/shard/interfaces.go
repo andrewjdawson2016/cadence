@@ -2,6 +2,7 @@ package shard
 
 import (
 	"errors"
+
 	"github.com/uber/cadence/service/worker/scanner/executions/checks"
 )
 

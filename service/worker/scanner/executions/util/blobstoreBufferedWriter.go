@@ -6,7 +6,7 @@ import (
 )
 
 type (
-	blobstoreBufferedWriter struct {}
+	blobstoreBufferedWriter struct{}
 )
 
 // NewBlobstoreBufferedWriter constructs a blobstoreBufferedWriter

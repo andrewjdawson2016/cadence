@@ -2,6 +2,7 @@ package checks
 
 import (
 	"fmt"
+
 	"github.com/uber/cadence/.gen/go/shared"
 	"github.com/uber/cadence/common"
 	"github.com/uber/cadence/common/persistence"
@@ -48,7 +49,7 @@ func (c *validFirstEventChecker) Check(cr *CheckRequest) *CheckResponse {
 		return &CheckResponse{
 			ResultType: ResultTypeFailed,
 			FailedResult: &FailedResult{
-				Note: "failed to deserialize batch events",
+				Note:    "failed to deserialize batch events",
 				Details: details,
 			},
 		}
@@ -58,7 +59,7 @@ func (c *validFirstEventChecker) Check(cr *CheckRequest) *CheckResponse {
 		return &CheckResponse{
 			ResultType: ResultTypeCorrupted,
 			CorruptedResult: &CorruptedResult{
-				Note:  "got unexpected first eventID",
+				Note:    "got unexpected first eventID",
 				Details: fmt.Sprintf("expected: %v but got %v", common.FirstEventID, firstEvent.GetEventId()),
 			},
 		}
@@ -67,7 +68,7 @@ func (c *validFirstEventChecker) Check(cr *CheckRequest) *CheckResponse {
 		return &CheckResponse{
 			ResultType: ResultTypeCorrupted,
 			CorruptedResult: &CorruptedResult{
-				Note:  "got unexpected first eventType",
+				Note:    "got unexpected first eventType",
 				Details: fmt.Sprintf("expected: %v but got %v", shared.EventTypeWorkflowExecutionStarted.String(), firstEvent.GetEventType().String()),
 			},
 		}

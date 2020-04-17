@@ -17,17 +17,17 @@ const (
 
 type (
 	persistenceCheckRequestIterator struct {
-		shardID int
+		shardID            int
 		persistenceRetryer util.PersistenceRetryer
-		pageSize int
-		payloadSerializer persistence.PayloadSerializer
-		branchDecoder *codec.ThriftRWEncoder
+		pageSize           int
+		payloadSerializer  persistence.PayloadSerializer
+		branchDecoder      *codec.ThriftRWEncoder
 
 		// the following keep track of iterator's state
-		currPage *persistence.InternalListConcreteExecutionsResponse
+		currPage      *persistence.InternalListConcreteExecutionsResponse
 		currPageIndex int
-		nextResult *CheckRequestIteratorResult
-		nextError error
+		nextResult    *CheckRequestIteratorResult
+		nextError     error
 	}
 )
 
@@ -40,16 +40,16 @@ func NewPersistenceCheckRequestIterator(
 	branchDecoder *codec.ThriftRWEncoder,
 ) CheckRequestIterator {
 	itr := &persistenceCheckRequestIterator{
-		shardID: shardID,
+		shardID:            shardID,
 		persistenceRetryer: persistenceRetryer,
-		pageSize: pageSize,
-		payloadSerializer: payloadSerializer,
-		branchDecoder: branchDecoder,
+		pageSize:           pageSize,
+		payloadSerializer:  payloadSerializer,
+		branchDecoder:      branchDecoder,
 
-		currPage: &persistence.InternalListConcreteExecutionsResponse{},
+		currPage:      &persistence.InternalListConcreteExecutionsResponse{},
 		currPageIndex: -1,
-		nextResult: nil,
-		nextError: nil,
+		nextResult:    nil,
+		nextError:     nil,
 	}
 	itr.advance()
 	return itr
@@ -107,7 +107,7 @@ func (itr *persistenceCheckRequestIterator) getFromCurrentPage() *CheckRequestIt
 
 func (itr *persistenceCheckRequestIterator) getNextPage() (*persistence.InternalListConcreteExecutionsResponse, error) {
 	req := &persistence.ListConcreteExecutionsRequest{
-		PageSize: itr.pageSize,
+		PageSize:  itr.pageSize,
 		PageToken: itr.currPage.NextPageToken,
 	}
 	var resp *persistence.InternalListConcreteExecutionsResponse
@@ -133,13 +133,13 @@ func (itr *persistenceCheckRequestIterator) convertListEntityToCheckRequest(e *p
 		return nil, err
 	}
 	return &checks.CheckRequest{
-		ShardID: itr.shardID,
-		DomainID: e.ExecutionInfo.DomainID,
+		ShardID:    itr.shardID,
+		DomainID:   e.ExecutionInfo.DomainID,
 		WorkflowID: e.ExecutionInfo.WorkflowID,
-		RunID: e.ExecutionInfo.RunID,
-		TreeID: hb.GetTreeID(),
-		BranchID: hb.GetBranchID(),
-		State: e.ExecutionInfo.State,
+		RunID:      e.ExecutionInfo.RunID,
+		TreeID:     hb.GetTreeID(),
+		BranchID:   hb.GetBranchID(),
+		State:      e.ExecutionInfo.State,
 	}, nil
 }
 

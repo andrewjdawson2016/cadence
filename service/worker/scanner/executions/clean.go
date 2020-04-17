@@ -26,10 +26,11 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/uber/cadence/service/worker/scanner/executions/util"
 	"math"
 	"os"
 	"time"
+
+	"github.com/uber/cadence/service/worker/scanner/executions/util"
 
 	"github.com/gocql/gocql"
 	"github.com/urfave/cli"

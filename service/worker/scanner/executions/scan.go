@@ -26,10 +26,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	checks2 "github.com/uber/cadence/service/worker/scanner/executions/checks"
-	"github.com/uber/cadence/service/worker/scanner/executions/util"
 	"os"
 	"time"
+
+	"github.com/uber/cadence/service/worker/scanner/executions/util"
 
 	"github.com/gocql/gocql"
 	"github.com/urfave/cli"

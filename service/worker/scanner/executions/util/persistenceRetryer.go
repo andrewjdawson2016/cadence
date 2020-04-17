@@ -43,8 +43,8 @@ type (
 	}
 
 	persistenceRetryer struct {
-		limiter quotas.Limiter
-		execStore persistence.ExecutionStore
+		limiter      quotas.Limiter
+		execStore    persistence.ExecutionStore
 		historyStore persistence.HistoryStore
 	}
 )
@@ -60,8 +60,8 @@ func NewPersistenceRetryer(
 	historyStore persistence.HistoryStore,
 ) PersistenceRetryer {
 	return &persistenceRetryer{
-		limiter: limiter,
-		execStore: execStore,
+		limiter:      limiter,
+		execStore:    execStore,
 		historyStore: historyStore,
 	}
 }

@@ -29,21 +29,21 @@ type (
 	// CheckResponse is the response from Check.
 	// Exactly one of FailedResult, CorruptedResult or HealthyResult will be non-nil
 	CheckResponse struct {
-		ResultType ResultType
-		FailedResult *FailedResult
+		ResultType      ResultType
+		FailedResult    *FailedResult
 		CorruptedResult *CorruptedResult
-		HealthyResult *HealthyResult
+		HealthyResult   *HealthyResult
 	}
 
 	// FailedResult contains details for ResultType=ResultTypeFailed
 	FailedResult struct {
-		Note string
+		Note    string
 		Details string
 	}
 
 	// CorruptedResult contains details for ResultType=ResultTypeCorrupted
 	CorruptedResult struct {
-		Note string
+		Note    string
 		Details string
 	}
 
@@ -61,7 +61,7 @@ type (
 		TreeID     string
 		BranchID   string
 		State      int
-		Resources RequestResources
+		Resources  RequestResources
 	}
 
 	// RequestResources enables a check to provide resources which will be used by dependent checks.
@@ -71,4 +71,3 @@ type (
 		// add other resources to future dependent checks here
 	}
 )
-
