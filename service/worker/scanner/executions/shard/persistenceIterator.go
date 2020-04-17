@@ -28,6 +28,7 @@ type (
 		currPageIndex int
 		nextResult    *CheckRequestIteratorResult
 		nextError     error
+		hasFetchedFirstPage bool
 	}
 )
 
@@ -50,6 +51,7 @@ func NewPersistenceCheckRequestIterator(
 		currPageIndex: -1,
 		nextResult:    nil,
 		nextError:     nil,
+		hasFetchedFirstPage: false,
 	}
 	itr.advance()
 	return itr
@@ -76,12 +78,19 @@ func (itr *persistenceCheckRequestIterator) advance() {
 		itr.nextError = nil
 		return
 	}
+	attemptFetchFirstPage := len(itr.currPage.NextPageToken) == 0
+	if attemptFetchFirstPage && itr.hasFetchedFirstPage {
+		itr.nextResult = nil
+		itr.nextError = ErrIteratorEmpty
+		return
+	}
 	page, err := itr.getNextPage()
 	if err != nil {
 		itr.nextResult = nil
 		itr.nextError = err
 		return
 	}
+	itr.hasFetchedFirstPage = true
 	itr.currPage = page
 	itr.currPageIndex = 0
 	currPageResult = itr.getFromCurrentPage()
@@ -95,7 +104,7 @@ func (itr *persistenceCheckRequestIterator) advance() {
 }
 
 func (itr *persistenceCheckRequestIterator) getFromCurrentPage() *CheckRequestIteratorResult {
-	if itr.currPage == nil || itr.currPageIndex >= len(itr.currPage.Executions) {
+	if itr.currPageIndex >= len(itr.currPage.Executions) {
 		return nil
 	}
 	cr, err := itr.convertListEntityToCheckRequest(itr.currPage.Executions[itr.currPageIndex])
