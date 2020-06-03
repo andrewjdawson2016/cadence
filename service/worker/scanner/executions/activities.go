@@ -81,6 +81,7 @@ type (
 		ResolvedFixerWorkflowConfig ResolvedFixerWorkflowConfig
 	}
 
+	// FixerCorruptedKeysActivityResult is the result of FixerCorruptedKeysActivity
 	FixerCorruptedKeysActivityResult struct {
 		CorruptedKeys []CorruptedKeysEntry
 		Shards        []int

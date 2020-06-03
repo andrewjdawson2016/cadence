@@ -136,7 +136,7 @@ type (
 )
 
 var (
-	errQueryNotReady = errors.New("query is not yet ready to be handled, please try again shortly")
+	errQueryNotReady               = errors.New("query is not yet ready to be handled, please try again shortly")
 	errQueryRequestedTooManyShards = fmt.Errorf("query request was for too many shards, please limit query to %v shards", maxShardQueryResult)
 )
 
