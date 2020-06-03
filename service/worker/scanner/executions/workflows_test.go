@@ -197,7 +197,7 @@ func (s *workflowsSuite) TestScannerWorkflow_Success() {
 			}, shardReport)
 		}
 	}
-	statusValue, err := env.QueryWorkflow(ShardStatusQuery)
+	statusValue, err := env.QueryWorkflow(ShardStatusQuery, shards)
 	s.NoError(err)
 	var status ShardStatusResult
 	s.NoError(statusValue.Get(&status))
@@ -210,7 +210,7 @@ func (s *workflowsSuite) TestScannerWorkflow_Success() {
 		}
 	}
 	s.Equal(ShardStatusResult(expected), status)
-	corruptionKeysValue, err := env.QueryWorkflow(ShardCorruptKeysQuery)
+	corruptionKeysValue, err := env.QueryWorkflow(ShardCorruptKeysQuery, shards)
 	s.NoError(err)
 	var shardCorruptKeysResult ShardCorruptKeysResult
 	s.NoError(corruptionKeysValue.Get(&shardCorruptKeysResult))
@@ -225,6 +225,40 @@ func (s *workflowsSuite) TestScannerWorkflow_Success() {
 		}
 	}
 	s.Equal(ShardCorruptKeysResult(expectedCorrupted), shardCorruptKeysResult)
+
+	// check for query errors on bad requests
+	statusValue, err = env.QueryWorkflow(ShardStatusQuery, Shards{
+		Range: &ShardRange{
+			Min: 0,
+			Max: 1000000,
+		},
+	})
+	s.Nil(statusValue)
+	s.Error(err)
+	statusValue, err = env.QueryWorkflow(ShardStatusQuery, Shards{
+		Range: &ShardRange{
+			Min: 0,
+			Max: 31,
+		},
+	})
+	s.Nil(statusValue)
+	s.Error(err)
+	corruptionKeysValue, err = env.QueryWorkflow(ShardCorruptKeysQuery, Shards{
+		Range: &ShardRange{
+			Min: 0,
+			Max: 1000000,
+		},
+	})
+	s.Nil(statusValue)
+	s.Error(err)
+	corruptionKeysValue, err = env.QueryWorkflow(ShardCorruptKeysQuery, Shards{
+		Range: &ShardRange{
+			Min: 0,
+			Max: 31,
+		},
+	})
+	s.Nil(statusValue)
+	s.Error(err)
 }
 
 func (s *workflowsSuite) TestScannerWorkflow_Failure_ScanShard() {
@@ -432,7 +466,12 @@ func (s *workflowsSuite) TestFixerWorkflow_Success() {
 		}
 	}
 
-	statusValue, err := env.QueryWorkflow(ShardStatusQuery)
+	statusValue, err := env.QueryWorkflow(ShardStatusQuery, Shards{
+		Range: &ShardRange{
+			Min: 0,
+			Max: 30,
+		},
+	})
 	s.NoError(err)
 	var status ShardStatusResult
 	s.NoError(statusValue.Get(&status))
@@ -444,4 +483,22 @@ func (s *workflowsSuite) TestFixerWorkflow_Success() {
 			expected[i] = ShardStatusSuccess
 		}
 	}
+
+	// check for query errors on bad requests
+	statusValue, err = env.QueryWorkflow(ShardStatusQuery, Shards{
+		Range: &ShardRange{
+			Min: 0,
+			Max: 1000000,
+		},
+	})
+	s.Nil(statusValue)
+	s.Error(err)
+	statusValue, err = env.QueryWorkflow(ShardStatusQuery, Shards{
+		Range: &ShardRange{
+			Min: 0,
+			Max: 31,
+		},
+	})
+	s.Nil(statusValue)
+	s.Error(err)
 }

@@ -23,6 +23,7 @@
 package executions
 
 import (
+	"fmt"
 	"time"
 
 	"go.uber.org/cadence"
@@ -86,4 +87,13 @@ func getLongActivityContext(ctx workflow.Context) workflow.Context {
 		},
 	}
 	return workflow.WithActivityOptions(ctx, activityOptions)
+}
+
+func shardsInBounds(status map[int]ShardStatus, shards ...int) error {
+	for _, s := range shards {
+		if _, ok := status[s]; !ok {
+			return fmt.Errorf("requested shard %v was not including in progressing", s)
+		}
+	}
+	return nil
 }

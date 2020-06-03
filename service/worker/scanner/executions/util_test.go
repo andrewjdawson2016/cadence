@@ -63,3 +63,36 @@ func (s *workflowsSuite) TestResolveFixerConfig() {
 		},
 	}, result)
 }
+
+func (s *workflowsSuite) TestShardsInBounds() {
+	testCases := []struct{
+		shards []int
+		status map[int]ShardStatus
+		expectError bool
+	}{
+		{
+			shards: []int{1, 2, 3},
+			status: map[int]ShardStatus{},
+			expectError: true,
+		},
+		{
+			shards: []int{1, 2, 3},
+			status: map[int]ShardStatus{1: ShardStatusRunning, 2: ShardStatusRunning, 4: ShardStatusRunning},
+			expectError: true,
+		},
+		{
+			shards: []int{1, 2, 3},
+			status: map[int]ShardStatus{1: ShardStatusRunning, 2: ShardStatusRunning, 3: ShardStatusRunning},
+			expectError: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		err := shardsInBounds(tc.status, tc.shards...)
+		if tc.expectError {
+			s.Error(err)
+		} else {
+			s.NoError(err)
+		}
+	}
+}

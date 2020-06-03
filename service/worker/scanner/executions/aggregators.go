@@ -46,6 +46,21 @@ func newShardFixResultAggregator(shards []int) *shardFixResultAggregator {
 	}
 }
 
+func (a *shardFixResultAggregator) getStatusResult(shards Shards) (ShardStatusResult, error) {
+	flattenShards := flattenShards(shards)
+	if len(flattenShards) > maxShardQueryResult {
+		return nil, errQueryRequestedTooManyShards
+	}
+	if err := shardsInBounds(a.status, flattenShards...); err != nil {
+		return nil, err
+	}
+	result := make(map[int]ShardStatus)
+	for _, s := range flattenShards {
+		result[s] = a.status[s]
+	}
+	return result, nil
+}
+
 func (a *shardFixResultAggregator) addReport(report common.ShardFixReport) {
 	a.removeReport(report.ShardID)
 	a.reports[report.ShardID] = report
@@ -72,11 +87,11 @@ func (a *shardFixResultAggregator) removeReport(shardID int) {
 }
 
 func (a *shardFixResultAggregator) getReport(shardID int) (*common.ShardFixReport, error) {
+	if err := shardsInBounds(a.status, shardID); err != nil {
+		return nil, err
+	}
 	if report, ok := a.reports[shardID]; ok {
 		return &report, nil
-	}
-	if _, ok := a.status[shardID]; !ok {
-		return nil, fmt.Errorf("shard %v is not included in the shards that will be processed", shardID)
 	}
 	return nil, fmt.Errorf("shard %v has not finished yet, check back later for report", shardID)
 }
@@ -110,6 +125,38 @@ func newShardScanResultAggregator(shards []int) *shardScanResultAggregator {
 	}
 }
 
+func (a *shardScanResultAggregator) getCorruptionKeys(shards Shards) (map[int]common.Keys, error) {
+	flattenShards := flattenShards(shards)
+	if len(flattenShards) > maxShardQueryResult {
+		return nil, errQueryRequestedTooManyShards
+	}
+	if err := shardsInBounds(a.status, flattenShards...); err != nil {
+		return nil, err
+	}
+	result := make(map[int]common.Keys)
+	for _, s := range flattenShards {
+		if val, ok := a.corruptionKeys[s]; ok {
+			result[s] = val
+		}
+	}
+	return result, nil
+}
+
+func (a *shardScanResultAggregator) getStatusResult(shards Shards) (ShardStatusResult, error) {
+	flattenShards := flattenShards(shards)
+	if len(flattenShards) > maxShardQueryResult {
+		return nil, errQueryRequestedTooManyShards
+	}
+	if err := shardsInBounds(a.status, flattenShards...); err != nil {
+		return nil, err
+	}
+	result := make(map[int]ShardStatus)
+	for _, s := range flattenShards {
+		result[s] = a.status[s]
+	}
+	return result, nil
+}
+
 func (a *shardScanResultAggregator) addReport(report common.ShardScanReport) {
 	a.removeReport(report.ShardID)
 	a.reports[report.ShardID] = report
@@ -140,11 +187,11 @@ func (a *shardScanResultAggregator) removeReport(shardID int) {
 }
 
 func (a *shardScanResultAggregator) getReport(shardID int) (*common.ShardScanReport, error) {
+	if err := shardsInBounds(a.status, shardID); err != nil {
+		return nil, err
+	}
 	if report, ok := a.reports[shardID]; ok {
 		return &report, nil
-	}
-	if _, ok := a.status[shardID]; !ok {
-		return nil, fmt.Errorf("shard %v is not included in the shards that will be processed", shardID)
 	}
 	return nil, fmt.Errorf("shard %v has not finished yet, check back later for report", shardID)
 }

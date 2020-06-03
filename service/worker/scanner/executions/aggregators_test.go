@@ -44,7 +44,7 @@ func (s *workflowsSuite) TestShardScanResultAggregator() {
 	s.Equal("shard 1 has not finished yet, check back later for report", err.Error())
 	report, err = agg.getReport(5)
 	s.Nil(report)
-	s.Equal("shard 5 is not included in the shards that will be processed", err.Error())
+	s.Equal("requested shard 5 was not including in progressing", err.Error())
 	firstReport := common.ShardScanReport{
 		ShardID: 1,
 		Stats: common.ShardScanStats{
@@ -107,6 +107,26 @@ func (s *workflowsSuite) TestShardScanResultAggregator() {
 	expected.status[2] = ShardStatusControlFlowFailure
 	expected.reports[2] = secondReport
 	s.Equal(expected, agg)
+	shardStatus, err := agg.getStatusResult(Shards{
+		List: []int{1, 2},
+	})
+	s.NoError(err)
+	s.Equal(ShardStatusResult(map[int]ShardStatus{
+		1: ShardStatusSuccess,
+		2: ShardStatusControlFlowFailure,
+	}), shardStatus)
+	corruptedKeys, err := agg.getCorruptionKeys(Shards{
+		Range: &ShardRange{
+			Min: 1,
+			Max: 3,
+		},
+	})
+	s.NoError(err)
+	s.Equal(map[int]common.Keys{
+		1: {
+			UUID: "test_uuid",
+		},
+	}, corruptedKeys)
 }
 
 func (s *workflowsSuite) TestShardFixResultAggregator() {
@@ -126,7 +146,7 @@ func (s *workflowsSuite) TestShardFixResultAggregator() {
 	s.Equal("shard 1 has not finished yet, check back later for report", err.Error())
 	report, err = agg.getReport(5)
 	s.Nil(report)
-	s.Equal("shard 5 is not included in the shards that will be processed", err.Error())
+	s.Equal("requested shard 5 was not including in progressing", err.Error())
 	firstReport := common.ShardFixReport{
 		ShardID: 1,
 		Stats: common.ShardFixStats{
@@ -169,4 +189,12 @@ func (s *workflowsSuite) TestShardFixResultAggregator() {
 	expected.status[2] = ShardStatusControlFlowFailure
 	expected.reports[2] = secondReport
 	s.Equal(expected, agg)
+	shardStatus, err := agg.getStatusResult(Shards{
+		List: []int{1, 2},
+	})
+	s.NoError(err)
+	s.Equal(ShardStatusResult(map[int]ShardStatus{
+		1: ShardStatusSuccess,
+		2: ShardStatusControlFlowFailure,
+	}), shardStatus)
 }

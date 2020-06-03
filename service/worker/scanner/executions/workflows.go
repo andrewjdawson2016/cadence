@@ -24,6 +24,7 @@ package executions
 
 import (
 	"errors"
+	"fmt"
 
 	"go.uber.org/cadence/workflow"
 
@@ -56,6 +57,8 @@ const (
 
 	scanShardReportChan = "scanShardReportChan"
 	fixShardReportChan  = "fixShardReportChan"
+
+	maxShardQueryResult = 1000
 )
 
 type (
@@ -134,6 +137,7 @@ type (
 
 var (
 	errQueryNotReady = errors.New("query is not yet ready to be handled, please try again shortly")
+	errQueryRequestedTooManyShards = fmt.Errorf("query request was for too many shards, please limit query to %v shards", maxShardQueryResult)
 )
 
 // ScannerWorkflow is the workflow that scans over all concrete executions
@@ -148,8 +152,8 @@ func ScannerWorkflow(
 	}); err != nil {
 		return err
 	}
-	if err := workflow.SetQueryHandler(ctx, ShardStatusQuery, func() (ShardStatusResult, error) {
-		return aggregator.status, nil
+	if err := workflow.SetQueryHandler(ctx, ShardStatusQuery, func(shards Shards) (ShardStatusResult, error) {
+		return aggregator.getStatusResult(shards)
 	}); err != nil {
 		return err
 	}
@@ -158,8 +162,8 @@ func ScannerWorkflow(
 	}); err != nil {
 		return err
 	}
-	if err := workflow.SetQueryHandler(ctx, ShardCorruptKeysQuery, func() (ShardCorruptKeysResult, error) {
-		return aggregator.corruptionKeys, nil
+	if err := workflow.SetQueryHandler(ctx, ShardCorruptKeysQuery, func(shards Shards) (ShardCorruptKeysResult, error) {
+		return aggregator.getCorruptionKeys(shards)
 	}); err != nil {
 		return err
 	}
@@ -239,11 +243,11 @@ func FixerWorkflow(
 	}); err != nil {
 		return err
 	}
-	if err := workflow.SetQueryHandler(ctx, ShardStatusQuery, func() (ShardStatusResult, error) {
+	if err := workflow.SetQueryHandler(ctx, ShardStatusQuery, func(shards Shards) (ShardStatusResult, error) {
 		if aggregator == nil {
 			return nil, errQueryNotReady
 		}
-		return aggregator.status, nil
+		return aggregator.getStatusResult(shards)
 	}); err != nil {
 		return err
 	}
