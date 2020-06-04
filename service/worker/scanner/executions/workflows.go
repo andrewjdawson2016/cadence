@@ -24,7 +24,6 @@ package executions
 
 import (
 	"errors"
-	"fmt"
 
 	"go.uber.org/cadence/workflow"
 
@@ -133,11 +132,41 @@ type (
 		Report   *common.ShardFixReport
 		ErrorStr *string
 	}
+
+	// PaginatedShardQueryRequest is the request used for queries which return results over all shards
+	PaginatedShardQueryRequest struct {
+		// StartingShardID is the first shard to start iteration from.
+		// Setting to nil will start iteration from the beginning of the shards.
+		StartingShardID *int
+		// LimitShards indicates the maximum number of results that can be returned.
+		// If nil or larger than allowed maximum, will default to maximum allowed.
+		LimitShards *int
+	}
+
+	// ShardQueryPaginationToken is used to return information used to make the next query
+	ShardQueryPaginationToken struct {
+		// NextShardID is one greater than the highest shard returned in the current query.
+		// NextShardID is nil if IsDone is true.
+		// It is possible to get NextShardID != nil and on the next call to get an empty result with IsDone = true.
+		NextShardID *int
+		IsDone bool
+	}
+
+	// ShardStatusQueryResult is the query result for ShardStatusQuery
+	ShardStatusQueryResult struct {
+		Result ShardStatusResult
+		ShardQueryPaginationToken ShardQueryPaginationToken
+	}
+
+	// ShardCorruptKeysQueryResult is the query result for ShardCorruptKeysQuery
+	ShardCorruptKeysQueryResult struct {
+		Result ShardCorruptKeysResult
+		ShardQueryPaginationToken ShardQueryPaginationToken
+	}
 )
 
 var (
-	errQueryNotReady               = errors.New("query is not yet ready to be handled, please try again shortly")
-	errQueryRequestedTooManyShards = fmt.Errorf("query request was for too many shards, please limit query to %v shards", maxShardQueryResult)
+	errQueryNotReady = errors.New("query is not yet ready to be handled, please try again shortly")
 )
 
 // ScannerWorkflow is the workflow that scans over all concrete executions
@@ -145,15 +174,18 @@ func ScannerWorkflow(
 	ctx workflow.Context,
 	params ScannerWorkflowParams,
 ) error {
-	shards := flattenShards(params.Shards)
-	aggregator := newShardScanResultAggregator(shards)
+	if err := validateShards(params.Shards); err != nil {
+		return err
+	}
+	shards, minShard, maxShard := flattenShards(params.Shards)
+	aggregator := newShardScanResultAggregator(shards, minShard, maxShard)
 	if err := workflow.SetQueryHandler(ctx, ShardReportQuery, func(shardID int) (*common.ShardScanReport, error) {
 		return aggregator.getReport(shardID)
 	}); err != nil {
 		return err
 	}
-	if err := workflow.SetQueryHandler(ctx, ShardStatusQuery, func(shards Shards) (ShardStatusResult, error) {
-		return aggregator.getStatusResult(shards)
+	if err := workflow.SetQueryHandler(ctx, ShardStatusQuery, func(req PaginatedShardQueryRequest) (*ShardStatusQueryResult, error) {
+		return aggregator.getStatusResult(req)
 	}); err != nil {
 		return err
 	}
@@ -162,8 +194,8 @@ func ScannerWorkflow(
 	}); err != nil {
 		return err
 	}
-	if err := workflow.SetQueryHandler(ctx, ShardCorruptKeysQuery, func(shards Shards) (ShardCorruptKeysResult, error) {
-		return aggregator.getCorruptionKeys(shards)
+	if err := workflow.SetQueryHandler(ctx, ShardCorruptKeysQuery, func(req PaginatedShardQueryRequest) (*ShardCorruptKeysQueryResult, error) {
+		return aggregator.getCorruptionKeys(req)
 	}); err != nil {
 		return err
 	}
@@ -221,7 +253,8 @@ func ScannerWorkflow(
 
 	activityCtx = getShortActivityContext(ctx)
 	if err := workflow.ExecuteActivity(activityCtx, ScannerEmitMetricsActivityName, ScannerEmitMetricsActivityParams{
-		ShardStatusResult:     aggregator.status,
+		ShardSuccessCount:     aggregator.successCount,
+		ShardControlFlowFailureCount: aggregator.controlFlowFailureCount,
 		AggregateReportResult: aggregator.aggregation,
 	}).Get(ctx, nil); err != nil {
 		return err
@@ -243,11 +276,11 @@ func FixerWorkflow(
 	}); err != nil {
 		return err
 	}
-	if err := workflow.SetQueryHandler(ctx, ShardStatusQuery, func(shards Shards) (ShardStatusResult, error) {
+	if err := workflow.SetQueryHandler(ctx, ShardStatusQuery, func(req PaginatedShardQueryRequest) (*ShardStatusQueryResult, error) {
 		if aggregator == nil {
 			return nil, errQueryNotReady
 		}
-		return aggregator.getStatusResult(shards)
+		return aggregator.getStatusResult(req)
 	}); err != nil {
 		return err
 	}
@@ -295,14 +328,28 @@ func FixerWorkflow(
 		})
 	}
 
-	aggregator = newShardFixResultAggregator(corruptedKeysResult.Shards)
-	for i := 0; i < len(corruptedKeysResult.CorruptedKeys); i++ {
-		var reportErr FixReportError
-		shardReportChan.Receive(ctx, &reportErr)
-		if reportErr.ErrorStr != nil {
-			return errors.New(*reportErr.ErrorStr)
-		}
-		aggregator.addReport(*reportErr.Report)
-	}
+	//aggregator = newShardFixResultAggregator(corruptedKeysResult.Shards)
+	//for i := 0; i < len(corruptedKeysResult.CorruptedKeys); i++ {
+	//	var reportErr FixReportError
+	//	shardReportChan.Receive(ctx, &reportErr)
+	//	if reportErr.ErrorStr != nil {
+	//		return errors.New(*reportErr.ErrorStr)
+	//	}
+	//	aggregator.addReport(*reportErr.Report)
+	//}
 	return nil
 }
+
+
+/**
+Tasks:
+- Write more unit tests for aggregators
+- Review all query to make sure results are small and code looks fine
+- Go through all activities
+- Fix activity which queries scanner from fixer workflow
+- Ensure no activities accept parameters that are large or return large results
+- Update workflow to consume the activity changes
+- Ensure all tests pass
+- Do batching of shards in scanner to reduce history length
+- Do batching of shards in fixer to reduce history length
+ */

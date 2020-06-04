@@ -23,6 +23,7 @@
 package executions
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -30,15 +31,41 @@ import (
 	"go.uber.org/cadence/workflow"
 )
 
-func flattenShards(shards Shards) []int {
-	if len(shards.List) != 0 {
-		return shards.List
+func validateShards(shards Shards) error {
+	if shards.List == nil && shards.Range == nil {
+		return errors.New("must provide either List or Range")
 	}
-	var result []int
-	for i := shards.Range.Min; i < shards.Range.Max; i++ {
-		result = append(result, i)
+	if shards.List != nil && shards.Range != nil {
+		return errors.New("both List and Range were provided")
 	}
-	return result
+	if shards.List != nil && len(shards.List) == 0 {
+		return errors.New("empty List provided")
+	}
+	if shards.Range != nil && shards.Range.Max <= shards.Range.Min {
+		return errors.New("empty Range provided")
+	}
+	return nil
+}
+
+func flattenShards(shards Shards) ([]int, int, int) {
+	shardList := shards.List
+	if len(shardList) == 0 {
+		shardList = []int{}
+		for i := shards.Range.Min; i < shards.Range.Max; i++ {
+			shardList = append(shardList, i)
+		}
+	}
+	min := shardList[0]
+	max := shardList[0]
+	for i := 1; i < len(shardList); i++ {
+		if shardList[i] < min {
+			min = shardList[i]
+		}
+		if shardList[i] > max {
+			max = shardList[i]
+		}
+	}
+	return shardList, min, max
 }
 
 func resolveFixerConfig(overwrites FixerWorkflowConfigOverwrites) ResolvedFixerWorkflowConfig {
@@ -89,11 +116,9 @@ func getLongActivityContext(ctx workflow.Context) workflow.Context {
 	return workflow.WithActivityOptions(ctx, activityOptions)
 }
 
-func shardsInBounds(status map[int]ShardStatus, shards ...int) error {
-	for _, s := range shards {
-		if _, ok := status[s]; !ok {
-			return fmt.Errorf("requested shard %v was not including in progressing", s)
-		}
+func shardInBounds(minShardID, maxShardID, shardID int) error {
+	if shardID > maxShardID || shardID < minShardID {
+		return fmt.Errorf("requested shard %v was not including in progressing", shardID)
 	}
 	return nil
 }

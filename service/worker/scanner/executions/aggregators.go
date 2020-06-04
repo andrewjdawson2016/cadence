@@ -29,36 +29,35 @@ import (
 )
 
 type shardFixResultAggregator struct {
+	minShard int
+	maxShard int
+
 	reports     map[int]common.ShardFixReport
 	status      ShardStatusResult
 	aggregation AggregateFixReportResult
 }
 
-func newShardFixResultAggregator(shards []int) *shardFixResultAggregator {
+func newShardFixResultAggregator(
+	shards []int,
+	minShard int,
+	maxShard int,
+) *shardFixResultAggregator {
 	status := make(map[int]ShardStatus)
 	for _, s := range shards {
 		status[s] = ShardStatusRunning
 	}
 	return &shardFixResultAggregator{
+		minShard: minShard,
+		maxShard: maxShard,
+
 		reports:     make(map[int]common.ShardFixReport),
 		status:      status,
 		aggregation: AggregateFixReportResult{},
 	}
 }
 
-func (a *shardFixResultAggregator) getStatusResult(shards Shards) (ShardStatusResult, error) {
-	flattenShards := flattenShards(shards)
-	if len(flattenShards) > maxShardQueryResult {
-		return nil, errQueryRequestedTooManyShards
-	}
-	if err := shardsInBounds(a.status, flattenShards...); err != nil {
-		return nil, err
-	}
-	result := make(map[int]ShardStatus)
-	for _, s := range flattenShards {
-		result[s] = a.status[s]
-	}
-	return result, nil
+func (a *shardFixResultAggregator) getStatusResult(req PaginatedShardQueryRequest) (*ShardStatusQueryResult, error) {
+	return getStatusResult(a.minShard, a.maxShard, req, a.status)
 }
 
 func (a *shardFixResultAggregator) addReport(report common.ShardFixReport) {
@@ -87,7 +86,7 @@ func (a *shardFixResultAggregator) removeReport(shardID int) {
 }
 
 func (a *shardFixResultAggregator) getReport(shardID int) (*common.ShardFixReport, error) {
-	if err := shardsInBounds(a.status, shardID); err != nil {
+	if err := shardInBounds(a.minShard, a.maxShard, shardID); err != nil {
 		return nil, err
 	}
 	if report, ok := a.reports[shardID]; ok {
@@ -104,57 +103,84 @@ func (a *shardFixResultAggregator) adjustAggregation(stats common.ShardFixStats,
 }
 
 type shardScanResultAggregator struct {
+	minShard int
+	maxShard int
+
 	reports        map[int]common.ShardScanReport
 	status         ShardStatusResult
 	aggregation    AggregateScanReportResult
 	corruptionKeys map[int]common.Keys
+	controlFlowFailureCount int
+	successCount int
 }
 
-func newShardScanResultAggregator(shards []int) *shardScanResultAggregator {
+func newShardScanResultAggregator(
+	shards []int,
+	minShard int,
+	maxShard int,
+) *shardScanResultAggregator {
 	status := make(map[int]ShardStatus)
 	for _, s := range shards {
 		status[s] = ShardStatusRunning
 	}
 	return &shardScanResultAggregator{
+		minShard: minShard,
+		maxShard: maxShard,
+
 		reports: make(map[int]common.ShardScanReport),
 		status:  status,
 		aggregation: AggregateScanReportResult{
 			CorruptionByType: make(map[common.InvariantType]int64),
 		},
 		corruptionKeys: make(map[int]common.Keys),
+		controlFlowFailureCount: 0,
+		successCount: 0,
 	}
 }
 
-func (a *shardScanResultAggregator) getCorruptionKeys(shards Shards) (map[int]common.Keys, error) {
-	flattenShards := flattenShards(shards)
-	if len(flattenShards) > maxShardQueryResult {
-		return nil, errQueryRequestedTooManyShards
+func (a *shardScanResultAggregator) getCorruptionKeys(req PaginatedShardQueryRequest) (*ShardCorruptKeysQueryResult, error) {
+	startingShardID := a.minShard
+	if req.StartingShardID != nil {
+		startingShardID = *req.StartingShardID
 	}
-	if err := shardsInBounds(a.status, flattenShards...); err != nil {
+	if err := shardInBounds(a.minShard, a.maxShard, startingShardID); err != nil {
 		return nil, err
+	}
+	limit := maxShardQueryResult
+	if req.LimitShards != nil && *req.LimitShards > 0 {
+		limit = *req.LimitShards
 	}
 	result := make(map[int]common.Keys)
-	for _, s := range flattenShards {
-		if val, ok := a.corruptionKeys[s]; ok {
-			result[s] = val
+	currentShardID := startingShardID
+	for len(result) < limit && currentShardID <= a.maxShard {
+		keys, ok := a.corruptionKeys[currentShardID]
+		if !ok {
+			currentShardID++
+			continue
 		}
+		result[currentShardID] = keys
+		currentShardID++
 	}
-	return result, nil
+	if currentShardID > a.maxShard {
+		return &ShardCorruptKeysQueryResult{
+			Result: result,
+			ShardQueryPaginationToken: ShardQueryPaginationToken{
+				NextShardID: nil,
+				IsDone: true,
+			},
+		}, nil
+	}
+	return &ShardCorruptKeysQueryResult{
+		Result: result,
+		ShardQueryPaginationToken: ShardQueryPaginationToken{
+			NextShardID: &currentShardID,
+			IsDone: false,
+		},
+	}, nil
 }
 
-func (a *shardScanResultAggregator) getStatusResult(shards Shards) (ShardStatusResult, error) {
-	flattenShards := flattenShards(shards)
-	if len(flattenShards) > maxShardQueryResult {
-		return nil, errQueryRequestedTooManyShards
-	}
-	if err := shardsInBounds(a.status, flattenShards...); err != nil {
-		return nil, err
-	}
-	result := make(map[int]ShardStatus)
-	for _, s := range flattenShards {
-		result[s] = a.status[s]
-	}
-	return result, nil
+func (a *shardScanResultAggregator) getStatusResult(req PaginatedShardQueryRequest) (*ShardStatusQueryResult, error) {
+	return getStatusResult(a.minShard, a.maxShard, req, a.status)
 }
 
 func (a *shardScanResultAggregator) addReport(report common.ShardScanReport) {
@@ -162,8 +188,10 @@ func (a *shardScanResultAggregator) addReport(report common.ShardScanReport) {
 	a.reports[report.ShardID] = report
 	if report.Result.ControlFlowFailure != nil {
 		a.status[report.ShardID] = ShardStatusControlFlowFailure
+		a.controlFlowFailureCount++
 	} else {
 		a.status[report.ShardID] = ShardStatusSuccess
+		a.successCount++
 	}
 	if report.Result.ShardScanKeys != nil {
 		a.adjustAggregation(report.Stats, func(a, b int64) int64 { return a + b })
@@ -183,11 +211,14 @@ func (a *shardScanResultAggregator) removeReport(shardID int) {
 	delete(a.corruptionKeys, shardID)
 	if report.Result.ShardScanKeys != nil {
 		a.adjustAggregation(report.Stats, func(a, b int64) int64 { return a - b })
+		a.successCount--
+	} else {
+		a.controlFlowFailureCount--
 	}
 }
 
 func (a *shardScanResultAggregator) getReport(shardID int) (*common.ShardScanReport, error) {
-	if err := shardsInBounds(a.status, shardID); err != nil {
+	if err := shardInBounds(a.minShard, a.maxShard, shardID); err != nil {
 		return nil, err
 	}
 	if report, ok := a.reports[shardID]; ok {
@@ -204,4 +235,51 @@ func (a *shardScanResultAggregator) adjustAggregation(stats common.ShardScanStat
 	for k, v := range stats.CorruptionByType {
 		a.aggregation.CorruptionByType[k] = fn(a.aggregation.CorruptionByType[k], v)
 	}
+}
+
+// TODO: test this function
+func getStatusResult(
+	minShardID int,
+	maxShardID int,
+	req PaginatedShardQueryRequest,
+	status ShardStatusResult,
+) (*ShardStatusQueryResult, error) {
+	startingShardID := minShardID
+	if req.StartingShardID != nil {
+		startingShardID = *req.StartingShardID
+	}
+	if err := shardInBounds(minShardID, maxShardID, startingShardID); err != nil {
+		return nil, err
+	}
+	limit := maxShardQueryResult
+	if req.LimitShards != nil && *req.LimitShards > 0 {
+		limit = *req.LimitShards
+	}
+	result := make(map[int]ShardStatus)
+	currentShardID := startingShardID
+	for len(result) < limit && currentShardID <= maxShardID {
+		status, ok := status[currentShardID]
+		if !ok {
+			currentShardID++
+			continue
+		}
+		result[currentShardID] = status
+		currentShardID++
+	}
+	if currentShardID > maxShardID {
+		return &ShardStatusQueryResult{
+			Result: result,
+			ShardQueryPaginationToken: ShardQueryPaginationToken{
+				NextShardID: nil,
+				IsDone: true,
+			},
+		}, nil
+	}
+	return &ShardStatusQueryResult{
+		Result: result,
+		ShardQueryPaginationToken: ShardQueryPaginationToken{
+			NextShardID: &currentShardID,
+			IsDone: false,
+		},
+	}, nil
 }

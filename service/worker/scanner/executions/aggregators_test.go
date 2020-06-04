@@ -22,10 +22,13 @@
 
 package executions
 
-import "github.com/uber/cadence/service/worker/scanner/executions/common"
+import (
+	c "github.com/uber/cadence/common"
+	"github.com/uber/cadence/service/worker/scanner/executions/common"
+)
 
 func (s *workflowsSuite) TestShardScanResultAggregator() {
-	agg := newShardScanResultAggregator([]int{1, 2, 3})
+	agg := newShardScanResultAggregator([]int{1, 2, 3}, 1, 3)
 	expected := &shardScanResultAggregator{
 		reports: map[int]common.ShardScanReport{},
 		status: map[int]ShardStatus{
@@ -37,6 +40,8 @@ func (s *workflowsSuite) TestShardScanResultAggregator() {
 			CorruptionByType: make(map[common.InvariantType]int64),
 		},
 		corruptionKeys: make(map[int]common.Keys),
+		controlFlowFailureCount: 0,
+		successCount: 0,
 	}
 	s.Equal(expected, agg)
 	report, err := agg.getReport(1)
@@ -81,6 +86,7 @@ func (s *workflowsSuite) TestShardScanResultAggregator() {
 			UUID: "test_uuid",
 		},
 	}
+	expected.successCount = 1
 	s.Equal(expected, agg)
 	agg.addReport(firstReport)
 	s.Equal(expected, agg)
@@ -106,20 +112,20 @@ func (s *workflowsSuite) TestShardScanResultAggregator() {
 	agg.addReport(secondReport)
 	expected.status[2] = ShardStatusControlFlowFailure
 	expected.reports[2] = secondReport
+	expected.controlFlowFailureCount = 1
 	s.Equal(expected, agg)
-	shardStatus, err := agg.getStatusResult(Shards{
-		List: []int{1, 2},
+	shardStatus, err := agg.getStatusResult(PaginatedShardQueryRequest{
+		StartingShardID: c.IntPtr(1),
+		LimitShards: c.IntPtr(2),
 	})
 	s.NoError(err)
 	s.Equal(ShardStatusResult(map[int]ShardStatus{
 		1: ShardStatusSuccess,
 		2: ShardStatusControlFlowFailure,
 	}), shardStatus)
-	corruptedKeys, err := agg.getCorruptionKeys(Shards{
-		Range: &ShardRange{
-			Min: 1,
-			Max: 3,
-		},
+	corruptedKeys, err := agg.getCorruptionKeys(PaginatedShardQueryRequest{
+		StartingShardID: c.IntPtr(1),
+		LimitShards: c.IntPtr(3),
 	})
 	s.NoError(err)
 	s.Equal(map[int]common.Keys{
@@ -130,7 +136,7 @@ func (s *workflowsSuite) TestShardScanResultAggregator() {
 }
 
 func (s *workflowsSuite) TestShardFixResultAggregator() {
-	agg := newShardFixResultAggregator([]int{1, 2, 3})
+	agg := newShardFixResultAggregator([]int{1, 2, 3}, 1, 3)
 	expected := &shardFixResultAggregator{
 		reports: map[int]common.ShardFixReport{},
 		status: map[int]ShardStatus{
@@ -189,8 +195,9 @@ func (s *workflowsSuite) TestShardFixResultAggregator() {
 	expected.status[2] = ShardStatusControlFlowFailure
 	expected.reports[2] = secondReport
 	s.Equal(expected, agg)
-	shardStatus, err := agg.getStatusResult(Shards{
-		List: []int{1, 2},
+	shardStatus, err := agg.getStatusResult(PaginatedShardQueryRequest{
+		StartingShardID: c.IntPtr(1),
+		LimitShards: c.IntPtr(2),
 	})
 	s.NoError(err)
 	s.Equal(ShardStatusResult(map[int]ShardStatus{
