@@ -337,14 +337,13 @@ func FixerWorkflow(
 	//	}
 	//	aggregator.addReport(*reportErr.Report)
 	//}
+	//return nil
 	return nil
 }
 
 
 /**
 Tasks:
-- Write more unit tests for aggregators
-- Review all query to make sure results are small and code looks fine
 - Go through all activities
 - Fix activity which queries scanner from fixer workflow
 - Ensure no activities accept parameters that are large or return large results

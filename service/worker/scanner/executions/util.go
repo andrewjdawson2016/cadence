@@ -36,7 +36,7 @@ func validateShards(shards Shards) error {
 		return errors.New("must provide either List or Range")
 	}
 	if shards.List != nil && shards.Range != nil {
-		return errors.New("both List and Range were provided")
+		return errors.New("only one of List or Range can be provided")
 	}
 	if shards.List != nil && len(shards.List) == 0 {
 		return errors.New("empty List provided")
@@ -105,12 +105,12 @@ func getShortActivityContext(ctx workflow.Context) workflow.Context {
 func getLongActivityContext(ctx workflow.Context) workflow.Context {
 	activityOptions := workflow.ActivityOptions{
 		ScheduleToStartTimeout: time.Minute,
-		StartToCloseTimeout:    time.Minute,
+		StartToCloseTimeout:    8 * time.Hour,
 		HeartbeatTimeout:       time.Minute,
 		RetryPolicy: &cadence.RetryPolicy{
 			InitialInterval:    time.Second,
 			BackoffCoefficient: 1.7,
-			ExpirationInterval: 5 * time.Hour,
+			ExpirationInterval: 8 * time.Hour,
 		},
 	}
 	return workflow.WithActivityOptions(ctx, activityOptions)
@@ -118,7 +118,7 @@ func getLongActivityContext(ctx workflow.Context) workflow.Context {
 
 func shardInBounds(minShardID, maxShardID, shardID int) error {
 	if shardID > maxShardID || shardID < minShardID {
-		return fmt.Errorf("requested shard %v was not including in progressing", shardID)
+		return fmt.Errorf("requested shard %v is outside of bounds (min: %v and max: %v)", shardID, minShardID, maxShardID)
 	}
 	return nil
 }

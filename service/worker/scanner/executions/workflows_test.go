@@ -337,7 +337,6 @@ func (s *workflowsSuite) TestFixerWorkflow_Success() {
 	}
 	env.OnActivity(FixerCorruptedKeysActivityName, mock.Anything, mock.Anything).Return(&FixerCorruptedKeysActivityResult{
 		CorruptedKeys: corruptedKeys,
-		Shards:        shards,
 	}, nil)
 
 	fixerWorkflowConfigOverwrites := FixerWorkflowConfigOverwrites{

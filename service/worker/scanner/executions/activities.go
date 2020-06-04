@@ -85,7 +85,6 @@ type (
 	// FixerCorruptedKeysActivityResult is the result of FixerCorruptedKeysActivity
 	FixerCorruptedKeysActivityResult struct {
 		CorruptedKeys []CorruptedKeysEntry
-		Shards        []int
 		MinShard      int
 		MaxShard      int
 	}
@@ -232,17 +231,14 @@ func FixerCorruptedKeysActivity(
 		return nil, err
 	}
 	var corrupted []CorruptedKeysEntry
-	var shards []int
 	for k, v := range corruptedKeys {
 		corrupted = append(corrupted, CorruptedKeysEntry{
 			ShardID:       k,
 			CorruptedKeys: v,
 		})
-		shards = append(shards, k)
 	}
 	return &FixerCorruptedKeysActivityResult{
 		CorruptedKeys: corrupted,
-		Shards:        shards,
 	}, nil
 }
 

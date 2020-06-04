@@ -54,7 +54,7 @@ func (s *workflowsSuite) TestFlattenShards() {
 			input: Shards{
 				List: []int{90, 1, 2, 3},
 			},
-			expectedList: []int{1, 2, 3},
+			expectedList: []int{90, 1, 2, 3},
 			expectedMin: 1,
 			expectedMax: 90,
 		},

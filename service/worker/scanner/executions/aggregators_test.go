@@ -30,6 +30,8 @@ import (
 func (s *workflowsSuite) TestShardScanResultAggregator() {
 	agg := newShardScanResultAggregator([]int{1, 2, 3}, 1, 3)
 	expected := &shardScanResultAggregator{
+		minShard: 1,
+		maxShard: 3,
 		reports: map[int]common.ShardScanReport{},
 		status: map[int]ShardStatus{
 			1: ShardStatusRunning,
@@ -119,18 +121,30 @@ func (s *workflowsSuite) TestShardScanResultAggregator() {
 		LimitShards: c.IntPtr(2),
 	})
 	s.NoError(err)
-	s.Equal(ShardStatusResult(map[int]ShardStatus{
-		1: ShardStatusSuccess,
-		2: ShardStatusControlFlowFailure,
-	}), shardStatus)
+	s.Equal(&ShardStatusQueryResult{
+		Result: map[int]ShardStatus{
+			1: ShardStatusSuccess,
+			2: ShardStatusControlFlowFailure,
+		},
+		ShardQueryPaginationToken: ShardQueryPaginationToken{
+			NextShardID: c.IntPtr(3),
+			IsDone: false,
+		},
+	}, shardStatus)
 	corruptedKeys, err := agg.getCorruptionKeys(PaginatedShardQueryRequest{
 		StartingShardID: c.IntPtr(1),
 		LimitShards: c.IntPtr(3),
 	})
 	s.NoError(err)
-	s.Equal(map[int]common.Keys{
-		1: {
-			UUID: "test_uuid",
+	s.Equal(&ShardCorruptKeysQueryResult{
+		Result: map[int]common.Keys{
+			1: {
+				UUID: "test_uuid",
+			},
+		},
+		ShardQueryPaginationToken: ShardQueryPaginationToken{
+			NextShardID: nil,
+			IsDone: true,
 		},
 	}, corruptedKeys)
 }
@@ -138,6 +152,8 @@ func (s *workflowsSuite) TestShardScanResultAggregator() {
 func (s *workflowsSuite) TestShardFixResultAggregator() {
 	agg := newShardFixResultAggregator([]int{1, 2, 3}, 1, 3)
 	expected := &shardFixResultAggregator{
+		minShard: 1,
+		maxShard: 3,
 		reports: map[int]common.ShardFixReport{},
 		status: map[int]ShardStatus{
 			1: ShardStatusRunning,
@@ -200,8 +216,152 @@ func (s *workflowsSuite) TestShardFixResultAggregator() {
 		LimitShards: c.IntPtr(2),
 	})
 	s.NoError(err)
-	s.Equal(ShardStatusResult(map[int]ShardStatus{
-		1: ShardStatusSuccess,
-		2: ShardStatusControlFlowFailure,
-	}), shardStatus)
+	s.Equal(&ShardStatusQueryResult{
+		Result: map[int]ShardStatus{
+			1: ShardStatusSuccess,
+			2: ShardStatusControlFlowFailure,
+		},
+		ShardQueryPaginationToken: ShardQueryPaginationToken{
+			NextShardID: c.IntPtr(3),
+			IsDone: false,
+		},
+	}, shardStatus)
+}
+
+func (s *workflowsSuite) TestGetStatusResult() {
+	testCases := []struct{
+		minShardID int
+		maxShardID int
+		req PaginatedShardQueryRequest
+		status ShardStatusResult
+		expectedResult *ShardStatusQueryResult
+		expectedError bool
+	}{
+		{
+			minShardID: 0,
+			maxShardID: 5,
+			req: PaginatedShardQueryRequest{
+				StartingShardID: c.IntPtr(6),
+			},
+			expectedResult: nil,
+			expectedError: true,
+		},
+		{
+			minShardID: 0,
+			maxShardID: 5,
+			req: PaginatedShardQueryRequest{
+				StartingShardID: c.IntPtr(0),
+				LimitShards: c.IntPtr(10),
+			},
+			status: map[int]ShardStatus{
+				1: ShardStatusRunning,
+				2: ShardStatusRunning,
+				3: ShardStatusSuccess,
+				4: ShardStatusSuccess,
+				5: ShardStatusControlFlowFailure,
+			},
+			expectedResult: &ShardStatusQueryResult{
+				Result: map[int]ShardStatus{
+					1: ShardStatusRunning,
+					2: ShardStatusRunning,
+					3: ShardStatusSuccess,
+					4: ShardStatusSuccess,
+					5: ShardStatusControlFlowFailure,
+				},
+				ShardQueryPaginationToken: ShardQueryPaginationToken{
+					NextShardID: nil,
+					IsDone: true,
+				},
+			},
+			expectedError: false,
+		},
+		{
+			minShardID: 0,
+			maxShardID: 5,
+			req: PaginatedShardQueryRequest{
+				StartingShardID: c.IntPtr(0),
+				LimitShards: c.IntPtr(2),
+			},
+			status: map[int]ShardStatus{
+				1: ShardStatusRunning,
+				2: ShardStatusRunning,
+				3: ShardStatusSuccess,
+				4: ShardStatusSuccess,
+				5: ShardStatusControlFlowFailure,
+			},
+			expectedResult: &ShardStatusQueryResult{
+				Result: map[int]ShardStatus{
+					1: ShardStatusRunning,
+					2: ShardStatusRunning,
+				},
+				ShardQueryPaginationToken: ShardQueryPaginationToken{
+					NextShardID: c.IntPtr(3),
+					IsDone: false,
+				},
+			},
+			expectedError: false,
+		},
+		{
+			minShardID: 0,
+			maxShardID: 5,
+			req: PaginatedShardQueryRequest{
+				StartingShardID: c.IntPtr(0),
+				LimitShards: c.IntPtr(3),
+			},
+			status: map[int]ShardStatus{
+				1: ShardStatusRunning,
+				2: ShardStatusRunning,
+				4: ShardStatusSuccess,
+				5: ShardStatusControlFlowFailure,
+			},
+			expectedResult: &ShardStatusQueryResult{
+				Result: map[int]ShardStatus{
+					1: ShardStatusRunning,
+					2: ShardStatusRunning,
+					4: ShardStatusSuccess,
+				},
+				ShardQueryPaginationToken: ShardQueryPaginationToken{
+					NextShardID: c.IntPtr(5),
+					IsDone: false,
+				},
+			},
+			expectedError: false,
+		},
+		{
+			minShardID: 0,
+			maxShardID: 5,
+			req: PaginatedShardQueryRequest{
+				StartingShardID: c.IntPtr(2),
+				LimitShards: c.IntPtr(3),
+			},
+			status: map[int]ShardStatus{
+				1: ShardStatusRunning,
+				2: ShardStatusRunning,
+				4: ShardStatusSuccess,
+				5: ShardStatusControlFlowFailure,
+			},
+			expectedResult: &ShardStatusQueryResult{
+				Result: map[int]ShardStatus{
+					2: ShardStatusRunning,
+					4: ShardStatusSuccess,
+					5: ShardStatusControlFlowFailure,
+				},
+				ShardQueryPaginationToken: ShardQueryPaginationToken{
+					NextShardID: nil,
+					IsDone: true,
+				},
+			},
+			expectedError: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		result, err := getStatusResult(tc.minShardID, tc.maxShardID, tc.req, tc.status)
+		s.Equal(tc.expectedResult, result)
+		if tc.expectedError {
+			s.Error(err)
+		} else {
+			s.NoError(err)
+		}
+	}
 }
