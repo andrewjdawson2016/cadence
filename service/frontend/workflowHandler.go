@@ -131,6 +131,7 @@ var (
 	errEmptyReplicationInfo                       = &gen.BadRequestError{Message: "Replication task info is not set."}
 	errEmptyQueueType                             = &gen.BadRequestError{Message: "Queue type is not set."}
 	errShuttingDown                               = &gen.InternalServiceError{Message: "Shutting down"}
+	errUpdateDomainNotEnabled                     = &gen.BadRequestError{Message: "Domain update is not enabled."}
 
 	// err for archival
 	errHistoryNotFound = &gen.BadRequestError{Message: "Requested workflow history not found, may have passed retention period."}
@@ -365,6 +366,10 @@ func (wh *WorkflowHandler) UpdateDomain(
 
 	if updateRequest == nil {
 		return nil, errRequestNotSet
+	}
+
+	if !wh.config.EnableUpdateDomain() {
+		return nil, errUpdateDomainNotEnabled
 	}
 
 	// don't require permission for failover request

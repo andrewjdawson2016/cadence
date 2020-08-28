@@ -100,6 +100,7 @@ var keys = map[Key]string{
 	DisableListVisibilityByFilter:               "frontend.disableListVisibilityByFilter",
 	FrontendThrottledLogRPS:                     "frontend.throttledLogRPS",
 	EnableClientVersionCheck:                    "frontend.enableClientVersionCheck",
+	FrontendEnableUpdateDomain:                  "frontend.enableUpdateDomain",
 	ValidSearchAttributes:                       "frontend.validSearchAttributes",
 	SendRawWorkflowHistory:                      "frontend.sendRawWorkflowHistory",
 	SearchAttributesNumberOfKeysLimit:           "frontend.searchAttributesNumberOfKeysLimit",
@@ -431,6 +432,8 @@ const (
 	FrontendShutdownDrainDuration
 	// EnableClientVersionCheck enables client version check for frontend
 	EnableClientVersionCheck
+	// FrontendEnableUpdateDomain controls if domain updates are allowed
+	FrontendEnableUpdateDomain
 
 	// FrontendMaxBadBinaries is the max number of bad binaries in domain config
 	FrontendMaxBadBinaries

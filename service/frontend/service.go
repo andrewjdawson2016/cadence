@@ -64,6 +64,7 @@ type Config struct {
 	MinRetentionDays                dynamicconfig.IntPropertyFn
 	DisallowQuery                   dynamicconfig.BoolPropertyFnWithDomainFilter
 	ShutdownDrainDuration           dynamicconfig.DurationPropertyFn
+	EnableUpdateDomain              dynamicconfig.BoolPropertyFn
 
 	// Persistence settings
 	HistoryMgrNumConns dynamicconfig.IntPropertyFn
@@ -126,6 +127,7 @@ func NewConfig(dc *dynamicconfig.Collection, numHistoryShards int, enableReadFro
 		BlobSizeLimitWarn:                           dc.GetIntPropertyFilteredByDomain(dynamicconfig.BlobSizeLimitWarn, 256*1024),
 		ThrottledLogRPS:                             dc.GetIntProperty(dynamicconfig.FrontendThrottledLogRPS, 20),
 		ShutdownDrainDuration:                       dc.GetDurationProperty(dynamicconfig.FrontendShutdownDrainDuration, 0),
+		EnableUpdateDomain:                          dc.GetBoolProperty(dynamicconfig.FrontendEnableUpdateDomain, true),
 		EnableDomainNotActiveAutoForwarding:         dc.GetBoolPropertyFilteredByDomain(dynamicconfig.EnableDomainNotActiveAutoForwarding, true),
 		EnableGracefulFailover:                      dc.GetBoolProperty(dynamicconfig.EnableGracefulFailover, false),
 		DomainFailoverRefreshInterval:               dc.GetDurationProperty(dynamicconfig.DomainFailoverRefreshInterval, 10*time.Second),
