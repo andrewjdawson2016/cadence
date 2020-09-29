@@ -813,57 +813,52 @@ func SecondsToDuration(d int64) time.Duration {
 	return time.Duration(d) * time.Second
 }
 
-// MillisecondsToDuration converts millisecond to time.Duration.
+// MillisecondsToDuration converts milliseconds to time.Duration.
 func MillisecondsToDuration(d int64) time.Duration {
 	return time.Duration(d) * time.Millisecond
 }
 
-// MicrosecondToDuration converts microsecond to time.Duration.
+// MicrosecondToDuration converts microseconds to time.Duration.
 func MicrosecondToDuration(d int64) time.Duration {
 	return time.Duration(d) * time.Microsecond
 }
 
-// NanosecondToDuration converts nanosecond to time.Duration.
+// NanosecondToDuration converts nanoseconds to time.Duration.
 func NanosecondToDuration(d int64) time.Duration {
 	return time.Duration(d) * time.Nanosecond
 }
 
-// DaysToInt gives number of full 24 hour days in duration as int.
-func DaysToInt(d time.Duration) int {
-	return int(HoursToInt32(d) / 24)
+// DurationToDays gives number of full 24 hour days in duration.
+func DurationToDays(d time.Duration) int64 {
+	return DurationToHours(d) / 24
 }
 
-// DaysToInt32 gives number of full 24 hour days in duration as int32.
-func DaysToInt32(d time.Duration) int32 {
-	return HoursToInt32(d) / 24
+// DurationToHours gives number of full hours in duration.
+func DurationToHours(d time.Duration) int64 {
+	return int64(d / time.Hour)
 }
 
-// HoursToInt32 gives number of full hours in duration as int32.
-func HoursToInt32(d time.Duration) int32 {
-	return int32(d / time.Hour)
-}
-
-// MinutesToInt64 gives number of full minutes in duration as int64.
-func MinutesToInt64(d time.Duration) int64 {
+// DurationToMinutes gives number of full minutes in duration.
+func DurationToMinutes(d time.Duration) int64 {
 	return int64(d / time.Minute)
 }
 
-// SecondsToInt64 gives number of full seconds in duration as int64.
-func SecondsToInt64(d time.Duration) int64 {
+// DurationToSeconds gives number of full seconds in duration.
+func DurationToSeconds(d time.Duration) int64 {
 	return int64(d / time.Second)
 }
 
-// MillisecondsToInt64 gives number of full milliseconds in duration as int64.
-func MillisecondsToInt64(d time.Duration) int64 {
+// DurationToMilliseconds gives number of full milliseconds in duration.
+func DurationToMilliseconds(d time.Duration) int64 {
 	return int64(d / time.Millisecond)
 }
 
-// MicrosecondsToInt64 gives number of full microseconds in duration as int64.
-func MicrosecondsToInt64(d time.Duration) int64 {
+// DurationToMicroseconds gives number of full microseconds in duration.
+func DurationToMicroseconds(d time.Duration) int64 {
 	return int64(d / time.Microsecond)
 }
 
-// NanosecondsToInt64 gives number of full nanoseconds in duration as int64.
-func NanosecondsToInt64(d time.Duration) int64 {
+// DurationToNanoseconds gives number of full nanoseconds in duration.
+func DurationToNanoseconds(d time.Duration) int64 {
 	return int64(d / time.Nanosecond)
 }

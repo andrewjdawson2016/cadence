@@ -226,7 +226,7 @@ func (m *cassandraMetadataPersistenceV2) CreateDomainInV2Table(
 		request.Info.Description,
 		request.Info.OwnerEmail,
 		request.Info.Data,
-		request.Config.Retention,
+		int32(common.DurationToDays(request.Config.Retention)),
 		request.Config.EmitMetric,
 		request.Config.ArchivalBucket,
 		request.Config.ArchivalStatus,
@@ -301,7 +301,7 @@ func (m *cassandraMetadataPersistenceV2) UpdateDomain(
 		request.Info.Description,
 		request.Info.OwnerEmail,
 		request.Info.Data,
-		request.Config.Retention,
+		int32(common.DurationToDays(request.Config.Retention)),
 		request.Config.EmitMetric,
 		request.Config.ArchivalBucket,
 		request.Config.ArchivalStatus,
@@ -363,6 +363,7 @@ func (m *cassandraMetadataPersistenceV2) GetDomain(
 	var failoverEndTime int64
 	var configVersion int64
 	var isGlobalDomain bool
+	var retentionDays int32
 
 	if len(request.ID) > 0 && len(request.Name) > 0 {
 		return nil, &workflow.BadRequestError{
@@ -409,7 +410,7 @@ func (m *cassandraMetadataPersistenceV2) GetDomain(
 		&info.Description,
 		&info.OwnerEmail,
 		&info.Data,
-		&config.Retention,
+		&retentionDays,
 		&config.EmitMetric,
 		&config.ArchivalBucket,
 		&config.ArchivalStatus,
@@ -441,6 +442,7 @@ func (m *cassandraMetadataPersistenceV2) GetDomain(
 	replicationConfig.ActiveClusterName = p.GetOrUseDefaultActiveCluster(m.currentClusterName, replicationConfig.ActiveClusterName)
 	replicationConfig.Clusters = p.DeserializeClusterConfigs(replicationClusters)
 	replicationConfig.Clusters = p.GetOrUseDefaultClusters(m.currentClusterName, replicationConfig.Clusters)
+	config.Retention = common.DaysToDuration(int64(retentionDays))
 
 	var responseFailoverEndTime *int64
 	if failoverEndTime > emptyFailoverEndTime {
@@ -486,6 +488,7 @@ func (m *cassandraMetadataPersistenceV2) ListDomains(
 	var badBinariesData []byte
 	var badBinariesDataEncoding string
 	var failoverEndTime int64
+	var retentionDays int32
 	response := &p.InternalListDomainsResponse{}
 	for iter.Scan(
 		&name,
@@ -495,7 +498,7 @@ func (m *cassandraMetadataPersistenceV2) ListDomains(
 		&domain.Info.Description,
 		&domain.Info.OwnerEmail,
 		&domain.Info.Data,
-		&domain.Config.Retention,
+		&retentionDays,
 		&domain.Config.EmitMetric,
 		&domain.Config.ArchivalBucket,
 		&domain.Config.ArchivalStatus,
@@ -521,6 +524,7 @@ func (m *cassandraMetadataPersistenceV2) ListDomains(
 				domain.Info.Data = map[string]string{}
 			}
 			domain.Config.BadBinaries = p.NewDataBlob(badBinariesData, common.EncodingType(badBinariesDataEncoding))
+			domain.Config.Retention = common.DaysToDuration(int64(retentionDays))
 			badBinariesData = []byte("")
 			badBinariesDataEncoding = ""
 			domain.ReplicationConfig.ActiveClusterName = p.GetOrUseDefaultActiveCluster(m.currentClusterName, domain.ReplicationConfig.ActiveClusterName)
