@@ -25,6 +25,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/uber/cadence/common"
+
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -340,7 +342,7 @@ func (s *selectedAPIsForwardingRedirectionPolicySuite) TestGetTargetDataCenter_G
 func (s *selectedAPIsForwardingRedirectionPolicySuite) setupLocalDomain() {
 	domainEntry := cache.NewLocalDomainCacheEntryForTest(
 		&persistence.DomainInfo{ID: s.domainID, Name: s.domainName},
-		&persistence.DomainConfig{Retention: 1},
+		&persistence.DomainConfig{Retention: common.DaysToDuration(1)},
 		cluster.TestCurrentClusterName,
 		nil,
 	)
@@ -352,7 +354,7 @@ func (s *selectedAPIsForwardingRedirectionPolicySuite) setupLocalDomain() {
 func (s *selectedAPIsForwardingRedirectionPolicySuite) setupGlobalDomainWithOneReplicationCluster() {
 	domainEntry := cache.NewGlobalDomainCacheEntryForTest(
 		&persistence.DomainInfo{ID: s.domainID, Name: s.domainName},
-		&persistence.DomainConfig{Retention: 1},
+		&persistence.DomainConfig{Retention: common.DaysToDuration(1)},
 		&persistence.DomainReplicationConfig{
 			ActiveClusterName: cluster.TestAlternativeClusterName,
 			Clusters: []*persistence.ClusterReplicationConfig{
@@ -375,7 +377,7 @@ func (s *selectedAPIsForwardingRedirectionPolicySuite) setupGlobalDomainWithTwoR
 	}
 	domainEntry := cache.NewGlobalDomainCacheEntryForTest(
 		&persistence.DomainInfo{ID: s.domainID, Name: s.domainName},
-		&persistence.DomainConfig{Retention: 1},
+		&persistence.DomainConfig{Retention: common.DaysToDuration(1)},
 		&persistence.DomainReplicationConfig{
 			ActiveClusterName: activeCluster,
 			Clusters: []*persistence.ClusterReplicationConfig{

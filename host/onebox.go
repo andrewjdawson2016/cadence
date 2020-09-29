@@ -708,7 +708,7 @@ func (c *cadenceImpl) createSystemDomain() error {
 			Description: "Cadence system domain",
 		},
 		Config: &persistence.DomainConfig{
-			Retention:                1,
+			Retention:                common.DaysToDuration(1),
 			HistoryArchivalStatus:    shared.ArchivalStatusDisabled,
 			VisibilityArchivalStatus: shared.ArchivalStatusDisabled,
 		},

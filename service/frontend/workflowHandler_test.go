@@ -1383,7 +1383,7 @@ func persistenceGetDomainResponse(historyArchivalState, visibilityArchivalState 
 			Data:        make(map[string]string),
 		},
 		Config: &persistence.DomainConfig{
-			Retention:                1,
+			Retention:                common.DaysToDuration(1),
 			EmitMetric:               true,
 			HistoryArchivalStatus:    historyArchivalState.Status,
 			HistoryArchivalURI:       historyArchivalState.URI,

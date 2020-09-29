@@ -117,7 +117,7 @@ func (m *MetadataPersistenceSuiteV2) TestCreateDomain() {
 			Data:        data,
 		},
 		&p.DomainConfig{
-			Retention:                retention,
+			Retention:                common.DaysToDuration(int64(retention)),
 			EmitMetric:               emitMetric,
 			HistoryArchivalStatus:    historyArchivalStatus,
 			HistoryArchivalURI:       historyArchivalURI,
@@ -145,7 +145,7 @@ func (m *MetadataPersistenceSuiteV2) TestCreateDomain() {
 	m.Equal(description, resp1.Info.Description)
 	m.Equal(owner, resp1.Info.OwnerEmail)
 	m.Equal(data, resp1.Info.Data)
-	m.Equal(retention, resp1.Config.Retention)
+	m.Equal(retention, common.DaysToInt32(resp1.Config.Retention))
 	m.Equal(emitMetric, resp1.Config.EmitMetric)
 	m.Equal(historyArchivalStatus, resp1.Config.HistoryArchivalStatus)
 	m.Equal(historyArchivalURI, resp1.Config.HistoryArchivalURI)
@@ -172,7 +172,7 @@ func (m *MetadataPersistenceSuiteV2) TestCreateDomain() {
 			Data:        map[string]string{},
 		},
 		&p.DomainConfig{
-			Retention:                100,
+			Retention:                common.DaysToDuration(100),
 			EmitMetric:               false,
 			HistoryArchivalStatus:    gen.ArchivalStatusDisabled,
 			HistoryArchivalURI:       "",
@@ -242,7 +242,7 @@ func (m *MetadataPersistenceSuiteV2) TestGetDomain() {
 			Data:        data,
 		},
 		&p.DomainConfig{
-			Retention:                retention,
+			Retention:                common.DaysToDuration(int64(retention)),
 			EmitMetric:               emitMetric,
 			HistoryArchivalStatus:    historyArchivalStatus,
 			HistoryArchivalURI:       historyArchivalURI,
@@ -271,7 +271,7 @@ func (m *MetadataPersistenceSuiteV2) TestGetDomain() {
 	m.Equal(description, resp2.Info.Description)
 	m.Equal(owner, resp2.Info.OwnerEmail)
 	m.Equal(data, resp2.Info.Data)
-	m.Equal(retention, resp2.Config.Retention)
+	m.Equal(retention, common.DaysToInt32(resp2.Config.Retention))
 	m.Equal(emitMetric, resp2.Config.EmitMetric)
 	m.Equal(historyArchivalStatus, resp2.Config.HistoryArchivalStatus)
 	m.Equal(historyArchivalURI, resp2.Config.HistoryArchivalURI)
@@ -299,7 +299,7 @@ func (m *MetadataPersistenceSuiteV2) TestGetDomain() {
 	m.Equal(description, resp3.Info.Description)
 	m.Equal(owner, resp3.Info.OwnerEmail)
 	m.Equal(data, resp3.Info.Data)
-	m.Equal(retention, resp3.Config.Retention)
+	m.Equal(retention, common.DaysToInt32(resp3.Config.Retention))
 	m.Equal(emitMetric, resp3.Config.EmitMetric)
 	m.Equal(historyArchivalStatus, resp3.Config.HistoryArchivalStatus)
 	m.Equal(historyArchivalURI, resp3.Config.HistoryArchivalURI)
@@ -381,7 +381,7 @@ func (m *MetadataPersistenceSuiteV2) TestConcurrentCreateDomain() {
 					Data:        data,
 				},
 				&p.DomainConfig{
-					Retention:                retention,
+					Retention:                common.DaysToDuration(int64(retention)),
 					EmitMetric:               emitMetric,
 					HistoryArchivalStatus:    historyArchivalStatus,
 					HistoryArchivalURI:       historyArchivalURI,
@@ -413,7 +413,7 @@ func (m *MetadataPersistenceSuiteV2) TestConcurrentCreateDomain() {
 	m.Equal(status, resp.Info.Status)
 	m.Equal(description, resp.Info.Description)
 	m.Equal(owner, resp.Info.OwnerEmail)
-	m.Equal(retention, resp.Config.Retention)
+	m.Equal(retention, common.DaysToInt32(resp.Config.Retention))
 	m.Equal(emitMetric, resp.Config.EmitMetric)
 	m.Equal(historyArchivalStatus, resp.Config.HistoryArchivalStatus)
 	m.Equal(historyArchivalURI, resp.Config.HistoryArchivalURI)
@@ -478,7 +478,7 @@ func (m *MetadataPersistenceSuiteV2) TestConcurrentUpdateDomain() {
 			Data:        data,
 		},
 		&p.DomainConfig{
-			Retention:                retention,
+			Retention:                common.DaysToDuration(int64(retention)),
 			EmitMetric:               emitMetric,
 			HistoryArchivalStatus:    historyArchivalStatus,
 			HistoryArchivalURI:       historyArchivalURI,
@@ -568,7 +568,7 @@ func (m *MetadataPersistenceSuiteV2) TestConcurrentUpdateDomain() {
 	m.Equal(description, resp3.Info.Description)
 	m.Equal(owner, resp3.Info.OwnerEmail)
 
-	m.Equal(retention, resp3.Config.Retention)
+	m.Equal(retention, common.DaysToInt32(resp3.Config.Retention))
 	m.Equal(emitMetric, resp3.Config.EmitMetric)
 	m.Equal(historyArchivalStatus, resp3.Config.HistoryArchivalStatus)
 	m.Equal(historyArchivalURI, resp3.Config.HistoryArchivalURI)
@@ -633,7 +633,7 @@ func (m *MetadataPersistenceSuiteV2) TestUpdateDomain() {
 			Data:        data,
 		},
 		&p.DomainConfig{
-			Retention:                retention,
+			Retention:                common.DaysToDuration(int64(retention)),
 			EmitMetric:               emitMetric,
 			HistoryArchivalStatus:    historyArchivalStatus,
 			HistoryArchivalURI:       historyArchivalURI,
@@ -704,7 +704,7 @@ func (m *MetadataPersistenceSuiteV2) TestUpdateDomain() {
 			Data:        updatedData,
 		},
 		&p.DomainConfig{
-			Retention:                updatedRetention,
+			Retention:                common.DaysToDuration(int64(updatedRetention)),
 			EmitMetric:               updatedEmitMetric,
 			HistoryArchivalStatus:    updatedHistoryArchivalStatus,
 			HistoryArchivalURI:       updatedHistoryArchivalURI,
@@ -735,7 +735,7 @@ func (m *MetadataPersistenceSuiteV2) TestUpdateDomain() {
 	m.Equal(updatedDescription, resp4.Info.Description)
 	m.Equal(updatedOwner, resp4.Info.OwnerEmail)
 	m.Equal(updatedData, resp4.Info.Data)
-	m.Equal(updatedRetention, resp4.Config.Retention)
+	m.Equal(updatedRetention, common.DaysToInt32(resp4.Config.Retention))
 	m.Equal(updatedEmitMetric, resp4.Config.EmitMetric)
 	m.Equal(updatedHistoryArchivalStatus, resp4.Config.HistoryArchivalStatus)
 	m.Equal(updatedHistoryArchivalURI, resp4.Config.HistoryArchivalURI)
@@ -764,7 +764,7 @@ func (m *MetadataPersistenceSuiteV2) TestUpdateDomain() {
 	m.Equal(updatedDescription, resp5.Info.Description)
 	m.Equal(updatedOwner, resp5.Info.OwnerEmail)
 	m.Equal(updatedData, resp5.Info.Data)
-	m.Equal(updatedRetention, resp5.Config.Retention)
+	m.Equal(updatedRetention, common.DaysToInt32(resp5.Config.Retention))
 	m.Equal(updatedEmitMetric, resp5.Config.EmitMetric)
 	m.Equal(updatedHistoryArchivalStatus, resp5.Config.HistoryArchivalStatus)
 	m.Equal(updatedHistoryArchivalURI, resp5.Config.HistoryArchivalURI)
@@ -793,7 +793,7 @@ func (m *MetadataPersistenceSuiteV2) TestUpdateDomain() {
 			Data:        updatedData,
 		},
 		&p.DomainConfig{
-			Retention:                updatedRetention,
+			Retention:                common.DaysToDuration(int64(updatedRetention)),
 			EmitMetric:               updatedEmitMetric,
 			HistoryArchivalStatus:    updatedHistoryArchivalStatus,
 			HistoryArchivalURI:       updatedHistoryArchivalURI,
@@ -824,7 +824,7 @@ func (m *MetadataPersistenceSuiteV2) TestUpdateDomain() {
 	m.Equal(updatedDescription, resp6.Info.Description)
 	m.Equal(updatedOwner, resp6.Info.OwnerEmail)
 	m.Equal(updatedData, resp6.Info.Data)
-	m.Equal(updatedRetention, resp6.Config.Retention)
+	m.Equal(updatedRetention, common.DaysToInt32(resp6.Config.Retention))
 	m.Equal(updatedEmitMetric, resp6.Config.EmitMetric)
 	m.Equal(updatedHistoryArchivalStatus, resp6.Config.HistoryArchivalStatus)
 	m.Equal(updatedHistoryArchivalURI, resp6.Config.HistoryArchivalURI)
@@ -883,7 +883,7 @@ func (m *MetadataPersistenceSuiteV2) TestDeleteDomain() {
 			Data:        data,
 		},
 		&p.DomainConfig{
-			Retention:                int32(retention),
+			Retention:                common.DaysToDuration(int64(retention)),
 			EmitMetric:               emitMetric,
 			HistoryArchivalStatus:    historyArchivalStatus,
 			HistoryArchivalURI:       historyArchivalURI,
@@ -929,7 +929,7 @@ func (m *MetadataPersistenceSuiteV2) TestDeleteDomain() {
 			Data:        data,
 		},
 		&p.DomainConfig{
-			Retention:                int32(retention),
+			Retention:                common.DaysToDuration(int64(retention)),
 			EmitMetric:               emitMetric,
 			HistoryArchivalStatus:    historyArchivalStatus,
 			HistoryArchivalURI:       historyArchivalURI,
@@ -1015,7 +1015,7 @@ func (m *MetadataPersistenceSuiteV2) TestListDomains() {
 				Data:        map[string]string{"k1": "v1"},
 			},
 			Config: &p.DomainConfig{
-				Retention:                109,
+				Retention:                common.DaysToDuration(109),
 				EmitMetric:               true,
 				HistoryArchivalStatus:    gen.ArchivalStatusEnabled,
 				HistoryArchivalURI:       "test://history/uri",
@@ -1042,7 +1042,7 @@ func (m *MetadataPersistenceSuiteV2) TestListDomains() {
 				Data:        map[string]string{"k1": "v2"},
 			},
 			Config: &p.DomainConfig{
-				Retention:                326,
+				Retention:                common.DaysToDuration(326),
 				EmitMetric:               false,
 				HistoryArchivalStatus:    gen.ArchivalStatusDisabled,
 				HistoryArchivalURI:       "",

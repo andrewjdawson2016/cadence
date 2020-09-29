@@ -220,7 +220,7 @@ func (s *taskAckManagerSuite) TestIsNewRunNDCEnabled_True() {
 	s.mockMutableState.EXPECT().GetVersionHistories().Return(&persistence.VersionHistories{})
 	s.mockDomainCache.EXPECT().GetDomainByID(domainID).Return(cache.NewGlobalDomainCacheEntryForTest(
 		&persistence.DomainInfo{ID: domainID, Name: "domainName"},
-		&persistence.DomainConfig{Retention: 1},
+		&persistence.DomainConfig{Retention: common.DaysToDuration(1)},
 		&persistence.DomainReplicationConfig{
 			ActiveClusterName: cluster.TestCurrentClusterName,
 			Clusters: []*persistence.ClusterReplicationConfig{
@@ -261,7 +261,7 @@ func (s *taskAckManagerSuite) TestIsNewRunNDCEnabled_False() {
 	s.mockMutableState.EXPECT().GetVersionHistories().Return(nil)
 	s.mockDomainCache.EXPECT().GetDomainByID(domainID).Return(cache.NewGlobalDomainCacheEntryForTest(
 		&persistence.DomainInfo{ID: domainID, Name: "domainName"},
-		&persistence.DomainConfig{Retention: 1},
+		&persistence.DomainConfig{Retention: common.DaysToDuration(1)},
 		&persistence.DomainReplicationConfig{
 			ActiveClusterName: cluster.TestCurrentClusterName,
 			Clusters: []*persistence.ClusterReplicationConfig{
@@ -388,7 +388,7 @@ func (s *taskAckManagerSuite) TestProcessReplication_OK() {
 	s.mockMutableState.EXPECT().GetActivityInfo(gomock.Any()).Return(nil, false).AnyTimes()
 	s.mockDomainCache.EXPECT().GetDomainByID(domainID).Return(cache.NewGlobalDomainCacheEntryForTest(
 		&persistence.DomainInfo{ID: domainID, Name: "domainName"},
-		&persistence.DomainConfig{Retention: 1},
+		&persistence.DomainConfig{Retention: common.DaysToDuration(1)},
 		&persistence.DomainReplicationConfig{
 			ActiveClusterName: cluster.TestCurrentClusterName,
 			Clusters: []*persistence.ClusterReplicationConfig{
@@ -488,7 +488,7 @@ func (s *taskAckManagerSuite) TestProcessReplication_Error() {
 	s.mockMutableState.EXPECT().GetActivityInfo(gomock.Any()).Return(nil, false).AnyTimes()
 	s.mockDomainCache.EXPECT().GetDomainByID(domainID).Return(cache.NewGlobalDomainCacheEntryForTest(
 		&persistence.DomainInfo{ID: domainID, Name: "domainName"},
-		&persistence.DomainConfig{Retention: 1},
+		&persistence.DomainConfig{Retention: common.DaysToDuration(1)},
 		&persistence.DomainReplicationConfig{
 			ActiveClusterName: cluster.TestCurrentClusterName,
 			Clusters: []*persistence.ClusterReplicationConfig{
@@ -589,7 +589,7 @@ func (s *taskAckManagerSuite) TestGenerateSyncActivityTask_OK() {
 	s.mockMutableState.EXPECT().GetActivityInfo(gomock.Any()).Return(activityInfo, true).AnyTimes()
 	s.mockDomainCache.EXPECT().GetDomainByID(domainID).Return(cache.NewGlobalDomainCacheEntryForTest(
 		&persistence.DomainInfo{ID: domainID, Name: "domainName"},
-		&persistence.DomainConfig{Retention: 1},
+		&persistence.DomainConfig{Retention: common.DaysToDuration(1)},
 		&persistence.DomainReplicationConfig{
 			ActiveClusterName: cluster.TestCurrentClusterName,
 			Clusters: []*persistence.ClusterReplicationConfig{
@@ -655,7 +655,7 @@ func (s *taskAckManagerSuite) TestGenerateSyncActivityTask_Empty() {
 	s.mockMutableState.EXPECT().GetActivityInfo(gomock.Any()).Return(nil, false).AnyTimes()
 	s.mockDomainCache.EXPECT().GetDomainByID(domainID).Return(cache.NewGlobalDomainCacheEntryForTest(
 		&persistence.DomainInfo{ID: domainID, Name: "domainName"},
-		&persistence.DomainConfig{Retention: 1},
+		&persistence.DomainConfig{Retention: common.DaysToDuration(1)},
 		&persistence.DomainReplicationConfig{
 			ActiveClusterName: cluster.TestCurrentClusterName,
 			Clusters: []*persistence.ClusterReplicationConfig{
@@ -713,7 +713,7 @@ func (s *taskAckManagerSuite) TestGenerateHistoryReplicationTask() {
 	s.mockMutableState.EXPECT().GetActivityInfo(gomock.Any()).Return(nil, false).AnyTimes()
 	s.mockDomainCache.EXPECT().GetDomainByID(domainID).Return(cache.NewGlobalDomainCacheEntryForTest(
 		&persistence.DomainInfo{ID: domainID, Name: "domainName"},
-		&persistence.DomainConfig{Retention: 1},
+		&persistence.DomainConfig{Retention: common.DaysToDuration(1)},
 		&persistence.DomainReplicationConfig{
 			ActiveClusterName: cluster.TestCurrentClusterName,
 			Clusters: []*persistence.ClusterReplicationConfig{
@@ -813,7 +813,7 @@ func (s *taskAckManagerSuite) TestToReplicationTask_SyncActivity() {
 	s.mockMutableState.EXPECT().GetActivityInfo(gomock.Any()).Return(activityInfo, true).AnyTimes()
 	s.mockDomainCache.EXPECT().GetDomainByID(domainID).Return(cache.NewGlobalDomainCacheEntryForTest(
 		&persistence.DomainInfo{ID: domainID, Name: "domainName"},
-		&persistence.DomainConfig{Retention: 1},
+		&persistence.DomainConfig{Retention: common.DaysToDuration(1)},
 		&persistence.DomainReplicationConfig{
 			ActiveClusterName: cluster.TestCurrentClusterName,
 			Clusters: []*persistence.ClusterReplicationConfig{
@@ -882,7 +882,7 @@ func (s *taskAckManagerSuite) TestToReplicationTask_History() {
 	s.mockMutableState.EXPECT().GetActivityInfo(gomock.Any()).Return(nil, false).AnyTimes()
 	s.mockDomainCache.EXPECT().GetDomainByID(domainID).Return(cache.NewGlobalDomainCacheEntryForTest(
 		&persistence.DomainInfo{ID: domainID, Name: "domainName"},
-		&persistence.DomainConfig{Retention: 1},
+		&persistence.DomainConfig{Retention: common.DaysToDuration(1)},
 		&persistence.DomainReplicationConfig{
 			ActiveClusterName: cluster.TestCurrentClusterName,
 			Clusters: []*persistence.ClusterReplicationConfig{

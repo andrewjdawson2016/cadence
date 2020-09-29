@@ -22,6 +22,7 @@ package constants
 
 import (
 	workflow "github.com/uber/cadence/.gen/go/shared"
+	"github.com/uber/cadence/common"
 	"github.com/uber/cadence/common/cache"
 	"github.com/uber/cadence/common/cluster"
 	"github.com/uber/cadence/common/persistence"
@@ -54,7 +55,7 @@ var (
 	// TestLocalDomainEntry is the local domain cache entry for test
 	TestLocalDomainEntry = cache.NewLocalDomainCacheEntryForTest(
 		&persistence.DomainInfo{ID: TestDomainID, Name: TestDomainName},
-		&persistence.DomainConfig{Retention: 1},
+		&persistence.DomainConfig{Retention: common.DaysToDuration(1)},
 		cluster.TestCurrentClusterName,
 		nil,
 	)
@@ -63,7 +64,7 @@ var (
 	TestGlobalDomainEntry = cache.NewGlobalDomainCacheEntryForTest(
 		&persistence.DomainInfo{ID: TestDomainID, Name: TestDomainName},
 		&persistence.DomainConfig{
-			Retention:                1,
+			Retention:                common.DaysToDuration(1),
 			VisibilityArchivalStatus: workflow.ArchivalStatusEnabled,
 			VisibilityArchivalURI:    "test:///visibility/archival",
 		},
@@ -81,7 +82,7 @@ var (
 	// TestGlobalParentDomainEntry is the global parent domain cache entry for test
 	TestGlobalParentDomainEntry = cache.NewGlobalDomainCacheEntryForTest(
 		&persistence.DomainInfo{ID: TestParentDomainID, Name: TestParentDomainName},
-		&persistence.DomainConfig{Retention: 1},
+		&persistence.DomainConfig{Retention: common.DaysToDuration(1)},
 		&persistence.DomainReplicationConfig{
 			ActiveClusterName: cluster.TestCurrentClusterName,
 			Clusters: []*persistence.ClusterReplicationConfig{
@@ -96,7 +97,7 @@ var (
 	// TestGlobalTargetDomainEntry is the global target domain cache entry for test
 	TestGlobalTargetDomainEntry = cache.NewGlobalDomainCacheEntryForTest(
 		&persistence.DomainInfo{ID: TestTargetDomainID, Name: TestTargetDomainName},
-		&persistence.DomainConfig{Retention: 1},
+		&persistence.DomainConfig{Retention: common.DaysToDuration(1)},
 		&persistence.DomainReplicationConfig{
 			ActiveClusterName: cluster.TestCurrentClusterName,
 			Clusters: []*persistence.ClusterReplicationConfig{
@@ -111,7 +112,7 @@ var (
 	// TestGlobalChildDomainEntry is the global child domain cache entry for test
 	TestGlobalChildDomainEntry = cache.NewGlobalDomainCacheEntryForTest(
 		&persistence.DomainInfo{ID: TestChildDomainID, Name: TestChildDomainName},
-		&persistence.DomainConfig{Retention: 1},
+		&persistence.DomainConfig{Retention: common.DaysToDuration(1)},
 		&persistence.DomainReplicationConfig{
 			ActiveClusterName: cluster.TestCurrentClusterName,
 			Clusters: []*persistence.ClusterReplicationConfig{

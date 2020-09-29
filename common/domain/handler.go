@@ -200,7 +200,7 @@ func (d *HandlerImpl) RegisterDomain(
 		Data:        registerRequest.Data,
 	}
 	config := &persistence.DomainConfig{
-		Retention:                registerRequest.GetWorkflowExecutionRetentionPeriodInDays(),
+		Retention:                common.DaysToDuration(int64(registerRequest.GetWorkflowExecutionRetentionPeriodInDays())),
 		EmitMetric:               registerRequest.GetEmitMetric(),
 		HistoryArchivalStatus:    nextHistoryArchivalState.Status,
 		HistoryArchivalURI:       nextHistoryArchivalState.URI,
@@ -610,7 +610,7 @@ func (d *HandlerImpl) createResponse(
 
 	configResult := &shared.DomainConfiguration{
 		EmitMetric:                             common.BoolPtr(config.EmitMetric),
-		WorkflowExecutionRetentionPeriodInDays: common.Int32Ptr(config.Retention),
+		WorkflowExecutionRetentionPeriodInDays: common.Int32Ptr(common.DaysToInt32(config.Retention)),
 		HistoryArchivalStatus:                  common.ArchivalStatusPtr(config.HistoryArchivalStatus),
 		HistoryArchivalURI:                     common.StringPtr(config.HistoryArchivalURI),
 		VisibilityArchivalStatus:               common.ArchivalStatusPtr(config.VisibilityArchivalStatus),
@@ -817,7 +817,7 @@ func (d *HandlerImpl) updateDomainConfiguration(
 		}
 		if domainConfig.WorkflowExecutionRetentionPeriodInDays != nil {
 			isConfigChanged = true
-			config.Retention = domainConfig.GetWorkflowExecutionRetentionPeriodInDays()
+			config.Retention = common.DaysToDuration(int64(domainConfig.GetWorkflowExecutionRetentionPeriodInDays()))
 		}
 		if domainConfig.BadBinaries != nil {
 			maxLength := d.maxBadBinaryCount(domainName)

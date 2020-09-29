@@ -503,7 +503,7 @@ func (s *domainHandlerGlobalDomainEnabledNotMasterClusterSuite) TestUpdateGetDom
 			Data:        data,
 		},
 		Config: &persistence.DomainConfig{
-			Retention:                retention,
+			Retention:                common.DaysToDuration(int64(retention)),
 			EmitMetric:               emitMetric,
 			HistoryArchivalStatus:    shared.ArchivalStatusDisabled,
 			HistoryArchivalURI:       "",
@@ -563,7 +563,7 @@ func (s *domainHandlerGlobalDomainEnabledNotMasterClusterSuite) TestUpdateGetDom
 			Data:        map[string]string{},
 		},
 		Config: &persistence.DomainConfig{
-			Retention:                0,
+			Retention:                common.DaysToDuration(0),
 			EmitMetric:               false,
 			HistoryArchivalStatus:    shared.ArchivalStatusDisabled,
 			HistoryArchivalURI:       "",
@@ -642,7 +642,7 @@ func (s *domainHandlerGlobalDomainEnabledNotMasterClusterSuite) TestUpdateGetDom
 			Data:        data,
 		},
 		Config: &persistence.DomainConfig{
-			Retention:                retention,
+			Retention:                common.DaysToDuration(int64(retention)),
 			EmitMetric:               emitMetric,
 			HistoryArchivalStatus:    shared.ArchivalStatusDisabled,
 			HistoryArchivalURI:       "",

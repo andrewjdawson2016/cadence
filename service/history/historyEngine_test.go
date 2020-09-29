@@ -1624,7 +1624,7 @@ func (s *engineSuite) TestRespondDecisionTaskCompletedBadBinary() {
 	domainEntry := cache.NewLocalDomainCacheEntryForTest(
 		&persistence.DomainInfo{ID: domainID, Name: constants.TestDomainName},
 		&p.DomainConfig{
-			Retention: 2,
+			Retention: common.DaysToDuration(2),
 			BadBinaries: workflow.BadBinaries{
 				Binaries: map[string]*workflow.BadBinaryInfo{
 					"test-bad-binary": {},

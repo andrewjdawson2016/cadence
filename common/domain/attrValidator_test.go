@@ -23,6 +23,8 @@ package domain
 import (
 	"testing"
 
+	"github.com/uber/cadence/common"
+
 	"github.com/uber/cadence/.gen/go/shared"
 
 	"github.com/uber/cadence/common/cluster"
@@ -84,7 +86,7 @@ func (s *attrValidatorSuite) TestValidateConfigRetentionPeriod() {
 	}
 	for _, tc := range testCases {
 		actualErr := s.validator.validateDomainConfig(
-			&persistence.DomainConfig{Retention: tc.retentionPeriod},
+			&persistence.DomainConfig{Retention: common.DaysToDuration(int64(tc.retentionPeriod))},
 		)
 		s.Equal(tc.expectedErr, actualErr)
 	}

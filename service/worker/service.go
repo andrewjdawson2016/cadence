@@ -332,7 +332,7 @@ func (s *Service) registerSystemDomain() {
 			Description: "Cadence internal system domain",
 		},
 		Config: &persistence.DomainConfig{
-			Retention:  common.SystemDomainRetentionDays,
+			Retention:  common.DaysToDuration(common.SystemDomainRetentionDays),
 			EmitMetric: true,
 		},
 		ReplicationConfig: &persistence.DomainReplicationConfig{

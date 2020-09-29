@@ -104,7 +104,7 @@ func (s *transmissionTaskSuite) TestHandleTransmissionTask_RegisterDomainTask_Is
 		Data:        data,
 	}
 	config := &p.DomainConfig{
-		Retention:                retention,
+		Retention:                common.DaysToDuration(int64(retention)),
 		EmitMetric:               emitMetric,
 		HistoryArchivalStatus:    historyArchivalStatus,
 		HistoryArchivalURI:       historyArchivalURI,
@@ -198,7 +198,7 @@ func (s *transmissionTaskSuite) TestHandleTransmissionTask_RegisterDomainTask_No
 		Data:        data,
 	}
 	config := &p.DomainConfig{
-		Retention:                retention,
+		Retention:                common.DaysToDuration(int64(retention)),
 		EmitMetric:               emitMetric,
 		HistoryArchivalStatus:    historyArchivalStatus,
 		HistoryArchivalURI:       historyArchivalURI,
@@ -263,7 +263,7 @@ func (s *transmissionTaskSuite) TestHandleTransmissionTask_UpdateDomainTask_IsGl
 		Data:        data,
 	}
 	config := &p.DomainConfig{
-		Retention:                retention,
+		Retention:                common.DaysToDuration(int64(retention)),
 		EmitMetric:               emitMetric,
 		HistoryArchivalStatus:    historyArchivalStatus,
 		HistoryArchivalURI:       historyArchivalURI,
@@ -357,7 +357,7 @@ func (s *transmissionTaskSuite) TestHandleTransmissionTask_UpdateDomainTask_NotG
 		Data:        data,
 	}
 	config := &p.DomainConfig{
-		Retention:                retention,
+		Retention:                common.DaysToDuration(int64(retention)),
 		EmitMetric:               emitMetric,
 		HistoryArchivalStatus:    historyArchivalStatus,
 		HistoryArchivalURI:       historyArchivalURI,

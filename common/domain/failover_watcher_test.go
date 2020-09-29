@@ -111,7 +111,7 @@ func (s *failoverWatcherSuite) TestCleanPendingActiveState() {
 		Data:        nil,
 	}
 	domainConfig := &persistence.DomainConfig{
-		Retention:  1,
+		Retention:  common.DaysToDuration(1),
 		EmitMetric: true,
 	}
 	replicationConfig := &persistence.DomainReplicationConfig{
@@ -198,7 +198,7 @@ func (s *failoverWatcherSuite) TestHandleFailoverTimeout() {
 		Data:        nil,
 	}
 	domainConfig := &persistence.DomainConfig{
-		Retention:  1,
+		Retention:  common.DaysToDuration(1),
 		EmitMetric: true,
 	}
 	replicationConfig := &persistence.DomainReplicationConfig{

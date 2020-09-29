@@ -96,7 +96,7 @@ func (s *historyResenderSuite) SetupTest() {
 	s.domainName = "some random domain name"
 	domainEntry := cache.NewGlobalDomainCacheEntryForTest(
 		&persistence.DomainInfo{ID: s.domainID, Name: s.domainName},
-		&persistence.DomainConfig{Retention: 1},
+		&persistence.DomainConfig{Retention: common.DaysToDuration(int64(1))},
 		&persistence.DomainReplicationConfig{
 			ActiveClusterName: cluster.TestCurrentClusterName,
 			Clusters: []*persistence.ClusterReplicationConfig{

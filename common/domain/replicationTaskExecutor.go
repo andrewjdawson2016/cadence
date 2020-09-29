@@ -25,6 +25,7 @@ package domain
 import (
 	"github.com/uber/cadence/.gen/go/replicator"
 	"github.com/uber/cadence/.gen/go/shared"
+	"github.com/uber/cadence/common"
 	"github.com/uber/cadence/common/log"
 	"github.com/uber/cadence/common/persistence"
 )
@@ -112,7 +113,7 @@ func (h *domainReplicationTaskExecutorImpl) handleDomainCreationReplicationTask(
 			Data:        task.Info.Data,
 		},
 		Config: &persistence.DomainConfig{
-			Retention:                task.Config.GetWorkflowExecutionRetentionPeriodInDays(),
+			Retention:                common.DaysToDuration(int64(task.Config.GetWorkflowExecutionRetentionPeriodInDays())),
 			EmitMetric:               task.Config.GetEmitMetric(),
 			HistoryArchivalStatus:    task.Config.GetHistoryArchivalStatus(),
 			HistoryArchivalURI:       task.Config.GetHistoryArchivalURI(),
@@ -229,7 +230,7 @@ func (h *domainReplicationTaskExecutorImpl) handleDomainUpdateReplicationTask(ta
 			Data:        task.Info.Data,
 		}
 		request.Config = &persistence.DomainConfig{
-			Retention:                task.Config.GetWorkflowExecutionRetentionPeriodInDays(),
+			Retention:                common.DaysToDuration(int64(task.Config.GetWorkflowExecutionRetentionPeriodInDays())),
 			EmitMetric:               task.Config.GetEmitMetric(),
 			HistoryArchivalStatus:    task.Config.GetHistoryArchivalStatus(),
 			HistoryArchivalURI:       task.Config.GetHistoryArchivalURI(),

@@ -221,7 +221,7 @@ func (s *IntegrationBase) registerArchivalDomain() error {
 			Status: persistence.DomainStatusRegistered,
 		},
 		Config: &persistence.DomainConfig{
-			Retention:                0,
+			Retention:                common.DaysToDuration(0),
 			HistoryArchivalStatus:    workflow.ArchivalStatusEnabled,
 			HistoryArchivalURI:       s.testCluster.archiverBase.historyURI,
 			VisibilityArchivalStatus: workflow.ArchivalStatusEnabled,

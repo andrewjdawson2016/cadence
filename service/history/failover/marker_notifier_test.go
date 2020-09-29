@@ -112,7 +112,7 @@ func (s *markerNotifierSuite) TestNotifyPendingFailoverMarker() {
 		Data:        nil,
 	}
 	domainConfig := &persistence.DomainConfig{
-		Retention:  1,
+		Retention:  common.DaysToDuration(1),
 		EmitMetric: true,
 	}
 	replicationConfig := &persistence.DomainReplicationConfig{

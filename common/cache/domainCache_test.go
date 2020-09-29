@@ -92,7 +92,7 @@ func (s *domainCacheSuite) TestListDomain() {
 	domainRecord1 := &persistence.GetDomainResponse{
 		Info: &persistence.DomainInfo{ID: uuid.New(), Name: "some random domain name", Data: make(map[string]string)},
 		Config: &persistence.DomainConfig{
-			Retention: 1,
+			Retention: common.DaysToDuration(1),
 			BadBinaries: shared.BadBinaries{
 				Binaries: map[string]*shared.BadBinaryInfo{},
 			}},
@@ -112,7 +112,7 @@ func (s *domainCacheSuite) TestListDomain() {
 	domainRecord2 := &persistence.GetDomainResponse{
 		Info: &persistence.DomainInfo{ID: uuid.New(), Name: "another random domain name", Data: make(map[string]string)},
 		Config: &persistence.DomainConfig{
-			Retention: 2,
+			Retention: common.DaysToDuration(2),
 			BadBinaries: shared.BadBinaries{
 				Binaries: map[string]*shared.BadBinaryInfo{},
 			}},
@@ -132,7 +132,7 @@ func (s *domainCacheSuite) TestListDomain() {
 	domainRecord3 := &persistence.GetDomainResponse{
 		Info: &persistence.DomainInfo{ID: uuid.New(), Name: "yet another random domain name", Data: make(map[string]string)},
 		Config: &persistence.DomainConfig{
-			Retention: 3,
+			Retention: common.DaysToDuration(3),
 			BadBinaries: shared.BadBinaries{
 				Binaries: map[string]*shared.BadBinaryInfo{},
 			}},
@@ -202,7 +202,7 @@ func (s *domainCacheSuite) TestGetDomain_NonLoaded_GetByName() {
 	domainRecord := &persistence.GetDomainResponse{
 		Info: &persistence.DomainInfo{ID: uuid.New(), Name: "some random domain name", Data: make(map[string]string)},
 		Config: &persistence.DomainConfig{
-			Retention: 1,
+			Retention: common.DaysToDuration(1),
 			BadBinaries: shared.BadBinaries{
 				Binaries: map[string]*shared.BadBinaryInfo{
 					"abc": {
@@ -246,7 +246,7 @@ func (s *domainCacheSuite) TestGetDomain_NonLoaded_GetByID() {
 	domainRecord := &persistence.GetDomainResponse{
 		Info: &persistence.DomainInfo{ID: uuid.New(), Name: "some random domain name", Data: make(map[string]string)},
 		Config: &persistence.DomainConfig{
-			Retention: 1,
+			Retention: common.DaysToDuration(1),
 			BadBinaries: shared.BadBinaries{
 				Binaries: map[string]*shared.BadBinaryInfo{},
 			},
@@ -283,7 +283,7 @@ func (s *domainCacheSuite) TestRegisterCallback_CatchUp() {
 	domainRecord1 := &persistence.GetDomainResponse{
 		Info: &persistence.DomainInfo{ID: uuid.New(), Name: "some random domain name", Data: make(map[string]string)},
 		Config: &persistence.DomainConfig{
-			Retention: 1,
+			Retention: common.DaysToDuration(1),
 			BadBinaries: shared.BadBinaries{
 				Binaries: map[string]*shared.BadBinaryInfo{},
 			}},
@@ -305,7 +305,7 @@ func (s *domainCacheSuite) TestRegisterCallback_CatchUp() {
 	domainRecord2 := &persistence.GetDomainResponse{
 		Info: &persistence.DomainInfo{ID: uuid.New(), Name: "another random domain name", Data: make(map[string]string)},
 		Config: &persistence.DomainConfig{
-			Retention: 2,
+			Retention: common.DaysToDuration(2),
 			BadBinaries: shared.BadBinaries{
 				Binaries: map[string]*shared.BadBinaryInfo{},
 			}},
@@ -366,7 +366,7 @@ func (s *domainCacheSuite) TestUpdateCache_TriggerCallBack() {
 	domainRecord1Old := &persistence.GetDomainResponse{
 		Info: &persistence.DomainInfo{ID: uuid.New(), Name: "some random domain name", Data: make(map[string]string)},
 		Config: &persistence.DomainConfig{
-			Retention: 1,
+			Retention: common.DaysToDuration(1),
 			BadBinaries: shared.BadBinaries{
 				Binaries: map[string]*shared.BadBinaryInfo{},
 			}},
@@ -388,7 +388,7 @@ func (s *domainCacheSuite) TestUpdateCache_TriggerCallBack() {
 	domainRecord2Old := &persistence.GetDomainResponse{
 		Info: &persistence.DomainInfo{ID: uuid.New(), Name: "another random domain name", Data: make(map[string]string)},
 		Config: &persistence.DomainConfig{
-			Retention: 2,
+			Retention: common.DaysToDuration(2),
 			BadBinaries: shared.BadBinaries{
 				Binaries: map[string]*shared.BadBinaryInfo{},
 			}},
@@ -505,7 +505,7 @@ func (s *domainCacheSuite) TestGetTriggerListAndUpdateCache_ConcurrentAccess() {
 	domainRecordOld := &persistence.GetDomainResponse{
 		Info: &persistence.DomainInfo{ID: id, Name: "some random domain name", Data: make(map[string]string)},
 		Config: &persistence.DomainConfig{
-			Retention: 1,
+			Retention: common.DaysToDuration(1),
 			BadBinaries: shared.BadBinaries{
 				Binaries: map[string]*shared.BadBinaryInfo{},
 			}},
@@ -577,7 +577,7 @@ func Test_GetRetentionDays(t *testing.T) {
 			Data: make(map[string]string),
 		},
 		config: &persistence.DomainConfig{
-			Retention: 7,
+			Retention: common.DaysToDuration(7),
 		},
 	}
 	d.info.Data[SampleRetentionKey] = "30"
@@ -616,7 +616,7 @@ func Test_IsSampledForLongerRetentionEnabled(t *testing.T) {
 			Data: make(map[string]string),
 		},
 		config: &persistence.DomainConfig{
-			Retention: 7,
+			Retention: common.DaysToDuration(7),
 			BadBinaries: shared.BadBinaries{
 				Binaries: map[string]*shared.BadBinaryInfo{},
 			},
@@ -635,7 +635,7 @@ func Test_IsSampledForLongerRetention(t *testing.T) {
 			Data: make(map[string]string),
 		},
 		config: &persistence.DomainConfig{
-			Retention: 7,
+			Retention: common.DaysToDuration(7),
 			BadBinaries: shared.BadBinaries{
 				Binaries: map[string]*shared.BadBinaryInfo{},
 			},

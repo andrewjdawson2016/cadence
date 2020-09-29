@@ -615,8 +615,7 @@ type (
 
 	// InternalDomainConfig describes the domain configuration
 	InternalDomainConfig struct {
-		// NOTE: this retention is in days, not in seconds
-		Retention                int32
+		Retention                time.Duration
 		EmitMetric               bool                    // deprecated
 		ArchivalBucket           string                  // deprecated
 		ArchivalStatus           workflow.ArchivalStatus // deprecated

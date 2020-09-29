@@ -269,7 +269,7 @@ func (s *coordinatorSuite) TestHandleFailoverMarkers_CleanPendingActiveState_Suc
 		Data:        nil,
 	}
 	domainConfig := &persistence.DomainConfig{
-		Retention:  1,
+		Retention:  common.DaysToDuration(1),
 		EmitMetric: true,
 	}
 	replicationConfig := &persistence.DomainReplicationConfig{
@@ -342,7 +342,7 @@ func (s *coordinatorSuite) TestHandleFailoverMarkers_CleanPendingActiveState_Err
 		Data:        nil,
 	}
 	domainConfig := &persistence.DomainConfig{
-		Retention:  1,
+		Retention:  common.DaysToDuration(1),
 		EmitMetric: true,
 	}
 	replicationConfig := &persistence.DomainReplicationConfig{
