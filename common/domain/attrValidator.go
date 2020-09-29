@@ -51,7 +51,7 @@ func newAttrValidator(
 }
 
 func (d *AttrValidatorImpl) validateDomainConfig(config *persistence.DomainConfig) error {
-	if common.DaysToInt32(config.Retention) < d.minRetentionDays {
+	if int32(common.DurationToDays(config.Retention)) < d.minRetentionDays {
 		return errInvalidRetentionPeriod
 	}
 	if config.HistoryArchivalStatus == shared.ArchivalStatusEnabled && len(config.HistoryArchivalURI) == 0 {

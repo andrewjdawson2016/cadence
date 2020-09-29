@@ -610,7 +610,7 @@ func (d *HandlerImpl) createResponse(
 
 	configResult := &shared.DomainConfiguration{
 		EmitMetric:                             common.BoolPtr(config.EmitMetric),
-		WorkflowExecutionRetentionPeriodInDays: common.Int32Ptr(common.DaysToInt32(config.Retention)),
+		WorkflowExecutionRetentionPeriodInDays: common.Int32Ptr(int32(common.DurationToDays(config.Retention))),
 		HistoryArchivalStatus:                  common.ArchivalStatusPtr(config.HistoryArchivalStatus),
 		HistoryArchivalURI:                     common.StringPtr(config.HistoryArchivalURI),
 		VisibilityArchivalStatus:               common.ArchivalStatusPtr(config.VisibilityArchivalStatus),

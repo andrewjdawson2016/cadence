@@ -875,13 +875,13 @@ func (entry *DomainCacheEntry) GetRetentionDays(
 	if entry.IsSampledForLongerRetention(workflowID) {
 		if sampledRetentionValue, ok := entry.info.Data[SampleRetentionKey]; ok {
 			sampledRetentionDays, err := strconv.Atoi(sampledRetentionValue)
-			if err != nil || sampledRetentionDays < common.DaysToInt(entry.config.Retention) {
-				return common.DaysToInt32(entry.config.Retention)
+			if err != nil || sampledRetentionDays < int(common.DurationToDays(entry.config.Retention)) {
+				return int32(common.DurationToDays(entry.config.Retention))
 			}
 			return int32(sampledRetentionDays)
 		}
 	}
-	return common.DaysToInt32(entry.config.Retention)
+	return int32(common.DurationToDays(entry.config.Retention))
 }
 
 // IsSampledForLongerRetentionEnabled return whether sample for longer retention is enabled or not
